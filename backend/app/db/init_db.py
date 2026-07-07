@@ -14,6 +14,7 @@ def init_database():
     _ensure_default_workspace()
     _ensure_draft_variant_columns()
     _ensure_v04_rag_columns()
+    _ensure_weekly_report_columns()
 
 
 def _ensure_default_workspace():
@@ -96,6 +97,27 @@ def _ensure_v04_rag_columns():
     with engine.begin() as conn:
         for name, definition in missing:
             conn.execute(text(f"ALTER TABLE knowledge_chunks ADD COLUMN {name} {definition}"))
+
+
+def _ensure_weekly_report_columns():
+    """v0.5 轻量迁移：补齐复盘聚合和预测校准字段。"""
+    inspector = inspect(engine)
+    if "weekly_reports" not in inspector.get_table_names():
+        return
+    existing = {column["name"] for column in inspector.get_columns("weekly_reports")}
+    columns = {
+        "angle_performance": "JSON NULL",
+        "content_type_performance": "JSON NULL",
+        "template_performance": "JSON NULL",
+        "performance_summary": "JSON NULL",
+        "prediction_calibration": "JSON NULL",
+    }
+    missing = [(name, definition) for name, definition in columns.items() if name not in existing]
+    if not missing:
+        return
+    with engine.begin() as conn:
+        for name, definition in missing:
+            conn.execute(text(f"ALTER TABLE weekly_reports ADD COLUMN {name} {definition}"))
 
 
 if __name__ == "__main__":

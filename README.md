@@ -1,10 +1,10 @@
-# AI 内容增长 Agent v0.4
+# AI 内容增长 Agent v0.5
 
 **普通人的AI提效实验室内容工作台**
 
 半自动内容生产 Agent —— 帮普通人把 AI 工作流、Agent 开发、开源项目和提效案例，转化成适合小红书/抖音图文发布的内容资产。
 
-当前已推进到 v0.4-D：除 URL/GitHub 导入外，已支持 Agent 工作台、自定义选题创作、入库前编辑、重复提示、素材库一源多题、发布方案生成、组合诊断、卡片实时预览与样式参数化、质量评分、人工审核清单、ZIP 发布包导出、异步 Agent Run、失败重试、自动轻量改稿、Agent 决策摘要、RAG 知识库检索和受控工具调用白名单。
+当前已推进到 v0.5：除 URL/GitHub 导入外，已支持 Agent 工作台、自定义选题创作、入库前编辑、重复提示、素材库一源多题、发布方案生成、组合诊断、卡片实时预览与样式参数化、质量评分、人工审核清单、ZIP 发布包导出、异步 Agent Run、失败重试、自动轻量改稿、Agent 决策摘要、RAG 知识库检索、受控工具调用白名单、发布前预测、发布后指标录入和复盘校准。
 
 ## 项目交接文档
 
@@ -13,6 +13,7 @@
 ```text
 README.md
 docs/v0.4-agent-architecture.md
+docs/v0.5-data-loop.md
 ```
 
 ## 第一版功能范围
@@ -27,8 +28,9 @@ docs/v0.4-agent-architecture.md
 - 卡片编辑器：预览和修改每页卡片，支持单卡实时预览、字号/密度/强调块/页脚参数化、PNG / ZIP 导出
 - 人工审核：合规检查、事实核验、发布前 checklist
 - 质量评分：评估发布包钩子、收藏价值、文字密度和合规风险
-- 发布数据录入：手动记录平台数据
-- 7天复盘：数据驱动的方向调整
+- 发布前预测：记录预计浏览、点赞、收藏、评论、涨粉、置信度、判断理由和不确定因素
+- 发布数据录入：手动记录平台真实数据，自动沉淀到发布记录
+- 7天复盘：对比预测与真实表现，校准选题、标题、封面和模板判断
 
 ## 第一版不做什么
 
@@ -153,6 +155,8 @@ http://localhost:5173
 | v0.4-B | RAG 接入 Agent 工作台 | ✅ 素材库显示索引状态，Agent Run 新增可选 retrieve_context 步骤，工作台可选择知识库并展示检索证据 |
 | v0.4-C | 本地混合检索与 RAG 实验台 | ✅ knowledge_chunks 写入本地 128 维哈希 embedding，检索改为词面+向量混合评分，新增 RAG 实验页和 smoke 脚本 |
 | v0.4-D | 受控 Function Calling 工具层 | ✅ 新增 `rag.search` / `rag.answer` / `source.index` 工具白名单、工具执行 API 和架构页工具边界展示 |
+| v0.5-A | 发布前预测和复盘校准 | ✅ 新增 content_predictions、预测 API、发布记录自动绑定、真实指标录入后标记 settled、复盘生成预测校准摘要 |
+| v0.5-B | 桌面端 Apple 风格 UI 收口 | ✅ 全局浅色系统界面、半透明面板、Apple 蓝主操作、细边框和轻阴影，保持桌面工作台信息密度 |
 
 ## v0.4 Agent 架构边界
 
@@ -172,6 +176,23 @@ docs/v0.4-agent-architecture.md
 - Agent 工作台启用知识库检索后，会先执行 `retrieve_context`，再进入选题/发布包生成
 - v0.4-C 当前是本地哈希 embedding + 混合检索，适合离线开发验证；外部 embedding/vector DB 是后续升级项
 - v0.4-D 工具调用只能执行后端白名单里的 `rag.search`、`rag.answer`、`source.index`，不接受任意函数名、SQL、文件路径或外部账号能力
+
+## v0.5 数据闭环
+
+详细设计见：
+
+```text
+docs/v0.5-data-loop.md
+```
+
+核心约束：
+
+- 发布前预测是人工/半自动判断记录，不自动发布、不读取平台账号、不绕过平台规则
+- 预测按 `draft_id`、`publish_log_id`、`platform` 绑定，避免不同平台或不同发布批次混淆
+- 创建发布记录时自动绑定同平台、同发布包的最新未绑定预测
+- 录入真实指标后，关联预测状态进入 `settled`
+- 周期复盘会计算浏览预测误差、整体高估/低估方向、误差最大的内容，并写入 `prediction_calibration`
+- 当前 v0.5 仍以手动预测为主，下一步才基于历史数据给出自动预测参考
 
 ## 本地验证
 
@@ -218,6 +239,17 @@ python3 -m compileall backend/app
 cd frontend
 npm run build
 ```
+
+v0.5 数据闭环验证：
+
+```bash
+python3 -m compileall backend/app
+
+cd frontend
+npm run build
+```
+
+浏览器打开 `http://127.0.0.1:5173/`，进入「数据录入」应看到「发布前预测」面板；进入「7天复盘」应看到「预测校准」面板。
 
 浏览器打开 `http://127.0.0.1:5178/`，进入「发布包编辑」，选择已有选题后应看到「组合诊断」面板；切换模板后，面板应提示组合已修改并建议点击「生成匹配卡片」。点击任意卡片进入编辑 Modal，应看到右侧实时预览；修改标题、字号、密度、强调块或页脚开关后，预览应即时变化，保存后卡片列表同步更新。
 
@@ -321,6 +353,11 @@ POST   /api/publish-logs                创建发布记录
 GET    /api/publish-logs                发布记录列表
 POST   /api/publish-logs/{id}/metrics   录入数据指标
 GET    /api/publish-logs/{id}/metrics   查看数据指标
+GET    /api/predictions                 发布前预测列表（支持 ?draft_id= & ?publish_log_id=）
+POST   /api/predictions                 创建发布前预测
+GET    /api/predictions/{id}            预测详情
+PUT    /api/predictions/{id}            更新预测
+POST   /api/predictions/{id}/attach-log 绑定预测到发布记录
 ```
 
 ### 7天复盘

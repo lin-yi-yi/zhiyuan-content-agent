@@ -4,9 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.db.init_db import init_database
-from app.api.routes import health, topics, drafts, cards, publish_logs, reports, models, sources, agent_runs, v04
+from app.api.routes import health, topics, drafts, cards, publish_logs, reports, models, sources, agent_runs, predictions, v04
 
-app = FastAPI(title=settings.APP_NAME, version="0.4.0")
+app = FastAPI(title=settings.APP_NAME, version="0.5.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -29,6 +29,7 @@ app.include_router(reports.router, prefix="/api")
 app.include_router(models.router, prefix="/api")
 app.include_router(sources.router, prefix="/api")
 app.include_router(agent_runs.router, prefix="/api")
+app.include_router(predictions.router, prefix="/api")
 app.include_router(v04.router, prefix="/api")
 
 

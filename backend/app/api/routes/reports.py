@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.models.content_prediction import ContentPrediction
 from app.models.draft import Draft
 from app.models.metric import Metric
 from app.models.publish_log import PublishLog
@@ -65,6 +66,8 @@ def create_report(body: WeeklyReportCreate, db: Session = Depends(get_db)):
         )
 
         rates = _metric_rates(metric)
+        prediction = _prediction_for_log(log, db)
+        prediction_error = _prediction_error(prediction, metric) if prediction else None
         angle = topic.content_angle if topic and topic.content_angle else "未标注角度"
         template = draft.template_key if draft and draft.template_key else "未标注模板"
         content_type = draft.content_type if draft and draft.content_type else "未标注类型"
@@ -77,6 +80,8 @@ def create_report(body: WeeklyReportCreate, db: Session = Depends(get_db)):
             "template": template,
             "content_type": content_type,
             "metric": metric,
+            "prediction": prediction,
+            "prediction_error": prediction_error,
             "engagement": engagement,
             **rates,
         }
@@ -110,11 +115,13 @@ def create_report(body: WeeklyReportCreate, db: Session = Depends(get_db)):
     angle_performance = _build_group_performance(angle_stats)
     template_performance = _build_group_performance(template_stats)
     content_type_performance = _build_group_performance(content_type_stats)
+    prediction_calibration = _build_prediction_calibration(rows)
     recommendations = _build_recommendations(
         rows,
         angle_performance,
         template_performance,
         content_type_performance,
+        prediction_calibration,
     )
     report_text = _build_report_text(
         body.start_date,
@@ -131,6 +138,7 @@ def create_report(body: WeeklyReportCreate, db: Session = Depends(get_db)):
         total_follow_conversion,
         best_items,
         recommendations,
+        prediction_calibration,
     )
 
     report = WeeklyReport(
@@ -159,7 +167,9 @@ def create_report(body: WeeklyReportCreate, db: Session = Depends(get_db)):
                 "comment_rate": total_comment_rate,
                 "follow_conversion_rate": total_follow_conversion,
             },
+            "prediction_calibration": prediction_calibration,
         },
+        prediction_calibration=prediction_calibration,
         recommendations={"items": recommendations},
     )
     db.add(report)
@@ -176,6 +186,7 @@ def _topic_snapshot(item: dict) -> dict:
     topic = item["topic"]
     metric = item["metric"]
     draft = item["draft"]
+    prediction = item.get("prediction")
     return {
         "topic_id": topic.id if topic else None,
         "title": topic.title if topic else "未关联选题",
@@ -193,6 +204,8 @@ def _topic_snapshot(item: dict) -> dict:
         "like_rate": item["like_rate"],
         "comment_rate": item["comment_rate"],
         "follow_conversion_rate": item["follow_conversion_rate"],
+        "prediction": _prediction_snapshot(prediction) if prediction else None,
+        "prediction_error": item.get("prediction_error"),
     }
 
 
@@ -201,10 +214,12 @@ def _build_recommendations(
     angle_performance: list[dict],
     template_performance: list[dict],
     content_type_performance: list[dict],
+    prediction_calibration: dict,
 ) -> list[str]:
     if not rows:
         return [
             "本周期还没有可复盘的数据，先保证每周至少发布 3 条图文。",
+            "发布前先记录预测，再录入真实数据，后续才能校准选题判断。",
             "每条内容发布后记录浏览、点赞、收藏、评论和新增粉丝。",
             "下周优先做 AI 工作流实操、Agent 开发日志和普通人提效案例。",
         ]
@@ -227,7 +242,7 @@ def _build_recommendations(
     else:
         weak_content_type = "未标注类型"
 
-    return [
+    items = [
         f"继续做“{best_angle or '实操案例'}”方向，当前最佳内容的收藏率为 {best['save_rate'] * 100:.1f}%。",
         f"收藏率高的模板是“{best_template}”，可保留其封面节奏和卡片密度。",
         f"下周建议在“{weak_template}”和“{weak_angle}”维度各补 1 条对照数据，验证是否为内容结构问题。",
@@ -236,6 +251,13 @@ def _build_recommendations(
         "评论区要主动追问用户最想自动化的职场任务，作为下组选题来源。",
         f"本周期共有 {len(high_save)} 条内容收藏率超过 5%，其中 {len(high_engage)} 条评论率也较高，适合做系列复用。",
     ]
+    if prediction_calibration.get("prediction_count"):
+        avg_error = float(prediction_calibration.get("avg_abs_view_error_rate") or 0)
+        bias = _bias_label(prediction_calibration.get("view_bias"))
+        items.insert(2, f"发布前预测本周期平均浏览误差约 {avg_error * 100:.1f}%，整体偏差为“{bias}”，下次先校准这一侧。")
+    else:
+        items.insert(2, "下周至少为 3 条内容记录发布前预测，复盘时才能判断选题直觉是否变准。")
+    return items
 
 
 def _build_report_text(
@@ -253,6 +275,7 @@ def _build_report_text(
     total_follow_conversion,
     best_items,
     recommendations,
+    prediction_calibration,
 ) -> str:
     best_title = best_items[0]["title"] if best_items else "暂无"
     lines = [
@@ -266,11 +289,135 @@ def _build_report_text(
         "1. 高收藏内容通常需要明确步骤、真实任务和可复制清单。",
         "2. 泛泛解释 AI 概念的内容，需要转成具体工作流才更适合小红书图文。",
         "3. 发布后应重点观察收藏率、评论率，而不只看浏览量。",
+    ]
+    if prediction_calibration.get("prediction_count"):
+        lines.extend([
+            f"4. 本周期有 {prediction_calibration['prediction_count']} 条内容可做预测校准，平均浏览误差约 {prediction_calibration['avg_abs_view_error_rate'] * 100:.1f}%。",
+            f"5. 预测偏差方向：{_bias_label(prediction_calibration.get('view_bias'))}。",
+        ])
+    else:
+        lines.append("4. 当前缺少发布前预测，后续应先记录预测再发布，才能校准选题判断。")
+    lines.extend([
         "",
         "下周建议：",
-    ]
+    ])
     lines.extend([f"- {item}" for item in recommendations])
     return "\n".join(lines)
+
+
+def _prediction_for_log(log: PublishLog, db: Session) -> ContentPrediction | None:
+    linked = (
+        db.query(ContentPrediction)
+        .filter(ContentPrediction.publish_log_id == log.id)
+        .order_by(ContentPrediction.created_at.desc(), ContentPrediction.id.desc())
+        .first()
+    )
+    if linked:
+        return linked
+    return (
+        db.query(ContentPrediction)
+        .filter(
+            ContentPrediction.draft_id == log.draft_id,
+            ContentPrediction.platform == log.platform,
+            ContentPrediction.publish_log_id.is_(None),
+        )
+        .order_by(ContentPrediction.created_at.desc(), ContentPrediction.id.desc())
+        .first()
+    )
+
+
+def _prediction_snapshot(prediction: ContentPrediction) -> dict:
+    return {
+        "id": prediction.id,
+        "draft_id": prediction.draft_id,
+        "publish_log_id": prediction.publish_log_id,
+        "platform": prediction.platform,
+        "predicted_views": prediction.predicted_views,
+        "predicted_likes": prediction.predicted_likes,
+        "predicted_favorites": prediction.predicted_favorites,
+        "predicted_comments": prediction.predicted_comments,
+        "predicted_shares": prediction.predicted_shares,
+        "predicted_new_followers": prediction.predicted_new_followers,
+        "predicted_save_rate": float(prediction.predicted_save_rate or 0),
+        "predicted_like_rate": float(prediction.predicted_like_rate or 0),
+        "predicted_comment_rate": float(prediction.predicted_comment_rate or 0),
+        "predicted_follow_conversion_rate": float(prediction.predicted_follow_conversion_rate or 0),
+        "confidence": prediction.confidence,
+        "rubric_version": prediction.rubric_version,
+        "status": prediction.status,
+    }
+
+
+def _prediction_error(prediction: ContentPrediction, metric: Metric) -> dict:
+    rates = _metric_rates(metric)
+    views = int(metric.views or 0)
+    predicted_views = int(prediction.predicted_views or 0)
+    view_error = views - predicted_views
+    return {
+        "views_error": view_error,
+        "views_error_rate": _relative_error(view_error, predicted_views),
+        "likes_error": int(metric.likes or 0) - int(prediction.predicted_likes or 0),
+        "favorites_error": int(metric.favorites or 0) - int(prediction.predicted_favorites or 0),
+        "comments_error": int(metric.comments or 0) - int(prediction.predicted_comments or 0),
+        "followers_error": int(metric.new_followers or 0) - int(prediction.predicted_new_followers or 0),
+        "save_rate_error": round(rates["save_rate"] - float(prediction.predicted_save_rate or 0), 4),
+        "like_rate_error": round(rates["like_rate"] - float(prediction.predicted_like_rate or 0), 4),
+        "comment_rate_error": round(rates["comment_rate"] - float(prediction.predicted_comment_rate or 0), 4),
+    }
+
+
+def _build_prediction_calibration(rows: list[dict]) -> dict:
+    predicted_rows = [item for item in rows if item.get("prediction") and item.get("prediction_error")]
+    if not predicted_rows:
+        return {
+            "prediction_count": 0,
+            "avg_abs_view_error_rate": 0,
+            "view_bias": "none",
+            "underestimated_count": 0,
+            "overestimated_count": 0,
+            "top_misses": [],
+        }
+
+    view_error_rates = [float(item["prediction_error"].get("views_error_rate") or 0) for item in predicted_rows]
+    signed_view_errors = [int(item["prediction_error"].get("views_error") or 0) for item in predicted_rows]
+    over_count = len([item for item in signed_view_errors if item < 0])
+    under_count = len([item for item in signed_view_errors if item > 0])
+    if under_count > over_count:
+        bias = "underestimated"
+    elif over_count > under_count:
+        bias = "overestimated"
+    else:
+        bias = "balanced"
+
+    misses = sorted(
+        predicted_rows,
+        key=lambda item: abs(float(item["prediction_error"].get("views_error_rate") or 0)),
+        reverse=True,
+    )[:3]
+    return {
+        "prediction_count": len(predicted_rows),
+        "avg_abs_view_error_rate": round(sum(abs(item) for item in view_error_rates) / len(view_error_rates), 4),
+        "view_bias": bias,
+        "underestimated_count": under_count,
+        "overestimated_count": over_count,
+        "top_misses": [_topic_snapshot(item) for item in misses],
+    }
+
+
+def _relative_error(error: int, predicted: int) -> float:
+    if predicted <= 0:
+        return 0
+    return round(error / predicted, 4)
+
+
+def _bias_label(value: str | None) -> str:
+    labels = {
+        "underestimated": "整体低估实际表现",
+        "overestimated": "整体高估实际表现",
+        "balanced": "高低估基本均衡",
+        "none": "暂无可校准数据",
+    }
+    return labels.get(value or "none", "暂无可校准数据")
 
 
 def _build_group_performance(stats_map: dict[str, dict[str, int | float]]) -> list[dict]:

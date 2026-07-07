@@ -10,3 +10,4 @@ from app.models.review_checklist import ReviewChecklist
 from app.models.agent_run import AgentRun, AgentStep
 from app.models.workspace import Workspace
 from app.models.knowledge_base import KnowledgeBase, KnowledgeDocument, KnowledgeChunk
+from app.models.content_prediction import ContentPrediction

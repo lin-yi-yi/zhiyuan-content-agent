@@ -12,3 +12,4 @@ venv/
 .DS_Store
 *.db
 *.tsbuildinfo
+.codex-run/

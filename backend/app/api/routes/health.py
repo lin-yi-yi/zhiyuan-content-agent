@@ -6,4 +6,4 @@ router = APIRouter(tags=["health"])
 
 @router.get("/health")
 async def health_check():
-    return {"status": "ok", "app": "AI Content Growth Agent", "version": "0.4.0"}
+    return {"status": "ok", "app": "AI Content Growth Agent", "version": "0.5.0"}

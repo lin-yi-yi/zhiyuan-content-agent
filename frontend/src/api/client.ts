@@ -286,6 +286,51 @@ export interface PublishLogCreate {
   notes?: string;
 }
 
+export interface ContentPrediction {
+  id: number;
+  draft_id: number;
+  publish_log_id: number | null;
+  platform: string;
+  predicted_views: number;
+  predicted_likes: number;
+  predicted_favorites: number;
+  predicted_comments: number;
+  predicted_shares: number;
+  predicted_new_followers: number;
+  predicted_save_rate: number | null;
+  predicted_like_rate: number | null;
+  predicted_comment_rate: number | null;
+  predicted_follow_conversion_rate: number | null;
+  confidence: number;
+  rubric_version: string;
+  rationale: string | null;
+  risk_notes: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContentPredictionCreate {
+  draft_id: number;
+  publish_log_id?: number | null;
+  platform?: string;
+  predicted_views?: number;
+  predicted_likes?: number;
+  predicted_favorites?: number;
+  predicted_comments?: number;
+  predicted_shares?: number;
+  predicted_new_followers?: number;
+  predicted_save_rate?: number | null;
+  predicted_like_rate?: number | null;
+  predicted_comment_rate?: number | null;
+  predicted_follow_conversion_rate?: number | null;
+  confidence?: number;
+  rubric_version?: string;
+  rationale?: string | null;
+  risk_notes?: string | null;
+  status?: string;
+}
+
 export interface DraftVariantGenerateRequest {
   selected_title?: string;
   selected_cover_text?: string;
@@ -574,12 +619,17 @@ export interface WeeklyReport {
   start_date: string;
   end_date: string;
   report_text: string;
-  performance_summary?: { totals?: Record<string, unknown>; rates?: Record<string, number> } | null;
+  performance_summary?: {
+    totals?: Record<string, unknown>;
+    rates?: Record<string, number>;
+    prediction_calibration?: Record<string, unknown>;
+  } | null;
   best_topics: { items?: Array<Record<string, unknown>> } | null;
   worst_topics: { items?: Array<Record<string, unknown>> } | null;
   angle_performance: { items?: Array<Record<string, unknown>> } | null;
   content_type_performance: { items?: Array<Record<string, unknown>> } | null;
   template_performance: { items?: Array<Record<string, unknown>> } | null;
+  prediction_calibration?: Record<string, unknown> | null;
   recommendations: { items?: string[] } | null;
   created_at: string;
 }
@@ -730,6 +780,27 @@ export const api = {
 
   createPublishLog: (body: PublishLogCreate) =>
     request<PublishLog>('/api/publish-logs', { method: 'POST', body: JSON.stringify(body) }),
+
+  listPredictions: (params?: { draft_id?: number; publish_log_id?: number; limit?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.draft_id) sp.set('draft_id', String(params.draft_id));
+    if (params?.publish_log_id) sp.set('publish_log_id', String(params.publish_log_id));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    const qs = sp.toString();
+    return request<ContentPrediction[]>(`/api/predictions${qs ? '?' + qs : ''}`);
+  },
+
+  createPrediction: (body: ContentPredictionCreate) =>
+    request<ContentPrediction>('/api/predictions', { method: 'POST', body: JSON.stringify(body) }),
+
+  updatePrediction: (id: number, body: Partial<ContentPredictionCreate>) =>
+    request<ContentPrediction>(`/api/predictions/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+
+  attachPredictionToLog: (id: number, publishLogId: number) =>
+    request<ContentPrediction>(`/api/predictions/${id}/attach-log`, {
+      method: 'POST',
+      body: JSON.stringify({ publish_log_id: publishLogId }),
+    }),
 
   listMetrics: (logId: number) =>
     request<Metric[]>(`/api/publish-logs/${logId}/metrics`),

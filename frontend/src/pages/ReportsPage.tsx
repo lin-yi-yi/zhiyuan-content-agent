@@ -20,6 +20,25 @@ function formatPercent(value: number) {
   return `${(value * 100).toFixed(1)}%`;
 }
 
+function formatSignedNumber(value: number) {
+  if (value > 0) return `+${value}`;
+  return String(value);
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function biasLabel(value: unknown) {
+  const labels: Record<string, string> = {
+    underestimated: '整体低估实际表现',
+    overestimated: '整体高估实际表现',
+    balanced: '高低估基本均衡',
+    none: '暂无可校准数据',
+  };
+  return labels[String(value || 'none')] || '暂无可校准数据';
+}
+
 export default function ReportsPage() {
   const [reports, setReports] = useState<WeeklyReport[]>([]);
   const [selectedReport, setSelectedReport] = useState<WeeklyReport | null>(null);
@@ -57,6 +76,11 @@ export default function ReportsPage() {
 
   const summaryRates = performanceSummary?.rates || null;
   const summaryTotals = performanceSummary?.totals || null;
+  const predictionCalibration = selectedReport?.prediction_calibration || performanceSummary?.prediction_calibration || null;
+  const calibrationCount = metricValue(predictionCalibration || {}, 'prediction_count');
+  const topPredictionMisses = Array.isArray(predictionCalibration?.top_misses)
+    ? predictionCalibration.top_misses as Array<Record<string, unknown>>
+    : [];
 
   return (
     <div>
@@ -139,6 +163,54 @@ export default function ReportsPage() {
                 </div>
               </>
             ) : <div className="empty">暂无关键率</div>}
+          </section>
+
+          <section className="panel calibration-panel" style={{ marginTop: 20 }}>
+            <div className="panel-heading-row">
+              <div>
+                <h3>预测校准</h3>
+                <p>对比发布前预测与真实数据，判断选题和封面判断是否需要校准。</p>
+              </div>
+            </div>
+            {predictionCalibration && calibrationCount > 0 ? (
+              <>
+                <div className="calibration-grid">
+                  <div className="calibration-card">
+                    <span>可校准内容</span>
+                    <strong>{calibrationCount}</strong>
+                  </div>
+                  <div className="calibration-card">
+                    <span>平均浏览误差</span>
+                    <strong>{formatPercent(metricValue(predictionCalibration, 'avg_abs_view_error_rate'))}</strong>
+                  </div>
+                  <div className="calibration-card">
+                    <span>偏差方向</span>
+                    <strong>{biasLabel(predictionCalibration.view_bias)}</strong>
+                  </div>
+                  <div className="calibration-card">
+                    <span>低估 / 高估</span>
+                    <strong>{metricValue(predictionCalibration, 'underestimated_count')} / {metricValue(predictionCalibration, 'overestimated_count')}</strong>
+                  </div>
+                </div>
+                {topPredictionMisses.length > 0 && (
+                  <div className="stack-list" style={{ marginTop: 12 }}>
+                    {topPredictionMisses.map((item, index) => {
+                      const error = asRecord(item.prediction_error);
+                      return (
+                        <div className="topic-rank" key={index}>
+                          <strong>{String(item.title || '未命名选题')}</strong>
+                          <span>
+                            真实浏览 {metricValue(item, 'views')} · 浏览偏差 {formatSignedNumber(metricValue(error, 'views_error'))} · 误差 {formatPercent(Math.abs(metricValue(error, 'views_error_rate')))}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="empty compact-empty">暂无发布前预测数据。后续先记录预测，再录入真实指标，复盘会自动校准。</div>
+            )}
           </section>
 
           <div className="grid-two" style={{ marginTop: 20 }}>

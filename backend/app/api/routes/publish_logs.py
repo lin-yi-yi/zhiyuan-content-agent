@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.models.content_prediction import ContentPrediction
 from app.models.draft import Draft
 from app.models.publish_log import PublishLog
 from app.models.metric import Metric
@@ -26,6 +27,20 @@ def create_log(body: PublishLogCreate, db: Session = Depends(get_db)):
         raise HTTPException(404, "发布包不存在")
     log = PublishLog(**body.model_dump())
     db.add(log)
+    db.flush()
+    prediction = (
+        db.query(ContentPrediction)
+        .filter(
+            ContentPrediction.draft_id == draft.id,
+            ContentPrediction.platform == body.platform,
+            ContentPrediction.publish_log_id.is_(None),
+        )
+        .order_by(ContentPrediction.created_at.desc(), ContentPrediction.id.desc())
+        .first()
+    )
+    if prediction:
+        prediction.publish_log_id = log.id
+        prediction.status = "locked" if prediction.status == "draft" else prediction.status
     topic = db.query(Topic).filter(Topic.id == draft.topic_id).first()
     if topic:
         topic.status = "published"
@@ -41,6 +56,9 @@ def create_metric(log_id: int, body: MetricCreate, db: Session = Depends(get_db)
         raise HTTPException(404, "发布记录不存在")
     metric = Metric(publish_log_id=log_id, **body.model_dump(exclude={"publish_log_id"}))
     db.add(metric)
+    linked_predictions = db.query(ContentPrediction).filter(ContentPrediction.publish_log_id == log_id).all()
+    for prediction in linked_predictions:
+        prediction.status = "settled"
     db.commit()
     db.refresh(metric)
     return MetricOut.model_validate(metric)

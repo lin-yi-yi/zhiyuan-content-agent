@@ -29,7 +29,7 @@ export default function AppShell({ active, onNavigate, children }: Props) {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="sidebar-brand">🧪 AI 提效实验室</div>
+        <div className="sidebar-brand">AI 提效实验室</div>
         <nav className="sidebar-nav">
           {navItems.map(item => (
             <a key={item.key} className={`nav-item ${active === item.key ? 'active' : ''}`}
@@ -45,7 +45,7 @@ export default function AppShell({ active, onNavigate, children }: Props) {
             <span className={`status-dot ${backendOnline ? 'online' : 'offline'}`} />
             后端 {backendOnline ? '已连接' : '断开'}
           </span>
-          <span>v0.4 foundation · Model Router</span>
+          <span>v0.5 data loop · Model Router</span>
         </div>
         {children}
       </main>

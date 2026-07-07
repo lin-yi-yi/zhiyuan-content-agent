@@ -15,6 +15,7 @@ class WeeklyReportOut(BaseModel):
     content_type_performance: Optional[dict] = None
     template_performance: Optional[dict] = None
     performance_summary: Optional[dict] = None
+    prediction_calibration: Optional[dict] = None
     recommendations: Optional[dict] = None
     created_at: datetime
     model_config = {"from_attributes": True}

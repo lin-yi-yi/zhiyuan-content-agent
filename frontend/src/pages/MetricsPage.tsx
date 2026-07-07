@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { api, Draft, Metric, MetricCreate, PublishLog, Topic } from '../api/client';
+import { api, ContentPrediction, ContentPredictionCreate, Draft, Metric, MetricCreate, PublishLog, Topic } from '../api/client';
 
 const PLATFORM_LABELS: Record<string, string> = {
   xiaohongshu: '小红书',
@@ -29,10 +29,33 @@ const emptyMetric: MetricCreate = {
   notes: '',
 };
 
+const emptyPrediction: ContentPredictionCreate = {
+  draft_id: 0,
+  platform: 'xiaohongshu',
+  predicted_views: 0,
+  predicted_likes: 0,
+  predicted_favorites: 0,
+  predicted_comments: 0,
+  predicted_shares: 0,
+  predicted_new_followers: 0,
+  confidence: 60,
+  rubric_version: 'manual-v1',
+  rationale: '',
+  risk_notes: '',
+};
+
 function nowForInput() {
   const d = new Date();
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   return d.toISOString().slice(0, 16);
+}
+
+function numberValue(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+
+function ratePercent(value: number | null | undefined) {
+  return `${((value || 0) * 100).toFixed(1)}%`;
 }
 
 export default function MetricsPage() {
@@ -41,6 +64,7 @@ export default function MetricsPage() {
   const [logs, setLogs] = useState<PublishLog[]>([]);
   const [selectedLogId, setSelectedLogId] = useState<number | null>(null);
   const [metrics, setMetrics] = useState<Metric[]>([]);
+  const [predictions, setPredictions] = useState<ContentPrediction[]>([]);
   const [loading, setLoading] = useState(false);
   const [logForm, setLogForm] = useState({
     draft_id: 0,
@@ -53,9 +77,13 @@ export default function MetricsPage() {
     notes: '',
   });
   const [metricForm, setMetricForm] = useState<MetricCreate>(emptyMetric);
+  const [predictionForm, setPredictionForm] = useState<ContentPredictionCreate>(emptyPrediction);
 
   const topicById = useMemo(() => new Map(topics.map(t => [t.id, t])), [topics]);
   const draftById = useMemo(() => new Map(drafts.map(d => [d.id, d])), [drafts]);
+  const selectedDraft = draftById.get(logForm.draft_id);
+  const selectedLog = logs.find(log => log.id === selectedLogId) || null;
+  const latestPrediction = predictions[0] || null;
 
   const load = async () => {
     const [topicData, draftData, logData] = await Promise.all([
@@ -90,8 +118,22 @@ export default function MetricsPage() {
     api.listMetrics(selectedLogId).then(setMetrics).catch(() => setMetrics([]));
   }, [selectedLogId]);
 
-  const selectedDraft = draftById.get(logForm.draft_id);
-  const selectedLog = logs.find(log => log.id === selectedLogId) || null;
+  useEffect(() => {
+    const targetDraftId = selectedLog?.draft_id || logForm.draft_id;
+    setPredictionForm(prev => ({
+      ...prev,
+      draft_id: targetDraftId || 0,
+      platform: selectedLog?.platform || logForm.platform,
+      publish_log_id: selectedLogId || null,
+    }));
+    if (selectedLogId) {
+      api.listPredictions({ publish_log_id: selectedLogId }).then(setPredictions).catch(() => setPredictions([]));
+    } else if (targetDraftId) {
+      api.listPredictions({ draft_id: targetDraftId }).then(setPredictions).catch(() => setPredictions([]));
+    } else {
+      setPredictions([]);
+    }
+  }, [selectedLogId, selectedLog?.draft_id, selectedLog?.platform, logForm.draft_id, logForm.platform]);
 
   const draftLabel = (draft: Draft) => {
     const topic = topicById.get(draft.topic_id);
@@ -139,6 +181,12 @@ export default function MetricsPage() {
       used_title: draft?.title_options?.[0] || '',
       used_cover_text: draft?.cover_text_options?.[0] || '',
     }));
+    setPredictionForm(prev => ({
+      ...prev,
+      draft_id: draftId,
+      platform: logForm.platform,
+      publish_log_id: null,
+    }));
   };
 
   const handleCreateLog = async () => {
@@ -170,11 +218,48 @@ export default function MetricsPage() {
       await api.createMetric(selectedLogId, metricForm);
       setMetricForm(emptyMetric);
       setMetrics(await api.listMetrics(selectedLogId));
+      setPredictions(await api.listPredictions({ publish_log_id: selectedLogId }));
     } catch (e: any) {
       alert('录入数据失败: ' + e.message);
     }
     setLoading(false);
   };
+
+  const handleCreatePrediction = async () => {
+    const draftId = selectedLog?.draft_id || predictionForm.draft_id || logForm.draft_id;
+    if (!draftId) {
+      alert('请先选择发布包或发布记录');
+      return;
+    }
+    setLoading(true);
+    try {
+      const payload: ContentPredictionCreate = {
+        ...predictionForm,
+        draft_id: draftId,
+        publish_log_id: selectedLogId || null,
+        platform: selectedLog?.platform || logForm.platform,
+      };
+      await api.createPrediction(payload);
+      if (selectedLogId) {
+        setPredictions(await api.listPredictions({ publish_log_id: selectedLogId }));
+      } else {
+        setPredictions(await api.listPredictions({ draft_id: draftId }));
+      }
+    } catch (e: any) {
+      alert('保存预测失败: ' + e.message);
+    }
+    setLoading(false);
+  };
+
+  const predictionSummary = useMemo(() => {
+    const views = numberValue(predictionForm.predicted_views);
+    return {
+      saveRate: views ? numberValue(predictionForm.predicted_favorites) / views : 0,
+      likeRate: views ? numberValue(predictionForm.predicted_likes) / views : 0,
+      commentRate: views ? numberValue(predictionForm.predicted_comments) / views : 0,
+      followRate: views ? numberValue(predictionForm.predicted_new_followers) / views : 0,
+    };
+  }, [predictionForm]);
 
   return (
     <div>
@@ -250,6 +335,81 @@ export default function MetricsPage() {
           )}
         </section>
       </div>
+
+      <section className="panel prediction-panel" style={{ marginTop: 20 }}>
+        <div className="panel-heading-row">
+          <div>
+            <h3>发布前预测</h3>
+            <p>发布前先写下判断，后续录入真实数据时自动进入校准复盘。</p>
+          </div>
+          {latestPrediction && (
+            <span className={`prediction-status prediction-status--${latestPrediction.status}`}>
+              {latestPrediction.status}
+            </span>
+          )}
+        </div>
+
+        <div className="metric-form-grid prediction-grid">
+          {[
+            ['predicted_views', '预测浏览'],
+            ['predicted_likes', '预测点赞'],
+            ['predicted_favorites', '预测收藏'],
+            ['predicted_comments', '预测评论'],
+            ['predicted_shares', '预测分享'],
+            ['predicted_new_followers', '预测涨粉'],
+            ['confidence', '置信度'],
+          ].map(([key, label]) => (
+            <div className="form-group" key={key}>
+              <label>{label}</label>
+              <input
+                type="number"
+                min={0}
+                max={key === 'confidence' ? 100 : undefined}
+                value={(predictionForm as any)[key] ?? 0}
+                onChange={e => setPredictionForm({ ...predictionForm, [key]: Number(e.target.value) })}
+              />
+            </div>
+          ))}
+          <div className="form-group">
+            <label>规则版本</label>
+            <input value={predictionForm.rubric_version || ''} onChange={e => setPredictionForm({ ...predictionForm, rubric_version: e.target.value })} />
+          </div>
+        </div>
+
+        <div className="metric-summary prediction-summary">
+          <h4>预测关键率</h4>
+          <div className="metric-summary-grid">
+            <span>收藏率：{ratePercent(predictionSummary.saveRate)}</span>
+            <span>点赞率：{ratePercent(predictionSummary.likeRate)}</span>
+            <span>评论率：{ratePercent(predictionSummary.commentRate)}</span>
+            <span>关注转化：{ratePercent(predictionSummary.followRate)}</span>
+          </div>
+        </div>
+
+        <div className="form-row" style={{ marginTop: 12 }}>
+          <div className="form-group">
+            <label>预测理由</label>
+            <textarea value={predictionForm.rationale || ''} onChange={e => setPredictionForm({ ...predictionForm, rationale: e.target.value })} placeholder="为什么判断这条会高收藏/低评论/适合当前账号？" />
+          </div>
+          <div className="form-group">
+            <label>不确定因素</label>
+            <textarea value={predictionForm.risk_notes || ''} onChange={e => setPredictionForm({ ...predictionForm, risk_notes: e.target.value })} placeholder="比如发布时间、标题风险、封面不确定、热点窗口等。" />
+          </div>
+        </div>
+
+        <div className="form-actions">
+          <button className="btn btn-primary" onClick={handleCreatePrediction} disabled={loading || !(selectedLog?.draft_id || logForm.draft_id)}>
+            保存预测
+          </button>
+        </div>
+
+        {latestPrediction && (
+          <div className="prediction-latest">
+            <strong>最近预测 #{latestPrediction.id}</strong>
+            <span>浏览 {latestPrediction.predicted_views} · 收藏 {latestPrediction.predicted_favorites} · 评论 {latestPrediction.predicted_comments} · 置信度 {latestPrediction.confidence}% · {new Date(latestPrediction.created_at).toLocaleString('zh-CN')}</span>
+          </div>
+        )}
+      </section>
 
       <section className="panel" style={{ marginTop: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 12 }}>
