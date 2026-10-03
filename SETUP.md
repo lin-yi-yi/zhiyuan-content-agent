@@ -1,4 +1,4 @@
-# 知源内容工作台 v0.10 — 安装与运行
+# 知源内容工作台 v0.10.1 — 安装与运行
 
 本指南对应 `lin-yi-yi/zhiyuan-content-agent` 的最新 `main` 分支。当前范围是本机运行与单机小团队试点，能力及验证边界见 [README](README.md)。
 
@@ -92,17 +92,22 @@ if [ ! -f .env.saas ]; then cp .env.saas.example .env.saas; fi
 
 此脚本隔离数据库与环境配置，执行后端测试、Python 编译检查、前端行为测试及构建，不以真实模型调用验证内容质量。需要亲自操作导入、失败重试、修改重审与导出时，按 [工业 FAQ 练习](docs/industrial-faq-practice.md) 启动独立临时合成环境；不要用客户资料做失败注入实验。
 
+`check.sh` 会在子进程中禁用 dotenv，清空继承的模型密钥、固定本地任务模型和空价格表，并关闭 LangSmith/LangChain 外部追踪；不会修改你的配置文件。前端依赖审计可单独运行 `cd frontend && npm audit --registry=https://registry.npmjs.org`，GitHub CI 同样执行并阻止已知 moderate 及以上告警。
+
 ## 常见问题
 
 | 现象 | 处理 |
 | --- | --- |
 | 提示 Python 版本不符或依赖缺失 | 确认 `.venv/bin/python --version` 为 3.12+；按上面的解释器说明处理，再运行 `setup.sh` |
 | 前端安装或构建失败 | 确认 `node --version` 为 22，查看首次报错；安装依赖后重试，不必重装数据库 |
-| 8765 被占用 | 使用 `PORT=8770 ./scripts/start.sh`，访问新端口；不要同时打开两个使用同一向量目录的服务 |
+| 8765 被占用 | 若是已有本项目服务，先停止旧实例；若是其他应用占用，可用 `PORT=8770 ./scripts/start.sh` 换端口 |
+| 提示同一 SQLite 数据库已有服务运行 | 先停止原服务，再启动新实例；换端口不能让两个实例同时操作同一业务库。服务退出会释放锁，不要删除锁文件强行启动。该保护只针对本地文件 SQLite，不是跨机器部署方案 |
 | 团队端口需修改 | 同时设置 `SAAS_PORT` 和对应的 `SAAS_PUBLIC_ORIGIN`，例如 `SAAS_PORT=8771 SAAS_PUBLIC_ORIGIN=http://127.0.0.1:8771 ./scripts/start_saas.sh` |
 | 向量模型下载失败 | 查看后端日志，使用上面的 `lexical` 命令继续本地流程；下载恢复后重建语义索引 |
 | 页面仍是旧版本 | `start.sh` 会重新构建；团队模式修改前端后先在 `frontend` 目录执行 `npm run build`，再刷新页面；后端代码修改后重启服务 |
 | 意外连接旧 MySQL | 检查终端是否已导出 `DATABASE_URL`；启动脚本会保留该环境变量。默认 SQLite 不要求 MySQL |
 | 页面打不开或任务失败 | 核对终端日志、当前端口及浏览器请求；本地模式可检查 `/api/health` 和 `/api/ready`，接口正常仍需实际跑完审核交付流程 |
+
+`/api/health` 返回当前运行版本；`/api/ready` 检查数据库可用性，连接失败返回 503。团队模式下 readiness 需要已登录的组织上下文。项目交接与定向测试入口见 [开发指南](CONTRIBUTING.md)，完整文档分组见 [文档导航](docs/README.md)。
 
 更完整的能力、限制及验证记录以 [README](README.md) 和 [v0.10 本地验收记录](docs/validation/p0-industrial-faq-2026-10-03.md) 为准。

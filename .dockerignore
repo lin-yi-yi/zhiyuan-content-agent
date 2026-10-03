@@ -6,6 +6,7 @@
 **/node_modules
 frontend/dist
 *.db
+*.runtime.lock
 .pytest_cache
 .codex-run
 .codex

@@ -59,7 +59,11 @@ def test_cli_uses_disposable_database_and_preserves_full_bad_case_report(tmp_pat
     forbidden_db = tmp_path / "must-not-create.db"
     env = {**os.environ, "DATABASE_URL": f"sqlite:///{forbidden_db}", "SAAS_MODE": "true",
            "DEFAULT_LLM_PROVIDER": "deepseek", "DEEPSEEK_API_KEY": "synthetic-never-use-this-key",
-           "RAG_RETRIEVAL_MODE": "semantic", "RAG_VECTOR_PATH": str(tmp_path / "must-not-create-index")}
+           "RAG_RETRIEVAL_MODE": "semantic", "RAG_VECTOR_PATH": str(tmp_path / "must-not-create-index"),
+           "LANGSMITH_TRACING": "true", "LANGSMITH_TRACING_V2": "true", "LANGCHAIN_TRACING_V2": "true",
+           "LANGCHAIN_TRACING": "true", "LANGCHAIN_HANDLER": "langchain",
+           "LANGSMITH_API_KEY": "synthetic-tracing-key", "LANGCHAIN_API_KEY": "synthetic-tracing-key",
+           "LANGSMITH_ENDPOINT": "http://127.0.0.1:9", "LANGCHAIN_ENDPOINT": "http://127.0.0.1:9"}
     output = tmp_path / "result.json"
     command = [sys.executable, str(ROOT / "scripts/evaluate_industrial_faq.py"), "--output", str(output)]
     result = subprocess.run(command, cwd=ROOT, env=env, capture_output=True, text=True, timeout=180)
@@ -67,6 +71,8 @@ def test_cli_uses_disposable_database_and_preserves_full_bad_case_report(tmp_pat
     assert not forbidden_db.exists() and not (tmp_path / "must-not-create-index").exists()
     serialized = output.read_text(encoding="utf-8")
     assert "synthetic-never-use-this-key" not in serialized + result.stdout + result.stderr
+    assert "synthetic-tracing-key" not in serialized + result.stdout + result.stderr
+    assert "Failed to send" not in result.stderr
     report = json.loads(serialized)
     assert report["workflow_checks_passed"] and report["permission_checks"]["passed"]
     assert report["generation"]["is_llm"] is False

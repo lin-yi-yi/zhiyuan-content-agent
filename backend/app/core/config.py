@@ -14,7 +14,7 @@ class Settings:
     AIHOT_ENABLED = os.getenv("AIHOT_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
     GITHUB_ENABLED = os.getenv("GITHUB_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
     APP_ENV = os.getenv("APP_ENV", "local")
-    APP_NAME = os.getenv("APP_NAME", "AI Content Growth Agent")
+    APP_NAME = os.getenv("APP_NAME", "知源内容工作台")
     BACKEND_CORS_ORIGINS = os.getenv("BACKEND_CORS_ORIGINS", "http://localhost:5173")
     DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///:memory:" if SAAS else f"sqlite:///{PROJECT_ROOT / 'content-agent.db'}")
     DEFAULT_LLM_PROVIDER = os.getenv("DEFAULT_LLM_PROVIDER", "local")

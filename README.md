@@ -1,6 +1,6 @@
 # 知源 · AI 内容与交付 Agent
 
-`zhiyuan-content-agent` · **v0.10 本地验证版** · RAG / LangGraph / 人工审核
+`zhiyuan-content-agent` · **v0.10.1 本地验证版** · RAG / LangGraph / 人工审核
 
 [![Project checks](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml/badge.svg?branch=main)](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml?query=branch%3Amain)
 
@@ -16,12 +16,12 @@
 | --- | --- |
 | 默认首页 / 最新整合代码 | [`main`](https://github.com/lin-yi-yi/zhiyuan-content-agent/tree/main)；直接打开仓库即可看到当前版本 |
 | 后续开发分支 | [`codex/content-agent`](https://github.com/lin-yi-yi/zhiyuan-content-agent/tree/codex/content-agent)；由原 `codex/job-ready-agent-v06` 更名，避免把分支名中的 v06 误当当前版本 |
-| 本轮完成 | 工业 FAQ 必需事实检查、修改后重新审核、资料版本与交付追溯、模型调用 / 重试 / 用量 / 费用估算记录 |
-| 本地验证 | 业务代码提交 `42b499e`：**811 个后端测试、29 个前端测试及构建通过**；[验收记录](docs/validation/p1-model-tracing-2026-10-03.md) |
-| GitHub 自动检查 | 已启用 `Project checks`；[首次 Ubuntu 远程检查通过](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37133055728)：**811 个后端测试、29 个前端测试及构建通过**。后续推送和 Pull Request 自动运行，顶部徽章显示 `main` 最新状态 |
+| 本轮完成 | 前端依赖安全更新、失败重试保留品牌规则、文件 SQLite 重复启动保护、品牌资料库导航与健康检查修复、文档交接整理 |
+| 本地验证 | v0.10.1：**835 个后端测试、32 个前端测试及构建通过**；合成工业 FAQ 26 项流程检查通过，保留 2 个自由问答坏例；[本轮验收](docs/validation/v0101-maintenance-2026-10-03.md) |
+| GitHub 自动检查 | `Project checks` 在推送和 Pull Request 时执行测试、构建及前端依赖审计；[运行记录](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml)。顶部徽章显示 `main` 最新状态 |
 | 真实业务验证 | 本轮使用合成资料与模拟模型响应；真实供应商账单、客户验收、付费和公网生产环境尚未验证 |
 
-**[项目状态与下一步](docs/project-status.md) · [安装与运行](SETUP.md) · [工业 FAQ 练习](docs/industrial-faq-practice.md) · [最新提交](https://github.com/lin-yi-yi/zhiyuan-content-agent/commits/main/)**
+**[项目状态与下一步](docs/project-status.md) · [安装与运行](SETUP.md) · [演示流程](docs/demo-walkthrough.md) · [文档导航](docs/README.md) · [开发交接](CONTRIBUTING.md) · [版本记录](CHANGELOG.md)**
 
 ## 启动与轻量运行
 
@@ -62,7 +62,7 @@ RAG_RETRIEVAL_MODE=lexical ./scripts/start.sh
 
 模型与信源、运行诊断进入「设置与连接」；团队模式还提供成员、用量和账号。模型评分和编辑器检查清单不能代替人工批准。
 
-## v0.10 当前能力
+## v0.10.1 当前能力
 
 | 能力 | 实现与边界 |
 | --- | --- |

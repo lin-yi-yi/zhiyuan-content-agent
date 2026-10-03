@@ -32,3 +32,9 @@ export function routeNumber(route: WorkbenchRoute, key: string) {
   const value = route.params.get(key);
   return ID_KEYS.has(key) && value && validId(value) ? Number(value) : null;
 }
+
+export function brandKnowledgeRoute(savedBrand: {knowledge_base_id: number} | null, newBrandKnowledgeBaseId?: number | null) {
+  // An unsaved edit must not replace an existing brand's persisted binding.
+  const id = savedBrand?.knowledge_base_id ?? newBrandKnowledgeBaseId;
+  return id != null && validId(String(id)) ? `knowledge?kb=${id}` : 'knowledge';
+}

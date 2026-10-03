@@ -8,7 +8,34 @@ const exported = {};
 const source = readFileSync(new URL('../src/utils/navigation.ts', import.meta.url), 'utf8');
 const code = ts.transpileModule(source, {compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020}}).outputText;
 vm.runInNewContext(code, {exports: exported, URLSearchParams});
-const {PAGES, parseWorkbenchRoute, routeHash, routeNumber} = exported;
+const {PAGES, parseWorkbenchRoute, routeHash, routeNumber, brandKnowledgeRoute} = exported;
+
+test('管理品牌资料时保持已保存绑定库，未保存的改绑不改变入口，刷新后仍保留库', () => {
+  for (const knowledgeBaseId of [12, 27]) {
+    const route = parseWorkbenchRoute(brandKnowledgeRoute({knowledge_base_id: knowledgeBaseId}, 99));
+    const reloaded = parseWorkbenchRoute(routeHash(route));
+    assert.equal(reloaded.page, 'knowledge');
+    assert.equal(routeNumber(reloaded, 'kb'), knowledgeBaseId);
+    assert.equal(reloaded.params.size, 1);
+  }
+});
+
+test('新建品牌可直接管理表单默认库或新选择的库，无需先保存空档案', () => {
+  for (const selectedKnowledgeBaseId of [3, 19]) {
+    const route = parseWorkbenchRoute(brandKnowledgeRoute(null, selectedKnowledgeBaseId));
+    assert.equal(route.page, 'knowledge');
+    assert.equal(routeNumber(route, 'kb'), selectedKnowledgeBaseId);
+  }
+});
+
+test('品牌尚未选择有效资料库时打开资料库默认页，不携带无效编号', () => {
+  for (const id of [undefined, null, 0, -1, 1.5, NaN, Infinity, 10000000000]) {
+    const route = parseWorkbenchRoute(brandKnowledgeRoute(null, id));
+    assert.equal(route.page, 'knowledge');
+    assert.equal(route.params.size, 0);
+    assert.equal(routeHash(route), '#knowledge');
+  }
+});
 
 test('品牌进入创作、任务进入指定稿件后刷新，品牌、知识库和版本保持一致', () => {
   for (const value of ['#brands?brand=9', '#rag?kb=12', '#agent?brand=9&kb=12&run=45&workflow=product_faq', '#drafts?draft=7&topic=3&run=45&kb=12']) {

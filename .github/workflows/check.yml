@@ -20,3 +20,6 @@ jobs:
         run: ./scripts/setup.sh
       - name: Run backend and frontend checks
         run: ./scripts/check.sh
+      - name: Audit frontend dependencies
+        working-directory: frontend
+        run: npm audit --audit-level=moderate --registry=https://registry.npmjs.org
