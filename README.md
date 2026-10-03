@@ -16,7 +16,7 @@
 | 后续开发分支 | [`codex/content-agent`](https://github.com/lin-yi-yi/zhiyuan-content-agent/tree/codex/content-agent)；由原 `codex/job-ready-agent-v06` 更名，避免把分支名中的 v06 误当当前版本 |
 | 本轮完成 | 工业 FAQ 必需事实检查、修改后重新审核、资料版本与交付追溯、模型调用 / 重试 / 用量 / 费用估算记录 |
 | 本地验证 | 业务代码提交 `42b499e`：**811 个后端测试、29 个前端测试及构建通过**；[验收记录](docs/validation/p1-model-tracing-2026-10-03.md) |
-| GitHub 自动检查 | 尚未启用；当前发布凭证缺少 `workflow` 权限，工作流文件未上传。上面的结果是本地测试 |
+| GitHub 自动检查 | 已配置 `Project checks`，在推送和 Pull Request 时自动执行完整检查；[查看运行状态](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml)。首次远程结果待确认，上面的结果是本地测试 |
 | 真实业务验证 | 本轮使用合成资料与模拟模型响应；真实供应商账单、客户验收、付费和公网生产环境尚未验证 |
 
 **[项目状态与下一步](docs/project-status.md) · [安装与运行](SETUP.md) · [工业 FAQ 练习](docs/industrial-faq-practice.md) · [最新提交](https://github.com/lin-yi-yi/zhiyuan-content-agent/commits/main/)**
@@ -141,7 +141,7 @@ DEEPSEEK_MODEL=deepseek-chat
 
 模型凭证由运营环境保管，组织所有者选择启用连接。AIHOT 的 SaaS 使用需要来源方商业授权，默认关闭。外部来源、图片、字体和模型服务按实际授权使用。
 
-脚本仅监听 `127.0.0.1`。公开访问需要 HTTPS、运维、备份恢复与生产验收；Docker/Compose 文件只是部署准备，GitHub CI 当前尚未启用。详见 [SaaS 运维指南](docs/saas-operations.md)。
+脚本仅监听 `127.0.0.1`。公开访问需要 HTTPS、运维、备份恢复与生产验收；Docker/Compose 文件只是部署准备。GitHub CI 执行测试与构建，不执行部署。详见 [SaaS 运维指南](docs/saas-operations.md)。
 
 ## 商业化尚未完成的部分
 
