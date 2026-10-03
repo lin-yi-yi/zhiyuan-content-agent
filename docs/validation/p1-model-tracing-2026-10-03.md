@@ -29,3 +29,11 @@
 本轮同步已有 v0.6–v0.10 工作与本次 P1，保留现有开发分支，不合并主分支，不做公网部署。用法与价格口径见 [模型调用追溯说明](../model-call-tracing.md)。
 
 GitHub 发布限制：当前 OAuth 登录没有 `workflow` scope，GitHub 拒绝新增 Actions 配置。因此 `.github/workflows/check.yml` 原样保留在本地、未纳入本次提交。代码、文档和本地检查脚本正常发布；上述测试结果来自本地运行，不声称远程 CI 已通过。
+
+## 后续 GitHub 验证 · 2026-10-03
+
+上述发布限制记录的是 P1 初次上传时的状态。项目随后更名为 `zhiyuan-content-agent`，通过 PR #1 整合到 `main`，开发分支更名为 `codex/content-agent`。维护者补齐 `workflow` 权限后，提交 `1b4be62` 上传自动检查配置，[首次 GitHub Actions 运行](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37133055728)与 [PR 检查](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37133064144)均通过。
+
+远程 Ubuntu 环境执行 `./scripts/setup.sh` 和 `./scripts/check.sh`：811 个后端测试、29 个前端测试、Python 编译及 TypeScript/Vite 构建通过，保留 1 个既有 Starlette/httpx 弃用警告。这个结果补充本地验收，不代表真实模型账单、客户效果或公网部署已验证。
+
+首次安装日志还报告 npm 依赖审计提示。通过官方 registry 复核，6 个受影响包均属于开发/构建依赖（4 high、2 moderate），`npm audit --omit=dev` 返回 0；本次未进行框架升级，已列入项目待办。后续 CI 配置固定 Ubuntu 24.04、采用 Node 24 运行时的 Actions 组件，并锁定首次 Linux 检查实际使用的条件依赖 `greenlet==3.5.6`，Python 与应用 Node 版本仍为 3.12 和 22。
