@@ -10,6 +10,8 @@ from app.schemas.draft import DraftOut, DraftUpdate
 from app.schemas.draft_variant import DraftVariantGenerateRequest, DraftVariantResponse
 from app.schemas.review_checklist import ChecklistItemOut, ChecklistUpdateRequest
 from app.services.draft_variant_generator import generate_draft_variant
+from app.services.review_lifecycle import has_workflow, invalidate_review_for_delete, invalidate_review_for_edit
+from app.services.workflow_support import WorkflowConflict
 
 router = APIRouter(prefix="/drafts", tags=["drafts"])
 
@@ -48,7 +50,24 @@ def update_draft(draft_id: int, body: DraftUpdate, db: Session = Depends(get_db)
     d = db.query(Draft).filter(Draft.id == draft_id).first()
     if not d:
         raise HTTPException(404, "草稿不存在")
-    for k, v in body.model_dump(exclude_unset=True).items():
+    values = body.model_dump(exclude_unset=True)
+    from app.saas.context import current_tenant
+    tenant = current_tenant.get()
+    if tenant and "status" in values and tenant.role not in {"owner", "reviewer"}:
+        raise HTTPException(403, "编辑者不能更改审核状态，请提交给审核者")
+    linked = has_workflow(draft_id, db)
+    if linked and "status" in values and values["status"] != d.status:
+        raise HTTPException(409, "此草稿属于 Agent 任务，请通过任务的人工审核操作改变状态。")
+    changed = any(getattr(d, key) != value for key, value in values.items() if key != "status")
+    if changed:
+        try:
+            invalidate_review_for_edit(d, db, "草稿内容已修改，旧审核结论失效")
+        except WorkflowConflict as exc:
+            db.rollback()
+            raise HTTPException(409, str(exc)) from exc
+    for k, v in values.items():
+        if k == "status" and (linked or (tenant and changed)):
+            continue
         setattr(d, k, v)
     db.commit()
     db.refresh(d)
@@ -60,6 +79,11 @@ def delete_draft(draft_id: int, db: Session = Depends(get_db)):
     d = db.query(Draft).filter(Draft.id == draft_id).first()
     if not d:
         raise HTTPException(404, "草稿不存在")
+    try:
+        invalidate_review_for_delete(d, db)
+    except WorkflowConflict as exc:
+        db.rollback()
+        raise HTTPException(409, str(exc)) from exc
     topic_id = d.topic_id
     db.delete(d)
     db.flush()
@@ -80,10 +104,13 @@ async def generate_variant_endpoint(draft_id: int, body: DraftVariantGenerateReq
             "cards": cards,
             "variant": variant,
         }
+    except WorkflowConflict as exc:
+        db.rollback()
+        raise HTTPException(409, str(exc)) from exc
     except ValueError as e:
         raise HTTPException(404, str(e))
-    except Exception as e:
-        raise HTTPException(500, f"生成发布方案失败: {str(e)}")
+    except Exception:
+        raise HTTPException(500, "生成发布方案失败，请检查配置或稍后重试。") from None
 
 
 @router.post("/{draft_id}/evaluate")
@@ -100,8 +127,8 @@ async def evaluate_draft_endpoint(draft_id: int, provider: str = "local", db: Se
     try:
         result = await evaluate_draft(d, cards, db, provider=provider)
         return result
-    except Exception as e:
-        raise HTTPException(500, f"评分失败: {str(e)}")
+    except Exception:
+        raise HTTPException(500, "评分失败，请检查配置或稍后重试。") from None
 
 
 # ========== 人工审核清单 ==========

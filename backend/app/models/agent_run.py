@@ -1,5 +1,5 @@
 """Agent 执行记录表"""
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, JSON, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
@@ -42,3 +42,10 @@ class AgentStep(Base):
     completed_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    @property
+    def duration_ms(self) -> int | None:
+        if self.started_at is None:
+            return None
+        end = self.completed_at or datetime.now(UTC).replace(tzinfo=None)
+        return max(0, int((end - self.started_at).total_seconds() * 1000))

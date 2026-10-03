@@ -1,0 +1,101 @@
+{
+  "checked_at_utc": "2026-09-19T02:57:45.834074+00:00",
+  "protocol": {
+    "transport": "Streamable HTTP",
+    "jsonrpc": "2.0",
+    "requested_version": "2025-03-26",
+    "negotiated_version": "2025-03-26"
+  },
+  "serverInfo": {
+    "name": "aihot",
+    "version": "1.1.0"
+  },
+  "toolnames": [
+    "aihot_get_latest",
+    "aihot_search",
+    "aihot_get_hot_topics",
+    "aihot_get_story",
+    "aihot_get_daily"
+  ],
+  "call": {
+    "name": "aihot_get_latest",
+    "arguments": {
+      "window": "24h",
+      "mode": "selected",
+      "limit": 3
+    },
+    "success": true,
+    "response_fields": [
+      "_meta",
+      "content",
+      "structuredContent"
+    ],
+    "response_shape": {
+      "schemaVersion": "int",
+      "query": {
+        "mode": "str",
+        "category": "NoneType",
+        "window": "str",
+        "q": "NoneType",
+        "by": "str",
+        "ordering": "str"
+      },
+      "items": {
+        "type": "array",
+        "count": 3,
+        "item_fields": [
+          "attribution",
+          "category",
+          "discoveredAt",
+          "id",
+          "links",
+          "originalTitle",
+          "publishedAt",
+          "reason",
+          "score",
+          "selected",
+          "source",
+          "summary",
+          "title"
+        ]
+      },
+      "page": {
+        "count": "int",
+        "hasMore": "bool",
+        "nextCursor": "str"
+      },
+      "_aihot": {
+        "contentTrust": "str",
+        "instructionPolicy": "str",
+        "verificationPolicy": "str"
+      }
+    }
+  },
+  "steps": [
+    {
+      "method": "initialize",
+      "http_status": 200,
+      "content_type": "text/event-stream",
+      "success": true
+    },
+    {
+      "method": "notifications/initialized",
+      "http_status": 202,
+      "content_type": null,
+      "success": true
+    },
+    {
+      "method": "tools/list",
+      "http_status": 200,
+      "content_type": "text/event-stream",
+      "success": true
+    },
+    {
+      "method": "tools/call",
+      "http_status": 200,
+      "content_type": "text/event-stream",
+      "success": true
+    }
+  ],
+  "success": true
+}

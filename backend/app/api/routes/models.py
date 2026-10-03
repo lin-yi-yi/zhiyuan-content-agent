@@ -1,22 +1,23 @@
 """模型管理 API — 查看可用模型、切换、测试连接、调用记录"""
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.core.config import settings
 from app.llm.router import router as llm_router
+from app.llm.tracing import serialize_model_run
 
 router = APIRouter(prefix="/models", tags=["models"])
 
 
 class ChatRequest(BaseModel):
-    provider: str = "deepseek"
+    provider: str | None = None
     model: str = ""
-    system_prompt: str = "你是一个有用的助手"
-    user_prompt: str = ""
-    temperature: float = 0.7
-    max_tokens: int = 2048
+    system_prompt: str = Field(default="你是一个有用的助手", max_length=8000)
+    user_prompt: str = Field(default="", max_length=16000)
+    temperature: float = Field(default=0.7, ge=0, le=2)
+    max_tokens: int = Field(default=2048, ge=1, le=4096)
 
 
 class ChatResponse(BaseModel):
@@ -60,20 +61,14 @@ def chat(req: ChatRequest):
         raise HTTPException(400, "user_prompt 不能为空")
     client = llm_router.get_client(provider=req.provider, model=req.model or None)
     content = client.chat(req.system_prompt, req.user_prompt, req.temperature, req.max_tokens)
-    return ChatResponse(content=content, provider=req.provider, model=req.model or client.model)
+    return ChatResponse(content=content, provider=getattr(client, "provider", req.provider or "local"), model=req.model or client.model)
 
 
 @router.get("/runs")
-def list_runs(limit: int = 50, db: Session = Depends(get_db)):
-    """查看最近的模型调用记录"""
+def list_runs(limit: int = Query(50, ge=1, le=200), db: Session = Depends(get_db)):
+    """Return usage metadata only, including for historical rows containing text."""
     from app.models.model_run import ModelRun
     runs = db.query(ModelRun).order_by(ModelRun.created_at.desc()).limit(limit).all()
     return {
-        "runs": [{
-            "id": r.id, "task_type": r.task_type, "provider": r.provider,
-            "model_name": r.model_name, "success": r.success,
-            "latency_ms": r.latency_ms, "input_preview": r.input_preview,
-            "output_preview": r.output_preview, "error_message": r.error_message,
-            "created_at": r.created_at.isoformat() if r.created_at else None,
-        } for r in runs],
+        "runs": [serialize_model_run(row) for row in runs],
     }

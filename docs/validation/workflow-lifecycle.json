@@ -1,0 +1,15 @@
+{
+  "run_id": 3,
+  "draft_id": 3,
+  "lifecycle": [
+    "awaiting_review",
+    "approved",
+    "edit_invalidated_approval",
+    "rejected",
+    "resubmitted",
+    "approved"
+  ],
+  "review_history_count": 2,
+  "duplicate_review_status": 409,
+  "card_count": 3
+}

@@ -15,6 +15,7 @@ def init_database():
     _ensure_draft_variant_columns()
     _ensure_v04_rag_columns()
     _ensure_weekly_report_columns()
+    _ensure_model_usage_columns()
 
 
 def _ensure_default_workspace():
@@ -118,6 +119,46 @@ def _ensure_weekly_report_columns():
     with engine.begin() as conn:
         for name, definition in missing:
             conn.execute(text(f"ALTER TABLE weekly_reports ADD COLUMN {name} {definition}"))
+
+
+def _ensure_model_usage_columns(bind=None):
+    """Add nullable tracing fields in place; never invent data for historic rows.
+
+    Called for the local database and each organization store on first open.
+    """
+    target = bind if bind is not None else engine
+    inspector = inspect(target)
+    if "model_runs" not in inspector.get_table_names():
+        return
+    existing = {column["name"] for column in inspector.get_columns("model_runs")}
+    columns = {
+        "prompt_hash": "VARCHAR(64) NULL",
+        "prompt_tokens": "INT NULL",
+        "completion_tokens": "INT NULL",
+        "total_tokens": "INT NULL",
+        "error_type": "VARCHAR(100) NULL",
+        "agent_run_id": "BIGINT NULL",
+        "agent_step_id": "BIGINT NULL",
+        "step_key": "VARCHAR(100) NULL",
+        "workflow_attempt": "INT NULL",
+        "invocation_id": "VARCHAR(32) NULL",
+        "request_index": "INT NULL",
+        "call_kind": "VARCHAR(30) NULL",
+        "prompt_version": "VARCHAR(64) NULL",
+        "estimated_cost": "DECIMAL(24, 12) NULL",
+        "cost_currency": "VARCHAR(3) NULL",
+        "pricing_version": "VARCHAR(100) NULL",
+        "cost_status": "VARCHAR(30) NULL",
+    }
+    indexes = {item["name"] for item in inspector.get_indexes("model_runs")}
+    with target.begin() as conn:
+        for name, definition in columns.items():
+            if name not in existing:
+                conn.execute(text(f"ALTER TABLE model_runs ADD COLUMN {name} {definition}"))
+        for name in ("agent_run_id", "agent_step_id", "invocation_id"):
+            index_name = f"ix_model_runs_{name}"
+            if index_name not in indexes:
+                conn.execute(text(f"CREATE INDEX {index_name} ON model_runs ({name})"))
 
 
 if __name__ == "__main__":

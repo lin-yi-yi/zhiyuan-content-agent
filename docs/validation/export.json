@@ -1,0 +1,17 @@
+{
+  "draft_id": 4,
+  "size_bytes": 318702,
+  "entries": [
+    "cards/",
+    "cards/01-cover.png",
+    "cards/02-content.png",
+    "cards/03-content.png",
+    "copy/",
+    "copy/title-options.txt",
+    "copy/body.txt",
+    "copy/hashtags.txt",
+    "copy/comment-guide.txt"
+  ],
+  "zip_integrity": "passed",
+  "render": "PNG created in real Chrome browser"
+}

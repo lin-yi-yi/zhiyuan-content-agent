@@ -1,520 +1,77 @@
-import { useEffect, useMemo, useState } from 'react';
-import { AgentRun, AgentRunCreate, AgentRunResult, KnowledgeBase, api } from '../api/client';
+import { useEffect, useRef, useState } from 'react';
+import { AgentRun, AgentRunCreate, AgentRunResult, KnowledgeBase, RagSearchHit, api } from '../api/client';
+import { workbench } from '../api/workbench';
+import { useWorkspace } from '../components/WorkspaceContext';
+import { BrandProfile,BusinessBrief,ContentWorkflow,brandsApi } from '../api/brands';
+import '../styles/brands.css';
+import EvidenceProvenance from '../components/EvidenceProvenance';
+import { EvidenceScope } from '../api/evidence';
+import { useAvailableModels } from '../components/useAvailableModels';
+import ModelTraceDetails from '../components/ModelTraceDetails';
+interface Props {onOpenEvidence?:(id:number,scope?:EvidenceScope)=>void;onNavigate:(page:string)=>void;onOpenDraft?:(draftId:number,topicId:number|null,runId:number)=>void;initialRunId?:number|null;initialKnowledgeBaseId?:number;initialBrandId?:number|null;initialWorkflow?:string|null}
+const labels:Record<string,string>={pending:'等待开始',running:'正在生成',completed:'已完成',skipped:'已跳过',failed:'执行失败',awaiting_review:'等待你审核',approved:'审核通过',rejected:'需要修改',cancelled:'已取消'};
+export default function AgentWorkbenchPage({onOpenEvidence,onNavigate,onOpenDraft,initialRunId,initialKnowledgeBaseId,initialBrandId,initialWorkflow}:Props){
+  const alive=useRef(true);useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
+  const {canWrite,canReview}=useWorkspace();const {models,modelsError}=useAvailableModels();
+  const [form,setForm]=useState<AgentRunCreate>({goal:'',brand_profile_id:initialBrandId??null,workflow_key:(['knowledge_post','product_faq','case_story'].includes(initialWorkflow||'')?initialWorkflow:'knowledge_post') as ContentWorkflow['key'],mode:'inspiration',research_depth:'quick',target_audience:'',viewpoint:'只使用资料支持的事实，缺少依据时明确说明',personal_case:'',content_type:'auto',source_urls:[],provider:'local',model:'',auto_score:true,use_rag:true,knowledge_base_id:initialKnowledgeBaseId??null,rag_top_k:5,rag_min_score:.08});
+  const [brands,setBrands]=useState<BrandProfile[]>([]);const [workflows,setWorkflows]=useState<ContentWorkflow[]>([]);const [briefReady,setBriefReady]=useState(false);const [downloading,setDownloading]=useState(false);
+  const [requiredModel,setRequiredModel]=useState('');const [requiredParameters,setRequiredParameters]=useState('');
+  const [knowledgeBases,setKnowledgeBases]=useState<KnowledgeBase[]>([]);const [sourceUrls,setSourceUrls]=useState('');const [run,setRun]=useState<AgentRunResult|null>(null);const [history,setHistory]=useState<AgentRun[]>([]);const [loading,setLoading]=useState(false);const [error,setError]=useState('');const [historyError,setHistoryError]=useState('');const [pollError,setPollError]=useState('');const [reviewNote,setReviewNote]=useState('');const [showComposer,setShowComposer]=useState(!initialRunId);
+  const modelInitialized=useRef(false);
+  useEffect(()=>{if(!models.length||!briefReady||modelInitialized.current)return;modelInitialized.current=true;setForm(old=>({...old,provider:brands.find(b=>b.id===old.brand_profile_id)?.data_policy==='local_only'?'local':(models.find(item=>item.is_default)||models.find(item=>item.provider==='local')||models[0]).provider}));},[models,briefReady,brands]);
+  useEffect(()=>{let active=true;Promise.all([brandsApi.list(),brandsApi.workflows()]).then(([items,templates])=>{if(!active)return;setBrands(items);setWorkflows(templates);setBriefReady(true);if(initialBrandId){const brand=items.find(b=>b.id===initialBrandId&&b.is_active);if(!brand){setError('指定品牌不可用或已归档，请重新选择。');setBriefReady(false);}else setForm(old=>({...old,brand_profile_id:brand.id,knowledge_base_id:brand.knowledge_base_id,workspace_id:brand.workspace_id,provider:brand.data_policy==='local_only'?'local':old.provider}));}}).catch(e=>{if(active)setError(`内容模板读取失败：${e.message}`);});return()=>{active=false;};},[]);
+  const selectedBrand=brands.find(b=>b.id===form.brand_profile_id);
+  const selectedWorkflow=workflows.find(w=>w.key===form.workflow_key);
+  const selectBrand=(id:number|null)=>{const brand=brands.find(b=>b.id===id&&b.is_active);setForm(old=>({...old,brand_profile_id:brand?.id||null,knowledge_base_id:brand?.knowledge_base_id||old.knowledge_base_id,workspace_id:brand?.workspace_id,provider:brand?.data_policy==='local_only'?'local':old.provider,use_rag:true}));setBriefReady(true);};
+  const downloadDelivery=async()=>{if(!run||downloading)return;setDownloading(true);setError('');try{const data=await brandsApi.delivery(run.id);if(!alive.current)return;const url=URL.createObjectURL(new Blob([data.markdown],{type:'text/markdown;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`交付清单-任务${run.id}.md`;a.click();window.setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(e){setError(e instanceof Error?e.message:'交付清单下载失败');}finally{setDownloading(false);}};
+  const loadHistory=()=>{api.listAgentRuns(12).then(items=>{if(!alive.current)return;setHistory(items);setHistoryError('');}).catch(()=>{if(alive.current)setHistoryError('暂时无法读取最近任务。');});};
+  useEffect(()=>{loadHistory();let active=true;api.listKnowledgeBases().then(items=>{if(!active)return;setKnowledgeBases(items);if(initialKnowledgeBaseId&&!items.some(item=>item.id===initialKnowledgeBaseId)){setError('指定知识库不可用，请重新选择。');setForm(old=>({...old,knowledge_base_id:null}));}else if(items[0])setForm(old=>({...old,knowledge_base_id:old.knowledge_base_id||items[0].id}));}).catch(()=>{if(active)setError('知识库列表读取失败，请刷新重试。');});return()=>{active=false;};},[]);
+  useEffect(()=>{if(!initialRunId)return;let active=true;setLoading(true);api.getAgentRun(initialRunId).then(value=>{if(active)setRun(value);}).catch(e=>{if(active)setError(`无法读取指定任务：${e.message}`);}).finally(()=>{if(active)setLoading(false);});return()=>{active=false;};},[initialRunId]);
+  useEffect(()=>{if(!run||!['pending','running'].includes(run.status))return;let stopped=false,inflight=false;const id=run.id;const timer=window.setInterval(async()=>{if(inflight)return;inflight=true;try{const next=await api.getAgentRun(id);if(!stopped){setRun(next);setPollError('');if(!['pending','running'].includes(next.status))loadHistory();}}catch{if(!stopped)setPollError('连接暂时中断，正在重新读取进度。任务可能仍在执行，请不要重复创建。');}finally{inflight=false;}},1500);return()=>{stopped=true;window.clearInterval(timer);};},[run?.id,run?.status]);
+  const action=async(fn:()=>Promise<AgentRunResult>)=>{setLoading(true);setError('');try{const next=await fn();if(!alive.current)return;setRun(next);if(next.id!==initialRunId)onNavigate(`agent?run=${next.id}`);setShowComposer(false);setReviewNote('');loadHistory();}catch(e){setError(e instanceof Error?e.message:'操作失败，请稍后重试。');}finally{setLoading(false);}};
+  const start=()=>{if(!form.goal.trim())return;
+    const parameters=[...new Set(requiredParameters.split(/\n+/).map(item=>item.trim()).filter(Boolean))];
+    if(Boolean(requiredModel.trim())!==Boolean(parameters.length)){setError('填写必需参数时，请同时填写品牌及产品型号、至少一个参数名。');return;}
+    if(parameters.length>10){setError('每次最多核对 10 个必需参数。');return;}
+    if(parameters.length&&!form.use_rag){setError('指定必需参数时，必须启用知识库依据。');return;}
+    void action(()=>api.createAgentRun({...form,goal:form.goal.trim(),required_facts:parameters.map(parameter=>({product_model:requiredModel.trim(),parameter})),source_urls:form.mode==='research'?sourceUrls.split(/\n+/).map(item=>item.trim()).filter(Boolean):[]}));};
+  const openDraft=()=>{if(run?.draft_id)onOpenDraft?.(run.draft_id,run.selected_topic_id??null,run.id);};
+  const running=Boolean(run&&['pending','running'].includes(run.status));
+  const stage=run?run.status==='approved'?3:['awaiting_review','rejected'].includes(run.status)?2:run.steps.some(item=>item.key==='retrieve_context'&&item.status==='completed')?1:0:0;
+  const issues=(Array.isArray(run?.evaluation?.issues)?run?.evaluation?.issues:[]) as Array<{message?:string;level?:string;card_page?:number}>;
+  const evidence=(run?.result_json?.rag_context||{}) as {hits?:RagSearchHit[];knowledge_base_name?:string;required_facts?:Array<{product_model:string;parameter:string}>;answerability?:string};
+  const currentReview=run?.result_json?.review as {decision?:string;note?:string;at?:string}|undefined;
+  const reviewHistory=(run?.result_json?.review_history||[]) as Array<{decision?:string;note?:string;reason?:string}>;
+  const brief=run?.result_json?.brief as BusinessBrief|undefined;
+  const editChanged=Boolean(run?.result_json?.review_invalidated||run?.result_json?.evaluation_stale);
+  return <div className="task-page"><div className="page-header compact-page-heading"><div><h1>从品牌资料，到可交付内容。</h1><p>选好品牌和任务模板，提交内容目标。生成后进入人工审核。</p></div></div>
+    {(error||modelsError)&&<div className="feedback error" role="alert">{error||modelsError}</div>}{pollError&&<div className="notice-strip" role="status">{pollError}</div>}
+    <div className="task-columns"><section className="panel task-form">{showComposer?<><div className="section-heading"><h2>你想写什么？</h2>{run&&<button className="text-action" onClick={()=>setShowComposer(false)}>返回当前任务</button>}</div><div className="form-group"><label htmlFor="task-brand">为哪个品牌创作</label><select id="task-brand" value={form.brand_profile_id||''} onChange={event=>selectBrand(Number(event.target.value)||null)}><option value="">暂不使用品牌档案</option>{brands.filter(b=>b.is_active).map(b=><option key={b.id} value={b.id}>{b.name} · v{b.version}</option>)}</select><button className="text-action" onClick={()=>onNavigate('brands')}>管理品牌档案 ↗</button></div>
+      <div className="workflow-choices" aria-label="内容任务模板">{workflows.map(w=><button className="workflow-choice" key={w.key} aria-pressed={form.workflow_key===w.key} onClick={()=>setForm({...form,workflow_key:w.key,use_rag:true})}><strong>{w.name}</strong></button>)}</div>
+      {selectedWorkflow&&<details className="calm-details task-material-hint"><summary>这个流程需要哪些资料？</summary><p className="subtle">{selectedWorkflow.required_materials.join('、')}。交付为图文稿和卡片，发布由你在官方后台完成。</p></details>}
+      {selectedBrand&&<p className="subtle">已应用品牌第 {selectedBrand.version} 版要求{selectedBrand.data_policy==='local_only'?' · 仅本地摘录':''}</p>}
+      <div className="form-group"><label htmlFor="task-goal">本次内容目标</label><textarea id="task-goal" maxLength={1000} className="goal-input" value={form.goal} onChange={event=>setForm({...form,goal:event.target.value})} placeholder="例如：根据产品说明，写一份给新用户的快速上手指南" rows={3}/></div>
 
-interface Props {
-  onNavigate: (page: string) => void;
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  pending: '待执行',
-  running: '执行中',
-  completed: '已完成',
-  skipped: '已跳过',
-  failed: '失败',
-};
-
-interface AgentDecisionAction {
-  priority?: string;
-  label?: string;
-  reason?: string;
-  target?: string;
-}
-
-interface AgentDecision {
-  summary?: string;
-  decision_status?: string;
-  confidence?: string;
-  selected_topic?: {
-    verification_status?: string;
-    reason?: string;
-  };
-  quality_gate?: {
-    score?: number;
-    threshold?: number;
-    publish_readiness?: string;
-    passed?: boolean;
-    strengths?: string[];
-  };
-  revision?: {
-    triggered?: boolean;
-    changes?: string[];
-    reason?: string;
-  };
-  why_this_topic?: string[];
-  manual_review_focus?: string[];
-  next_actions?: AgentDecisionAction[];
-}
-
-interface RagContextHit {
-  chunk_id?: number;
-  title?: string;
-  source_uri?: string;
-  content?: string;
-  score?: number;
-}
-
-interface RagContext {
-  enabled?: boolean;
-  evidence_status?: string;
-  knowledge_base_id?: number;
-  knowledge_base_name?: string;
-  coverage?: {
-    top_score?: number;
-    evidence_count?: number;
-    distinct_documents?: number;
-    status?: string;
-  };
-  hits?: RagContextHit[];
-}
-
-export default function AgentWorkbenchPage({ onNavigate }: Props) {
-  const [form, setForm] = useState<AgentRunCreate>({
-    goal: '普通人怎么用 AI 自动化副业内容',
-    mode: 'inspiration',
-    research_depth: 'quick',
-    target_audience: 'AI 新手 / 自媒体人',
-    viewpoint: '先跑通半自动流程，再谈全自动',
-    personal_case: '',
-    content_type: 'auto',
-    source_urls: [],
-    provider: 'local',
-	    model: '',
-	    auto_score: true,
-	    use_rag: false,
-	    knowledge_base_id: null,
-	    rag_top_k: 5,
-	    rag_min_score: 0.08,
-	  });
-	  const [sourceUrlsText, setSourceUrlsText] = useState('');
-	  const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([]);
-	  const [run, setRun] = useState<AgentRunResult | null>(null);
-  const [history, setHistory] = useState<AgentRun[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const loadHistory = () => {
-    api.listAgentRuns(12).then(setHistory).catch(() => setHistory([]));
-  };
-
-	  useEffect(() => {
-	    loadHistory();
-	    api.listKnowledgeBases().then(items => {
-	      setKnowledgeBases(items);
-	      if (items[0]) {
-	        setForm(prev => prev.knowledge_base_id ? prev : { ...prev, knowledge_base_id: items[0].id });
-	      }
-	    }).catch(() => setKnowledgeBases([]));
-	  }, []);
-
-  useEffect(() => {
-    if (!run || !['pending', 'running'].includes(run.status)) return;
-    const timer = window.setInterval(async () => {
-      try {
-        const next = await api.getAgentRun(run.id);
-        setRun(next);
-        if (!['pending', 'running'].includes(next.status)) loadHistory();
-      } catch {
-        // 页面轮询失败不打断用户，下一轮继续尝试。
-      }
-    }, 1200);
-    return () => window.clearInterval(timer);
-  }, [run?.id, run?.status]);
-
-  const stepProgress = useMemo(() => {
-    const total = run?.steps.length || 0;
-    const completed = run?.steps.filter(step => ['completed', 'skipped'].includes(step.status)).length || 0;
-    return { total, completed };
-  }, [run]);
-
-  const handleStart = async () => {
-    if (!form.goal.trim()) return;
-    setLoading(true);
-    try {
-      const result = await api.createAgentRun({
-        ...form,
-        source_urls: sourceUrlsText.split(/\n+/).map(item => item.trim()).filter(Boolean),
-      });
-      setRun(result);
-      loadHistory();
-    } catch (e) {
-      alert('Agent 执行失败: ' + e);
-    }
-    setLoading(false);
-  };
-
-  const handleRetry = async () => {
-    if (!run) return;
-    setLoading(true);
-    try {
-      const result = await api.retryAgentRun(run.id);
-      setRun(result);
-      loadHistory();
-    } catch (e) {
-      alert('重试失败: ' + e);
-    }
-    setLoading(false);
-  };
-
-  const handleLoadRun = async (id: number) => {
-    setLoading(true);
-    try {
-      setRun(await api.getAgentRun(id));
-    } catch (e) {
-      alert('读取 Agent 任务失败: ' + e);
-    }
-    setLoading(false);
-  };
-
-  const evaluation = run?.evaluation || {};
-  const issues = Array.isArray(evaluation.issues) ? evaluation.issues as Array<{ message?: string; level?: string; card_page?: number }> : [];
-  const ideas = ((run?.result_json?.topic_ideas as Record<string, unknown> | undefined)?.ideas || []) as Array<Record<string, unknown>>;
-  const decision = (run?.result_json?.agent_decision || null) as AgentDecision | null;
-	  const decisionActions = Array.isArray(decision?.next_actions) ? decision.next_actions : [];
-	  const reviewFocus = Array.isArray(decision?.manual_review_focus) ? decision.manual_review_focus : [];
-	  const whyThisTopic = Array.isArray(decision?.why_this_topic) ? decision.why_this_topic : [];
-	  const revisionChanges = Array.isArray(decision?.revision?.changes) ? decision.revision.changes : [];
-	  const ragContext = (run?.result_json?.rag_context || null) as RagContext | null;
-	  const ragHits = Array.isArray(ragContext?.hits) ? ragContext.hits : [];
-
-  return (
-    <div>
-      <div className="page-header">
-        <h1>Agent 工作台</h1>
-        <p>输入一个内容目标，让 Agent 串起选题、发布包、卡片和质量评分</p>
-      </div>
-
-      <div className="agent-layout">
-        <section className="agent-panel">
-          <div className="agent-panel__header">
-            <h2>内容目标</h2>
-            <span className="badge" style={{ background: '#eef2ff', color: '#4338ca' }}>v0.3-C</span>
-          </div>
-          <div className="form-group">
-            <label>我想做什么内容 *</label>
-            <textarea
-              value={form.goal}
-              onChange={e => setForm({ ...form, goal: e.target.value })}
-              rows={3}
-              placeholder="例如：普通人怎么用 AI 自动化副业内容"
-            />
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label>模式</label>
-              <select value={form.mode} onChange={e => setForm({ ...form, mode: e.target.value as 'research' | 'inspiration' })}>
-                <option value="inspiration">主题灵感创作</option>
-                <option value="research">AI 自动调研</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>调研深度</label>
-              <select value={form.research_depth} onChange={e => setForm({ ...form, research_depth: e.target.value as 'quick' | 'deep' })}>
-                <option value="quick">快速模式</option>
-                <option value="deep">深度模式</option>
-              </select>
-            </div>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label>目标人群</label>
-              <input
-                value={form.target_audience || ''}
-                onChange={e => setForm({ ...form, target_audience: e.target.value })}
-                placeholder="AI 新手 / 自媒体人"
-              />
-            </div>
-            <div className="form-group">
-              <label>模型</label>
-              <select value={form.provider} onChange={e => setForm({ ...form, provider: e.target.value })}>
-                <option value="local">local 规则模型</option>
-                <option value="doubao">豆包 / 火山方舟</option>
-                <option value="deepseek">DeepSeek</option>
-              </select>
-            </div>
-          </div>
-          <div className="form-group">
-            <label>想表达的观点</label>
-            <textarea
-              value={form.viewpoint || ''}
-              onChange={e => setForm({ ...form, viewpoint: e.target.value })}
-              rows={2}
-              placeholder="例如：先跑通半自动流程，再谈全自动"
-            />
-          </div>
-          <div className="form-group">
-            <label>个人经验 / 案例</label>
-            <textarea
-              value={form.personal_case || ''}
-              onChange={e => setForm({ ...form, personal_case: e.target.value })}
-              rows={2}
-              placeholder="可选。没有真实案例也可以留空"
-            />
-          </div>
-          {form.mode === 'research' && (
-            <div className="form-group">
-              <label>补充来源链接</label>
-              <textarea
-                value={sourceUrlsText}
-                onChange={e => setSourceUrlsText(e.target.value)}
-                rows={3}
-                placeholder="可选，每行一个公开网页 / GitHub / 工具官网链接"
-              />
-            </div>
-          )}
-	          <label className="checkbox-row">
-	            <input
-	              type="checkbox"
-	              checked={Boolean(form.auto_score)}
-	              onChange={e => setForm({ ...form, auto_score: e.target.checked })}
-	            />
-	            <span>自动评分推荐选题</span>
-	          </label>
-	          <div className="agent-rag-config">
-	            <label className="checkbox-row">
-	              <input
-	                type="checkbox"
-	                checked={Boolean(form.use_rag)}
-	                onChange={e => setForm({ ...form, use_rag: e.target.checked })}
-	              />
-	              <span>启用知识库检索</span>
-	            </label>
-	            {form.use_rag && (
-	              <div className="form-row">
-	                <div className="form-group">
-	                  <label>知识库</label>
-	                  <select
-	                    value={form.knowledge_base_id || ''}
-	                    onChange={e => setForm({ ...form, knowledge_base_id: e.target.value ? Number(e.target.value) : null })}
-	                  >
-	                    {knowledgeBases.map(item => (
-	                      <option key={item.id} value={item.id}>#{item.id} {item.name}</option>
-	                    ))}
-	                  </select>
-	                </div>
-	                <div className="form-group">
-	                  <label>证据数量</label>
-	                  <select value={form.rag_top_k || 5} onChange={e => setForm({ ...form, rag_top_k: Number(e.target.value) })}>
-	                    <option value={3}>3 条</option>
-	                    <option value={5}>5 条</option>
-	                    <option value={8}>8 条</option>
-	                  </select>
-	                </div>
-	              </div>
-	            )}
-	          </div>
-	          <button className="btn btn-primary agent-start-button" onClick={handleStart} disabled={loading || !form.goal.trim()}>
-            {loading ? '任务创建中...' : '开始生成完整发布包'}
-          </button>
-        </section>
-
-        <aside className="agent-history">
-          <h3>最近任务</h3>
-          {history.length === 0 ? (
-            <div className="empty" style={{ padding: 16 }}>暂无执行记录</div>
-          ) : history.map(item => (
-            <button key={item.id} className={`agent-history-item ${run?.id === item.id ? 'active' : ''}`} onClick={() => handleLoadRun(item.id)}>
-              <strong>#{item.id} {item.goal}</strong>
-              <span>{STATUS_LABELS[item.status] || item.status} · {item.evaluation_score ?? '-'}分</span>
-            </button>
-          ))}
-        </aside>
-      </div>
-
-      {run && (
-        <section className="agent-result">
-          <div className="agent-result__header">
-            <div>
-              <h2>Agent Run #{run.id}</h2>
-              <p>{STATUS_LABELS[run.status] || run.status} · {stepProgress.completed}/{stepProgress.total} 步完成</p>
-            </div>
-            <div className="agent-result__actions">
-              {run.status === 'failed' && (
-                <button className="btn btn-primary" onClick={handleRetry} disabled={loading}>重试失败步骤</button>
-              )}
-              <div className={`agent-run-status ${run.status}`}>{STATUS_LABELS[run.status] || run.status}</div>
-            </div>
-          </div>
-
-          <div className="agent-step-grid">
-            {run.steps.map(step => (
-              <div key={step.id} className={`agent-step-card ${step.status}`}>
-                <span>{String(step.step_index).padStart(2, '0')}</span>
-                <strong>{step.label}</strong>
-                <small>{STATUS_LABELS[step.status] || step.status}</small>
-                {step.error_message && <em>{step.error_message}</em>}
-              </div>
-            ))}
-	          </div>
-
-	          {ragContext?.enabled && (
-	            <div className={`agent-rag-evidence ${ragContext.evidence_status === 'sufficient' ? 'ok' : 'weak'}`}>
-	              <div className="agent-rag-evidence__header">
-	                <div>
-	                  <span>知识库证据</span>
-	                  <strong>
-	                    {ragContext.evidence_status === 'sufficient' ? '证据可用' : '证据不足'}
-	                  </strong>
-	                  <p>
-	                    知识库 #{ragContext.knowledge_base_id} ·
-	                    命中 {ragContext.coverage?.evidence_count || 0} 条 ·
-	                    最高分 {ragContext.coverage?.top_score ?? 0}
-	                  </p>
-	                </div>
-	              </div>
-	              {ragHits.length > 0 ? (
-	                <div className="agent-rag-hit-list">
-	                  {ragHits.slice(0, 5).map((hit, index) => (
-	                    <div key={`${hit.chunk_id}-${index}`}>
-	                      <span>chunk #{hit.chunk_id} · {hit.score ?? '-'}</span>
-	                      <strong>{hit.title || '未命名来源'}</strong>
-	                      <p>{String(hit.content || '').slice(0, 180)}</p>
-	                    </div>
-	                  ))}
-	                </div>
-	              ) : (
-	                <p className="agent-rag-empty">当前知识库没有足够相关证据，后续内容需要人工补来源或降级为观点草稿。</p>
-	              )}
-	            </div>
-	          )}
-
-	          {decision && (
-            <div className="agent-decision">
-              <div className="agent-decision__main">
-                <span>Agent 决策</span>
-                <strong>{decision.summary}</strong>
-                <p>
-                  {decision.quality_gate?.passed ? '已过基础质量线' : '需要人工重点复查'} ·
-                  信心 {decision.confidence || 'medium'} ·
-                  {decision.selected_topic?.verification_status || '未核验'}
-                </p>
-              </div>
-              <div className="agent-decision__stats">
-                <div>
-                  <span>质量门槛</span>
-                  <strong>{decision.quality_gate?.score ?? run.evaluation_score ?? '-'}/{decision.quality_gate?.threshold ?? 75}</strong>
-                  <p>{decision.quality_gate?.publish_readiness || 'needs_review'}</p>
-                </div>
-                <div>
-                  <span>自动改稿</span>
-                  <strong>{decision.revision?.triggered ? '已执行' : '未触发'}</strong>
-                  <p>{decision.revision?.reason || '-'}</p>
-                </div>
-              </div>
-
-              {whyThisTopic.length > 0 && (
-                <div className="agent-decision-list">
-                  <h3>为什么选它</h3>
-                  {whyThisTopic.slice(0, 3).map((item, index) => (
-                    <p key={`${item}-${index}`}>{item}</p>
-                  ))}
-                </div>
-              )}
-
-              {decisionActions.length > 0 && (
-                <div className="agent-action-list">
-                  <h3>下一步</h3>
-                  {decisionActions.slice(0, 5).map((action, index) => (
-                    <div key={`${action.label}-${index}`}>
-                      <span>{action.priority || 'medium'}</span>
-                      <strong>{action.label}</strong>
-                      <p>{action.reason}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {(reviewFocus.length > 0 || revisionChanges.length > 0) && (
-                <div className="agent-review-focus">
-                  {reviewFocus.length > 0 && (
-                    <div>
-                      <h3>人工复查重点</h3>
-                      {reviewFocus.slice(0, 5).map((item, index) => (
-                        <p key={`${item}-${index}`}>{item}</p>
-                      ))}
-                    </div>
-                  )}
-                  {revisionChanges.length > 0 && (
-                    <div>
-                      <h3>自动改稿记录</h3>
-                      {revisionChanges.slice(0, 5).map((item, index) => (
-                        <p key={`${item}-${index}`}>{item}</p>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {ideas.length > 0 && (
-            <div className="agent-section">
-              <h3>选题建议</h3>
-              <div className="agent-idea-grid">
-                {ideas.slice(0, 5).map((idea, index) => (
-                  <div key={`${idea.title}-${index}`} className={`agent-idea-card ${run.topic?.title === idea.title ? 'selected' : ''}`}>
-                    <strong>{String(idea.title || '')}</strong>
-                    <span>{String(idea.content_angle || '-')} · {String(idea.score || '-')}分</span>
-                    <p>{String(idea.reason || '')}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="agent-summary-grid">
-            <div className="agent-summary-card">
-              <span>推荐选题</span>
-              <strong>{run.topic?.title || '-'}</strong>
-              <p>{run.topic?.content_angle || '-'} · {run.topic?.score ?? '-'}分</p>
-            </div>
-            <div className="agent-summary-card">
-              <span>发布包</span>
-              <strong>{run.draft ? `#${run.draft.id}` : '-'}</strong>
-              <p>{run.cards.length} 张卡片</p>
-            </div>
-            <div className="agent-summary-card">
-              <span>质量评分</span>
-              <strong>{run.evaluation_score ?? '-'}/100</strong>
-              <p>{String(evaluation.publish_readiness || 'needs_review')}</p>
-            </div>
-          </div>
-
-          {run.draft && (
-            <div className="agent-section">
-              <div className="agent-section__header">
-                <h3>发布包结果</h3>
-                <button className="btn btn-primary" onClick={() => onNavigate('drafts')}>去发布包编辑</button>
-              </div>
-              <div className="agent-draft-preview">
-                {(run.draft.title_options || []).slice(0, 3).map((title, index) => (
-                  <span key={`${title}-${index}`}>{title}</span>
-                ))}
-              </div>
-              <div className="agent-card-list">
-                {run.cards.slice(0, 7).map(card => (
-                  <div key={card.id}>
-                    <span>{String(card.page_index).padStart(2, '0')}</span>
-                    <strong>{card.title}</strong>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {issues.length > 0 && (
-            <div className="agent-section">
-              <h3>质量问题</h3>
-              <div className="agent-issue-list">
-                {issues.slice(0, 5).map((issue, index) => (
-                  <div key={`${issue.message}-${index}`}>
-                    <span>{issue.level || 'medium'}</span>
-                    <p>{issue.card_page ? `第 ${issue.card_page} 页：` : ''}{issue.message}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </section>
-      )}
-    </div>
-  );
+      <details className="calm-details"><summary>必须有依据的产品参数（可选）</summary><p className="subtle">填写后，缺少任一项已核验参数就停止生成。型号和参数名需与核验笔记一致；留空只检索相关资料，不能保证目标中的所有问题都有答案。</p><div className="form-row"><div className="form-group"><label htmlFor="task-required-model">品牌及产品型号</label><input id="task-required-model" maxLength={200} value={requiredModel} onChange={event=>setRequiredModel(event.target.value)} placeholder="例如：合成星桥 XP-24"/></div><div className="form-group"><label htmlFor="task-required-parameters">必需参数 · 每行一项，最多 10 项</label><textarea id="task-required-parameters" rows={3} value={requiredParameters} onChange={event=>setRequiredParameters(event.target.value)} placeholder={'额定电压\n额定流量'}/></div></div></details>
+      <div className="form-row"><div className="form-group"><label htmlFor="task-kb">使用哪份知识库</label><select id="task-kb" disabled={Boolean(selectedBrand)} value={form.knowledge_base_id||''} onChange={event=>setForm({...form,knowledge_base_id:Number(event.target.value)||null})}><option value="" disabled>选择知识库</option>{knowledgeBases.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select></div><div className="form-group"><label htmlFor="task-provider">生成方式</label><select id="task-provider" disabled={selectedBrand?.data_policy==='local_only'} value={form.provider} onChange={event=>setForm({...form,provider:event.target.value})}>{models.filter(item=>selectedBrand?.data_policy!=='local_only'||item.provider==='local').map(item=><option key={item.provider} value={item.provider}>{item.provider==='local'?'本地摘录 · 无需密钥':item.model||item.provider}</option>)}</select></div></div>
+      <p className="task-model-hint">{form.provider==='local'?'本地模式用规则整理和摘录资料。选择已配置的在线模型可生成更自然的正文。':'本次会将目标和检索到的资料发送给所选模型。'} <button className="text-action" onClick={()=>onNavigate('connections')}>管理模型</button></p>
+      <details className="calm-details"><summary>更多要求 · 受众、观点与参考链接</summary><div className="form-group"><label htmlFor="task-audience">写给谁看</label><input id="task-audience" value={form.target_audience||''} onChange={event=>setForm({...form,target_audience:event.target.value})} placeholder="例如：第一次使用产品的新用户"/></div><div className="form-group"><label htmlFor="task-viewpoint">特别要求</label><textarea id="task-viewpoint" value={form.viewpoint||''} onChange={event=>setForm({...form,viewpoint:event.target.value})} rows={2}/></div><div className="form-group"><label htmlFor="task-case">可使用的真实案例（可选）</label><textarea id="task-case" value={form.personal_case||''} onChange={event=>setForm({...form,personal_case:event.target.value})} rows={2}/></div><label className="inline-choice"><input type="checkbox" checked={form.mode==='research'} onChange={event=>setForm({...form,mode:event.target.checked?'research':'inspiration'})}/>结合指定网页资料</label>{form.mode==='research'&&<div className="form-group"><label htmlFor="task-links">参考链接 · 每行一个</label><textarea id="task-links" value={sourceUrls} onChange={event=>setSourceUrls(event.target.value)} rows={3}/><p className="subtle">读取你提供的链接，不会自动搜索整个互联网。</p></div>}<label className="inline-choice"><input type="checkbox" checked={Boolean(form.use_rag)} disabled={Boolean(form.brand_profile_id||form.workflow_key)} onChange={event=>setForm({...form,use_rag:event.target.checked})}/>使用知识库作为事实依据</label><label className="inline-choice"><input type="checkbox" checked={Boolean(form.auto_score)} onChange={event=>setForm({...form,auto_score:event.target.checked})}/>额外评估选题价值（正文质量检查始终执行）</label><div className="form-group"><label htmlFor="task-evidence-count">最多采用的证据片段</label><select id="task-evidence-count" value={form.rag_top_k||5} onChange={event=>setForm({...form,rag_top_k:Number(event.target.value)})}><option value={3}>3 条</option><option value={5}>5 条</option><option value={8}>8 条</option></select></div></details>
+      <div className="form-actions"><button className="btn btn-primary" onClick={start} disabled={!canWrite||!briefReady||loading||!form.goal.trim()||!models.length||Boolean(form.use_rag&&!form.knowledge_base_id)}>{loading?'正在创建…':'生成内容草稿 →'}</button><button className="text-action" onClick={()=>onNavigate('knowledge')}>先补充资料</button></div></>:<div className="section-heading"><div><h2>{running?'正在处理你的内容':'当前任务'}</h2><p className="subtle">{run?.goal||'正在读取指定任务…'}</p></div><button className="btn" disabled={loading} onClick={()=>onNavigate('agent')}>新建内容</button></div>}</section>
+      <aside className="panel task-history"><h2>最近任务</h2>{historyError&&<p className="feedback error">{historyError}<button className="text-action" onClick={loadHistory}>重新读取</button></p>}{!history.length&&!historyError?<p className="empty">新任务会保存在这里，可以随时回来继续。</p>:history.map(item=><button className="recent-work" key={item.id} disabled={loading} onClick={()=>onNavigate(`agent?run=${item.id}`)}><span className={`status-dot status-${item.status}`}/><div><strong>{item.goal}</strong><small>#{item.id} · {labels[item.status]||item.status}</small></div></button>)}</aside></div>
+    {run&&<section className="panel task-result"><div className="result-heading"><div><span className="eyebrow">内容任务 #{run.id}</span><h2>{labels[run.status]||run.status}</h2><p className="subtle">{run.goal}</p></div>{run.draft_id&&<button className="btn btn-primary" disabled={loading||running} onClick={openDraft}>{run.status==='approved'?'打开交付内容':'编辑这份稿件'} →</button>}</div>
+      {brief&&<div className="brand-task-context"><strong>{brief.profile?.name||'未指定品牌'}{brief.profile?` · v${brief.profile.version}`:''} / {brief.workflow.name}</strong><p>本任务保存创建时的品牌要求，后续档案修改不影响这份快照。</p></div>}
+      {run.status==='approved'&&<div className="delivery-actions"><button className="btn btn-primary" disabled={downloading||loading} onClick={()=>void downloadDelivery()}>{downloading?'正在核对交付版本…':'下载审核交付清单'}</button><button className="btn" onClick={()=>onNavigate('metrics')}>发布后记录效果</button><p className="subtle">清单包含正文、出处与审核版本。图片素材请打开交付内容导出。</p></div>}
+      <div className="task-stage-row">{['准备资料','生成与检查','人工审核'].map((text,index)=><div className={`task-stage ${stage>index?'done':stage===index?'current':''}`} key={text}><b>0{index+1}</b>{text}</div>)}</div>
+      {run.error_message&&<div className="feedback error" role="alert">{run.error_message}</div>}
+      <div className="form-actions">{running&&<button className="btn" disabled={!canWrite||loading} onClick={()=>void action(()=>workbench.cancel(run.id))}>停止任务</button>}{run.status==='failed'&&<><button className="btn btn-primary" disabled={!canWrite||loading} onClick={()=>void action(()=>api.retryAgentRun(run.id))}>从失败处重试</button><button className="text-action" onClick={()=>onNavigate('knowledge')}>检查资料</button></>}{run.status==='rejected'&&<><button className="btn btn-primary" disabled={!canWrite||loading} onClick={openDraft}>修改原稿</button><button className="btn" disabled={!canWrite||loading} onClick={()=>void action(()=>workbench.submitReview(run.id))}>修改后重新送审</button></>}</div>
+      {run.draft&&<><div className="section-heading" style={{marginTop:22}}><h3>当前草稿</h3><span className="subtle">{run.cards.length} 张卡片 · {run.draft.model_provider||run.provider}</span></div><div className="task-body">{run.draft.body_text}</div></>}
+      {run.status==='awaiting_review'&&<div className="task-review" style={{marginTop:22}}><h3>检查来源与内容，再作决定</h3><p>{issues.length?`质量检查提出 ${issues.length} 项建议，请展开下方详情查看。`:'请核对内容是否准确，引用是否支持对应结论。'} 通过后仍需手动导出和发布。</p><label htmlFor="review-note" className="subtle">审核备注</label><textarea id="review-note" value={reviewNote} onChange={event=>setReviewNote(event.target.value)} placeholder="记录已核实的内容，或需要修改的问题" rows={2}/><div className="form-actions"><button className="btn btn-primary" disabled={!canReview||loading} onClick={()=>void action(()=>workbench.review(run.id,'approve',reviewNote))}>审核通过</button><button className="btn" disabled={!canReview||loading} onClick={()=>void action(()=>workbench.review(run.id,'reject',reviewNote))}>退回修改</button></div></div>}
+      {currentReview&&<div className="notice-strip" style={{marginTop:18}}><strong>{currentReview.decision==='approve'?'审核结论：通过':'审核结论：退回修改'}</strong><p>{currentReview.note||'本次未填写审核备注。'}</p>{currentReview.at&&<small>{new Date(currentReview.at.endsWith('Z')?currentReview.at:`${currentReview.at}Z`).toLocaleString()}</small>}</div>}
+      {editChanged&&<p className="notice-strip">{run.status==='approved'?'当前版本已人工审核；历史评分对应修改前内容，不能用于本版质量判断。':'稿件已修改，请基于当前版本重新检查。此前评分不能代替这次审核。'}</p>}
+      {issues.length>0&&<details className="calm-details"><summary>质量建议 · {issues.length} 项{run.evaluation_score!=null?` · 本次评分 ${run.evaluation_score}/100`:''}</summary><ul>{issues.map((item,index)=><li key={index} className="subtle">{item.card_page?`第 ${item.card_page} 页：`:''}{item.message}</li>)}</ul><p className="subtle">模型自评分用于辅助检查，不是客户验收结果。</p></details>}
+      <details className="calm-details"><summary>查看依据 · {(evidence.hits||[]).length} 条检索片段</summary><p className="subtle">{evidence.knowledge_base_name||'本任务资料'} · 以下为生成时保存的依据。核验笔记可查看当前状态；审核和正式交付会再次检查有效性。</p>{Boolean(evidence.required_facts?.length)&&<p className="subtle">本次必需参数：{evidence.required_facts!.map(item=>`${item.product_model} / ${item.parameter}`).join('；')}。已找到依据仍须逐项核对生成正文。</p>}{(evidence.hits||[]).map(hit=><div key={hit.chunk_id} className="task-citation"><h4>{hit.title} <small>来源片段 #{hit.chunk_id}</small></h4><p>{hit.content}</p><EvidenceProvenance metadata={hit.metadata||{}} scope={{workspace_id:hit.workspace_id,knowledge_base_id:hit.knowledge_base_id}} onOpenEvidence={onOpenEvidence}/></div>)}</details>
+      <details className="calm-details"><summary>执行详情与审核历史</summary><p className="subtle">本次模型：{run.provider} · 已完成 {run.steps.filter(step=>['completed','skipped'].includes(step.status)).length}/{run.steps.length} 步</p><ol className="task-steps">{run.steps.map(step=><li key={step.id}><span>{step.label}</span><span>{labels[step.status]||step.status} {step.duration_ms!=null&&<small>· {(step.duration_ms/1000).toFixed(1)} 秒</small>}</span></li>)}</ol>{reviewHistory.map((item,index)=><p className="subtle" key={index}>{item.decision==='approve'?'通过':'退回'} · {item.note||item.reason||'未填写备注'}</p>)}</details>
+      <ModelTraceDetails key={run.id} runId={run.id} updatedAt={run.updated_at} revision={`${run.status}:${run.current_step}`} steps={run.steps}/>
+    </section>}
+  </div>;
 }

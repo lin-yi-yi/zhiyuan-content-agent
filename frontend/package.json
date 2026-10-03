@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:request": "node --test tests/request-context.test.mjs",
+    "test:workflow": "node --test tests/draft-navigation.test.mjs tests/metric-snapshot.test.mjs tests/learning-progress.test.mjs tests/workbench-navigation.test.mjs tests/pilot-form.test.mjs"
   },
   "dependencies": {
     "file-saver": "^2.0.5",

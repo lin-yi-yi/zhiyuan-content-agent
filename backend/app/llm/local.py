@@ -3,10 +3,12 @@
 用于没有 API Key 时跑通 MVP 工作流：选题评分、发布包生成、卡片生成和合规检查。
 """
 import json
+import hashlib
 import re
 import time
 
 from app.llm.base import BaseLLMClient
+from app.llm.tracing import model_request_metadata, persist_model_run
 
 
 class LocalRuleBasedClient(BaseLLMClient):
@@ -19,29 +21,31 @@ class LocalRuleBasedClient(BaseLLMClient):
             content = "连接成功。本地规则模型已就绪，可以用于离线自测。"
         else:
             content = "这是本地规则模型的回复，用于在未配置 API Key 时跑通工作台流程。"
-        self._log_run("chat", system_prompt + user_prompt, content, True, start)
+        self._log_run("chat", system_prompt + user_prompt, content, True, start, system_prompt=system_prompt)
         return content
 
     def chat_json(self, system_prompt: str, user_prompt: str, temperature: float = 0.3) -> dict:
         start = time.time()
         prompt = system_prompt + "\n" + user_prompt
         if "小红书发布包生成" in system_prompt:
-            result = self._generate_draft(user_prompt)
-            task_type = "draft_generation"
+            generate, task_type = self._generate_draft, "draft_generation"
         elif "选题评分" in system_prompt:
-            result = self._score_topic(user_prompt)
-            task_type = "topic_score"
+            generate, task_type = self._score_topic, "topic_score"
         elif "卡片生成" in system_prompt:
-            result = self._generate_cards(user_prompt)
-            task_type = "card_generation"
+            generate, task_type = self._generate_cards, "card_generation"
         elif "合规检查" in system_prompt:
-            result = self._check_compliance(user_prompt)
-            task_type = "compliance_check"
+            generate, task_type = self._check_compliance, "compliance_check"
         else:
-            result = self._generate_draft(user_prompt)
-            task_type = "draft_generation"
+            generate, task_type = self._generate_draft, "draft_generation"
 
-        self._log_run(task_type, prompt, json.dumps(result, ensure_ascii=False), True, start)
+        try:
+            result = generate(user_prompt)
+        except Exception as exc:
+            self._log_run(task_type, prompt, "", False, start, system_prompt=system_prompt,
+                          error_type=type(exc).__name__[:100])
+            raise
+
+        self._log_run(task_type, prompt, json.dumps(result, ensure_ascii=False), True, start, system_prompt=system_prompt)
         return result
 
     def _score_topic(self, text: str) -> dict:
@@ -240,26 +244,13 @@ class LocalRuleBasedClient(BaseLLMClient):
             "aigc_notice": "内容含 AI 辅助生成，发布前建议人工审核并按平台规则标识。",
         }
 
-    def _log_run(self, task_type: str, input_text: str, output_text: str, success: bool, start: float):
-        from app.db.session import SessionLocal
-        from app.models.model_run import ModelRun
-
+    def _log_run(self, task_type: str, input_text: str, output_text: str, success: bool, start: float,
+                 *, system_prompt: str = "", error_type: str | None = None):
         latency_ms = int((time.time() - start) * 1000)
-        try:
-            db = SessionLocal()
-            db.add(ModelRun(
-                task_type=task_type,
-                provider=self.provider,
-                model_name=self.model,
-                input_preview=input_text[:500],
-                output_preview=output_text[:500],
-                success=success,
-                latency_ms=latency_ms,
-            ))
-            db.commit()
-            db.close()
-        except Exception:
-            pass
+        persist_model_run(task_type=task_type, provider=self.provider, model_name=self.model,
+            prompt_hash=hashlib.sha256(input_text.encode("utf-8")).hexdigest(),
+            success=success, latency_ms=latency_ms,
+            request_metadata=model_request_metadata(system_prompt, "local_rule"), error_type=error_type)
 
     @staticmethod
     def _field(text: str, label: str) -> str:

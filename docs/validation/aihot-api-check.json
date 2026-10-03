@@ -1,0 +1,37 @@
+{
+  "checked_at_utc": "2026-09-19T03:02:15.870452+00:00",
+  "local_endpoint": "http://127.0.0.1:8765/api/source-hub/aihot",
+  "status": {
+    "name": "AIHOT",
+    "homepage_url": "https://aihot.news/agent",
+    "mcp_url": "https://aihot.news/api/mcp",
+    "terms_url": "https://aihot.news/terms",
+    "enabled": true,
+    "embed_supported": false,
+    "read_only": true
+  },
+  "first_read": {
+    "http_status": 200,
+    "count": 17,
+    "refresh": {
+      "status": "ready",
+      "last_attempt_at": "2026-09-19T03:02:15.490968+00:00",
+      "last_success_at": "2026-09-19T03:02:15.860683+00:00",
+      "next_refresh_at": "2026-09-19T03:03:15.860683+00:00",
+      "stale": false,
+      "from_cache": false,
+      "error": null
+    },
+    "all_unverified": true,
+    "preserves_attribution": true,
+    "preserves_original_links": true
+  },
+  "second_read": {
+    "http_status": 200,
+    "count": 17,
+    "from_cache": true
+  },
+  "invalid_keyword_http_status": 422,
+  "news_content_saved": false,
+  "public_deployment": false
+}

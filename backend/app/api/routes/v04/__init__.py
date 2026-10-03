@@ -1,4 +1,5 @@
-"""v0.4 Agent foundation API."""
+"""Backward-compatible foundation endpoints for the current local workbench."""
+from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -10,11 +11,13 @@ from app.agent_core.boundaries import (
     workspace_context,
 )
 from app.agent_core.langchain_adapter import framework_status
+from app.agent_core.embeddings import retrieval_status
 from app.agent_core.rag_service import answer_question, index_source, search_knowledge
 from app.agent_core.tools import execute_tool, list_tools
 from app.db.session import get_db
-from app.models.knowledge_base import KnowledgeBase
+from app.models.knowledge_base import KnowledgeBase, KnowledgeChunk
 from app.models.workspace import Workspace
+from app.schemas.evidence import RequiredFacts
 
 router = APIRouter(prefix="/v04", tags=["v0.4-agent-foundation"])
 
@@ -39,11 +42,13 @@ class RagSearchRequest(BaseModel):
     knowledge_base_id: int | None = None
     top_k: int = Field(5, ge=1, le=12)
     min_score: float = Field(0.08, ge=0, le=1)
+    retrieval_mode: Literal["lexical", "semantic", "hybrid"] | None = None
 
 
 class RagAnswerRequest(RagSearchRequest):
     provider: str = "local"
     model: str = ""
+    required_facts: RequiredFacts = Field(default_factory=list)
 
 
 class ToolExecuteRequest(BaseModel):
@@ -57,46 +62,74 @@ class ToolExecuteRequest(BaseModel):
 def architecture(db: Session = Depends(get_db)):
     workspace = get_default_workspace(db)
     knowledge_base = get_knowledge_base_or_default(db, workspace_context(db, workspace.id))
+    retrieval = retrieval_status()
+    mode = retrieval.get("mode")
+    dimensions = set()
+    if mode in {"semantic", "hybrid"}:
+        dimensions = {chunk.embedding_dim for chunk in db.query(KnowledgeChunk).filter(
+            KnowledgeChunk.workspace_id == workspace.id,
+            KnowledgeChunk.knowledge_base_id == knowledge_base.id,
+            KnowledgeChunk.embedding_provider == retrieval.get("embedding_provider"),
+            KnowledgeChunk.embedding_model == retrieval.get("embedding_model"),
+            KnowledgeChunk.embedding_dim > 0,
+        ).all() if (chunk.metadata_json or {}).get("index_fingerprint") == retrieval.get("index_fingerprint")}
+    strategy_names = {
+        "semantic": "语义检索（已配置）" if retrieval.get("configured") else "语义检索（依赖不完整）",
+        "hybrid": "混合检索：BM25 + 向量 + RRF（已配置）" if retrieval.get("configured") else "混合检索（依赖不完整）",
+        "lexical": "词项检索演示", "invalid": "检索配置错误",
+    }
+    from app.saas.context import is_saas_mode
+    saas = is_saas_mode()
+    capabilities = list_capabilities()
+    for capability in capabilities:
+        if capability["name"] == "source_read":
+            capability["data_scope"] = "组织独立业务库；索引和检索继续按知识库范围过滤。" if saas else "本地共享素材表；知识库索引和检索按 workspace_id + knowledge_base_id 过滤。"
+            capability["limitations"] = ["不读取本机任意文件", "登录会话与成员角色校验" if saas else "本地单用户功能，未实现身份认证和用户授权"]
     return {
-        "version": "v0.4-foundation",
+        "version": "v0.7-saas-pilot" if saas else "v0.6-local-workbench",
         "product_boundary": {
             "product": "AI 内容增长 Agent",
-            "primary_scenario": "把素材、项目和实践经验转成可审核的内容资产。",
+            "primary_scenario": "资料导入 → 证据检索 → 引用式草稿 → 人工审核 → 导出内容。",
             "in_scope": [
-                "素材库 RAG 检索",
-                "内容生成前的证据引用",
-                "Agent 步骤记录和人工审核",
-                "多模型 OpenAI-compatible 调用",
+                "文本和 Markdown 入库、去重、更新与索引重建",
+                "可选语义检索、BM25与向量RRF融合、明确标记的词项演示",
+                "LangGraph 工作流、SQL 节点检查点和显式重试",
+                "证据不足拒答、引用 ID 检查和人工审核状态",
+                "OpenAI-compatible 模型接口与明确标记的本地规则演示",
             ],
             "out_of_scope": [
                 "自动发布到外部平台",
                 "读取本机任意文件",
                 "访问浏览器 Cookie、账号密码或外部密钥",
                 "跨 workspace 混用知识库数据",
+                "邮件验证、密码找回和多因素认证" if saas else "登录身份认证与角色授权",
+                "分布式 worker 与多进程任务调度",
             ],
         },
         "data_isolation": {
             "default_workspace_id": workspace.id,
             "default_knowledge_base_id": knowledge_base.id,
-            "rule": "v0.4 RAG 数据必须带 workspace_id 和 knowledge_base_id；检索和回答只能在请求指定边界内执行。",
-            "tables": ["workspaces", "knowledge_bases", "knowledge_documents", "knowledge_chunks"],
-            "legacy_tables": "sources/topics/drafts/cards 暂不强改 schema；RAG 通过 source_id 只读接入素材库。",
+            "rule": "服务端登录会话和组织成员关系决定独立数据库与向量目录；修改 workspace_id 不能切换组织。" if saas else "本地单用户应用。RAG 使用 workspace_id + knowledge_base_id 过滤资料范围；这些可由请求指定的 ID 不构成用户身份或访问授权。",
+            "tables": ["workspaces", "knowledge_bases", "knowledge_documents", "knowledge_chunks", "agent_runs", "agent_steps"],
+            "legacy_tables": "sources 保存原始素材；topics/drafts/cards 保存内容成果。知识库更新会重建索引，删除文档保留旧素材记录。",
         },
         "retrieval_strategy": {
-            "name": "local_hybrid_v1",
-            "embedding_provider": "local_hash",
-            "embedding_model": "local-hash-embedding-v1",
-            "embedding_dim": 128,
-            "scoring": "lexical overlap + local hash vector cosine",
-            "limitation": "当前是离线开发检索底座，不等同于生产级外部 embedding/vector database。",
+            "name": strategy_names.get(mode, "检索状态未知"),
+            "embedding_provider": retrieval.get("embedding_provider") or "未使用",
+            "embedding_model": retrieval.get("embedding_model") or "未使用",
+            # Zero means unknown/not applicable; never invent dimensions from a model name.
+            "embedding_dim": next(iter(dimensions)) if len(dimensions) == 1 else 0,
+            "scoring": "BM25 + Qdrant余弦双路召回，RRF排序，独立证据门控" if mode == "hybrid" else "真实 Embedding + Qdrant 本地余弦检索" if mode == "semantic" else (
+                "词项重叠评分；不生成向量" if mode == "lexical" else "配置无效，检索不会静默降级"),
+            "limitation": " ".join(retrieval.get("limitations") or []) + " 页面读取配置与已存索引元数据，不执行实时检索验收。",
         },
-        "capabilities": list_capabilities(),
+        "capabilities": capabilities,
         "tools": list_tools(),
         "framework_status": framework_status(),
         "workflow_boundary": {
-            "current": "现有 content_growth_agent 保持线性 v0.3 流程。",
-            "v04_extension": "新增 RAG 和工具白名单作为能力层；LangGraph 只作为后续分支工作流入口。",
-            "async_boundary": "当前仍使用 FastAPI BackgroundTasks；真正任务队列建议下一阶段引入 Redis + Celery/RQ/ARQ。",
+            "current": "LangGraph 实际执行检索、生成、评估与至多一次规则修订分支，最后进入 awaiting_review。人工通过或退回记录为 approved / rejected。",
+            "v04_extension": "AgentRun / AgentStep 保存 SQL 节点检查点。失败后显式重试复用已完成步骤；人工审核是数据库状态，不是 LangGraph 原生 interrupt/checkpointer。",
+            "async_boundary": "单进程后台任务携带服务端组织上下文；重启后首次访问组织时标记中断任务以便人工重试。无分布式队列。" if saas else "FastAPI BackgroundTasks 在单进程内执行；启动时标记中断任务供人工重试。没有分布式 worker、持久化消息队列或登录身份认证；本地 Qdrant 也要求单进程。",
         },
     }
 
@@ -180,8 +213,11 @@ def search_endpoint(body: RagSearchRequest, db: Session = Depends(get_db)):
             knowledge_base_id=body.knowledge_base_id,
             top_k=body.top_k,
             min_score=body.min_score,
+            retrieval_mode=body.retrieval_mode,
         )
-        return {"items": [item.to_dict() for item in hits], "total": len(hits)}
+        status = retrieval_status(body.retrieval_mode)
+        return {"items": [item.to_dict() for item in hits], "total": len(hits),
+                "strategy": status.get("strategy"), "retrieval": status}
     except PermissionError as exc:
         raise HTTPException(403, str(exc))
     except ValueError as exc:
@@ -200,6 +236,8 @@ def answer_endpoint(body: RagAnswerRequest, db: Session = Depends(get_db)):
             provider=body.provider,
             model=body.model,
             top_k=body.top_k,
+            retrieval_mode=body.retrieval_mode,
+            required_facts=body.required_facts,
         )
     except PermissionError as exc:
         raise HTTPException(403, str(exc))

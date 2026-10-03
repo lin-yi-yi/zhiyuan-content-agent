@@ -1,0 +1,1443 @@
+{
+  "dataset_id": "content-evidence-demo-v1",
+  "document_ids": {
+    "evidence-policy": 1,
+    "review-policy": 2,
+    "metrics-policy": 3,
+    "recovery-policy": 4
+  },
+  "dataset_label": "人工编写的内容工作流演示语料与问题，非生产效果",
+  "sample_count": 12,
+  "top_k": 3,
+  "answerable_count": 8,
+  "refusal_case_count": 4,
+  "checked_citation_count": 9,
+  "adopted_evidence_count": 9,
+  "retrieval": {
+    "mode": "semantic",
+    "configured": true,
+    "semantic_enabled": true,
+    "embedding_provider": "fastembed",
+    "embedding_model": "BAAI/bge-small-zh-v1.5",
+    "vector_store": "qdrant_local",
+    "index_fingerprint": "62a6f67a13376506",
+    "runtime_verified": false,
+    "missing_dependencies": [],
+    "semantic_min_score": 0.55,
+    "limitations": [
+      "配置检查不等于模型已下载或语义检索已验证。",
+      "单进程本地 Qdrant；多进程部署需改用独立向量服务。",
+      "阈值需用自己的标注问题校准，分数不是答案正确概率。"
+    ]
+  },
+  "metrics": {
+    "recall_at_k": 1.0,
+    "chunk_recall_at_k": null,
+    "evidence_precision_at_k": 0.3333,
+    "refusal_accuracy": 1.0,
+    "candidate_precision_at_k": 0.3333,
+    "candidate_recall_at_1": 0.875,
+    "mean_reciprocal_rank": 0.9375,
+    "answer_evidence_precision": 0.7778,
+    "answer_evidence_recall": 0.875,
+    "answerable_acceptance_rate": 0.875,
+    "citation_validity_rate": 1.0,
+    "mean_latency_ms": 85.9833
+  },
+  "cases": [
+    {
+      "question": "技术文章的产品能力应该用什么来源证明？",
+      "should_refuse": false,
+      "refused": false,
+      "refusal_reason": "",
+      "recall_at_k": 1.0,
+      "chunk_recall_at_k": null,
+      "evidence_precision_at_k": 0.3333333333333333,
+      "candidate_precision_at_k": 0.3333333333333333,
+      "candidate_recall_at_1": 1.0,
+      "reciprocal_rank": 1.0,
+      "answer_evidence_precision": 1.0,
+      "answer_evidence_recall": 1.0,
+      "candidate_count": 3,
+      "adopted_evidence_count": 1,
+      "false_refusal": false,
+      "citation_ids_valid": true,
+      "retrieved_document_ids": [
+        1,
+        2,
+        3
+      ],
+      "retrieved_chunk_ids": [
+        1,
+        2,
+        3
+      ],
+      "latency_ms": 971.4,
+      "retrieval_candidates": [
+        {
+          "chunk_id": 1,
+          "document_id": 1,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 1,
+          "title": "演示：技术内容来源与引用规则",
+          "source_uri": "demo://content/evidence-policy",
+          "content": "# 技术内容来源与引用规则（演示资料）\n技术文章中的产品能力、API参数和版本信息必须给出可追溯的原始出处。优先采用官方文档、项目代码和可重复的运行结果。社区帖子可以提供线索，但不能直接当作能力验证。\n引用需要保存文档标题、来源地址、抓取或记录日期，以及所引用的正文片段。检索结果与问题无关时，应明确提示证据不足，并建议补充具体版本的官方资料。内容生成结果发布前必须人工核验。",
+          "score": 0.7631,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 1,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.7631
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 2,
+          "document_id": 2,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 2,
+          "title": "演示：发布前人工审核流程",
+          "source_uri": "demo://content/review-policy",
+          "content": "# 发布前人工审核流程（演示资料）\n每份内容草稿生成后进入待审核状态，审核人员检查事实引用、个人信息、措辞和版权来源。审核结果可以是通过或退回修改，退回时必须记录原因。\n通过审核仅代表允许导出发布包，不代表文章已经发布到外部平台。本项目不持有社交平台账号，不自动发文。需要由使用者在平台上完成发布，并手动登记发布时间与链接。",
+          "score": 0.495,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 2,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.495
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 3,
+          "document_id": 3,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 3,
+          "title": "演示：内容表现统计口径",
+          "source_uri": "demo://content/metrics-policy",
+          "content": "# 内容表现统计口径（演示资料）\n每条已发布内容记录浏览量、点赞数、收藏数和评论数。收藏率定义为收藏数除以浏览量。当浏览量为零时，收藏率记为缺失，不应当显示为零或除以零。\n周报只比较同一平台、同一统计窗口的记录，并注明样本数量。人工录入的数据需要注明采集时间。小样本相关性不能证明某个提示词或模板必然带来增长，也不能据此承诺收入。",
+          "score": 0.4792,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 3,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.4792
+            },
+            "evidence_threshold": 0.55
+          }
+        }
+      ],
+      "citations": [
+        {
+          "chunk_id": 1,
+          "document_id": 1,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 1,
+          "title": "演示：技术内容来源与引用规则",
+          "source_uri": "demo://content/evidence-policy",
+          "content": "# 技术内容来源与引用规则（演示资料）\n技术文章中的产品能力、API参数和版本信息必须给出可追溯的原始出处。优先采用官方文档、项目代码和可重复的运行结果。社区帖子可以提供线索，但不能直接当作能力验证。\n引用需要保存文档标题、来源地址、抓取或记录日期，以及所引用的正文片段。检索结果与问题无关时，应明确提示证据不足，并建议补充具体版本的官方资料。内容生成结果发布前必须人工核验。",
+          "score": 0.7631,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 1,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.7631
+            },
+            "evidence_threshold": 0.55
+          }
+        }
+      ]
+    },
+    {
+      "question": "没有相关资料时应该怎么回答？",
+      "should_refuse": false,
+      "refused": true,
+      "refusal_reason": "insufficient_evidence",
+      "recall_at_k": 1.0,
+      "chunk_recall_at_k": null,
+      "evidence_precision_at_k": 0.3333333333333333,
+      "candidate_precision_at_k": 0.3333333333333333,
+      "candidate_recall_at_1": 0.0,
+      "reciprocal_rank": 0.5,
+      "answer_evidence_precision": null,
+      "answer_evidence_recall": 0.0,
+      "candidate_count": 3,
+      "adopted_evidence_count": 0,
+      "false_refusal": true,
+      "citation_ids_valid": null,
+      "retrieved_document_ids": [
+        1,
+        2,
+        3
+      ],
+      "retrieved_chunk_ids": [
+        1,
+        2,
+        3
+      ],
+      "latency_ms": 4.9,
+      "retrieval_candidates": [
+        {
+          "chunk_id": 2,
+          "document_id": 2,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 2,
+          "title": "演示：发布前人工审核流程",
+          "source_uri": "demo://content/review-policy",
+          "content": "# 发布前人工审核流程（演示资料）\n每份内容草稿生成后进入待审核状态，审核人员检查事实引用、个人信息、措辞和版权来源。审核结果可以是通过或退回修改，退回时必须记录原因。\n通过审核仅代表允许导出发布包，不代表文章已经发布到外部平台。本项目不持有社交平台账号，不自动发文。需要由使用者在平台上完成发布，并手动登记发布时间与链接。",
+          "score": 0.5021,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 2,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.5021
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 1,
+          "document_id": 1,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 1,
+          "title": "演示：技术内容来源与引用规则",
+          "source_uri": "demo://content/evidence-policy",
+          "content": "# 技术内容来源与引用规则（演示资料）\n技术文章中的产品能力、API参数和版本信息必须给出可追溯的原始出处。优先采用官方文档、项目代码和可重复的运行结果。社区帖子可以提供线索，但不能直接当作能力验证。\n引用需要保存文档标题、来源地址、抓取或记录日期，以及所引用的正文片段。检索结果与问题无关时，应明确提示证据不足，并建议补充具体版本的官方资料。内容生成结果发布前必须人工核验。",
+          "score": 0.5011,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 1,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.5011
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 3,
+          "document_id": 3,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 3,
+          "title": "演示：内容表现统计口径",
+          "source_uri": "demo://content/metrics-policy",
+          "content": "# 内容表现统计口径（演示资料）\n每条已发布内容记录浏览量、点赞数、收藏数和评论数。收藏率定义为收藏数除以浏览量。当浏览量为零时，收藏率记为缺失，不应当显示为零或除以零。\n周报只比较同一平台、同一统计窗口的记录，并注明样本数量。人工录入的数据需要注明采集时间。小样本相关性不能证明某个提示词或模板必然带来增长，也不能据此承诺收入。",
+          "score": 0.4888,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 3,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.4888
+            },
+            "evidence_threshold": 0.55
+          }
+        }
+      ],
+      "citations": []
+    },
+    {
+      "question": "草稿审核通过后会自动发布到外部平台吗？",
+      "should_refuse": false,
+      "refused": false,
+      "refusal_reason": "",
+      "recall_at_k": 1.0,
+      "chunk_recall_at_k": null,
+      "evidence_precision_at_k": 0.3333333333333333,
+      "candidate_precision_at_k": 0.3333333333333333,
+      "candidate_recall_at_1": 1.0,
+      "reciprocal_rank": 1.0,
+      "answer_evidence_precision": 1.0,
+      "answer_evidence_recall": 1.0,
+      "candidate_count": 3,
+      "adopted_evidence_count": 1,
+      "false_refusal": false,
+      "citation_ids_valid": true,
+      "retrieved_document_ids": [
+        1,
+        2,
+        3
+      ],
+      "retrieved_chunk_ids": [
+        1,
+        2,
+        3
+      ],
+      "latency_ms": 6.2,
+      "retrieval_candidates": [
+        {
+          "chunk_id": 2,
+          "document_id": 2,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 2,
+          "title": "演示：发布前人工审核流程",
+          "source_uri": "demo://content/review-policy",
+          "content": "# 发布前人工审核流程（演示资料）\n每份内容草稿生成后进入待审核状态，审核人员检查事实引用、个人信息、措辞和版权来源。审核结果可以是通过或退回修改，退回时必须记录原因。\n通过审核仅代表允许导出发布包，不代表文章已经发布到外部平台。本项目不持有社交平台账号，不自动发文。需要由使用者在平台上完成发布，并手动登记发布时间与链接。",
+          "score": 0.7542,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 2,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.7542
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 1,
+          "document_id": 1,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 1,
+          "title": "演示：技术内容来源与引用规则",
+          "source_uri": "demo://content/evidence-policy",
+          "content": "# 技术内容来源与引用规则（演示资料）\n技术文章中的产品能力、API参数和版本信息必须给出可追溯的原始出处。优先采用官方文档、项目代码和可重复的运行结果。社区帖子可以提供线索，但不能直接当作能力验证。\n引用需要保存文档标题、来源地址、抓取或记录日期，以及所引用的正文片段。检索结果与问题无关时，应明确提示证据不足，并建议补充具体版本的官方资料。内容生成结果发布前必须人工核验。",
+          "score": 0.4924,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 1,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.4924
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 3,
+          "document_id": 3,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 3,
+          "title": "演示：内容表现统计口径",
+          "source_uri": "demo://content/metrics-policy",
+          "content": "# 内容表现统计口径（演示资料）\n每条已发布内容记录浏览量、点赞数、收藏数和评论数。收藏率定义为收藏数除以浏览量。当浏览量为零时，收藏率记为缺失，不应当显示为零或除以零。\n周报只比较同一平台、同一统计窗口的记录，并注明样本数量。人工录入的数据需要注明采集时间。小样本相关性不能证明某个提示词或模板必然带来增长，也不能据此承诺收入。",
+          "score": 0.4421,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 3,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.4421
+            },
+            "evidence_threshold": 0.55
+          }
+        }
+      ],
+      "citations": [
+        {
+          "chunk_id": 2,
+          "document_id": 2,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 2,
+          "title": "演示：发布前人工审核流程",
+          "source_uri": "demo://content/review-policy",
+          "content": "# 发布前人工审核流程（演示资料）\n每份内容草稿生成后进入待审核状态，审核人员检查事实引用、个人信息、措辞和版权来源。审核结果可以是通过或退回修改，退回时必须记录原因。\n通过审核仅代表允许导出发布包，不代表文章已经发布到外部平台。本项目不持有社交平台账号，不自动发文。需要由使用者在平台上完成发布，并手动登记发布时间与链接。",
+          "score": 0.7542,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 2,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.7542
+            },
+            "evidence_threshold": 0.55
+          }
+        }
+      ]
+    },
+    {
+      "question": "审核人员退回修改时需要记录什么？",
+      "should_refuse": false,
+      "refused": false,
+      "refusal_reason": "",
+      "recall_at_k": 1.0,
+      "chunk_recall_at_k": null,
+      "evidence_precision_at_k": 0.3333333333333333,
+      "candidate_precision_at_k": 0.3333333333333333,
+      "candidate_recall_at_1": 1.0,
+      "reciprocal_rank": 1.0,
+      "answer_evidence_precision": 0.5,
+      "answer_evidence_recall": 1.0,
+      "candidate_count": 3,
+      "adopted_evidence_count": 2,
+      "false_refusal": false,
+      "citation_ids_valid": true,
+      "retrieved_document_ids": [
+        2,
+        3,
+        4
+      ],
+      "retrieved_chunk_ids": [
+        2,
+        3,
+        4
+      ],
+      "latency_ms": 5.4,
+      "retrieval_candidates": [
+        {
+          "chunk_id": 2,
+          "document_id": 2,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 2,
+          "title": "演示：发布前人工审核流程",
+          "source_uri": "demo://content/review-policy",
+          "content": "# 发布前人工审核流程（演示资料）\n每份内容草稿生成后进入待审核状态，审核人员检查事实引用、个人信息、措辞和版权来源。审核结果可以是通过或退回修改，退回时必须记录原因。\n通过审核仅代表允许导出发布包，不代表文章已经发布到外部平台。本项目不持有社交平台账号，不自动发文。需要由使用者在平台上完成发布，并手动登记发布时间与链接。",
+          "score": 0.6494,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 2,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.6494
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 4,
+          "document_id": 4,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 4,
+          "title": "演示：模型请求失败与任务恢复",
+          "source_uri": "demo://content/recovery-policy",
+          "content": "# 模型请求失败与任务恢复（演示资料）\n外部模型服务返回超时或限流时，记录失败步骤、错误类别和尝试次数。只对可恢复的网络故障进行有限重试，认证失败需要使用者检查配置。\n重试前确认上一次步骤是否已经保存结果，避免重复生成相同内容或重复写入发布记录。任务应保留输入摘要、每步状态和可追溯的输出；日志不得包含API密钥。进程退出后的恢复需要持久化检查点，不能只依赖内存任务。",
+          "score": 0.6002,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 4,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.6002
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 3,
+          "document_id": 3,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 3,
+          "title": "演示：内容表现统计口径",
+          "source_uri": "demo://content/metrics-policy",
+          "content": "# 内容表现统计口径（演示资料）\n每条已发布内容记录浏览量、点赞数、收藏数和评论数。收藏率定义为收藏数除以浏览量。当浏览量为零时，收藏率记为缺失，不应当显示为零或除以零。\n周报只比较同一平台、同一统计窗口的记录，并注明样本数量。人工录入的数据需要注明采集时间。小样本相关性不能证明某个提示词或模板必然带来增长，也不能据此承诺收入。",
+          "score": 0.4812,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 3,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.4812
+            },
+            "evidence_threshold": 0.55
+          }
+        }
+      ],
+      "citations": [
+        {
+          "chunk_id": 2,
+          "document_id": 2,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 2,
+          "title": "演示：发布前人工审核流程",
+          "source_uri": "demo://content/review-policy",
+          "content": "# 发布前人工审核流程（演示资料）\n每份内容草稿生成后进入待审核状态，审核人员检查事实引用、个人信息、措辞和版权来源。审核结果可以是通过或退回修改，退回时必须记录原因。\n通过审核仅代表允许导出发布包，不代表文章已经发布到外部平台。本项目不持有社交平台账号，不自动发文。需要由使用者在平台上完成发布，并手动登记发布时间与链接。",
+          "score": 0.6494,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 2,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.6494
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 4,
+          "document_id": 4,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 4,
+          "title": "演示：模型请求失败与任务恢复",
+          "source_uri": "demo://content/recovery-policy",
+          "content": "# 模型请求失败与任务恢复（演示资料）\n外部模型服务返回超时或限流时，记录失败步骤、错误类别和尝试次数。只对可恢复的网络故障进行有限重试，认证失败需要使用者检查配置。\n重试前确认上一次步骤是否已经保存结果，避免重复生成相同内容或重复写入发布记录。任务应保留输入摘要、每步状态和可追溯的输出；日志不得包含API密钥。进程退出后的恢复需要持久化检查点，不能只依赖内存任务。",
+          "score": 0.6002,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 4,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.6002
+            },
+            "evidence_threshold": 0.55
+          }
+        }
+      ]
+    },
+    {
+      "question": "收藏率怎么算，浏览量为零怎么办？",
+      "should_refuse": false,
+      "refused": false,
+      "refusal_reason": "",
+      "recall_at_k": 1.0,
+      "chunk_recall_at_k": null,
+      "evidence_precision_at_k": 0.3333333333333333,
+      "candidate_precision_at_k": 0.3333333333333333,
+      "candidate_recall_at_1": 1.0,
+      "reciprocal_rank": 1.0,
+      "answer_evidence_precision": 1.0,
+      "answer_evidence_recall": 1.0,
+      "candidate_count": 3,
+      "adopted_evidence_count": 1,
+      "false_refusal": false,
+      "citation_ids_valid": true,
+      "retrieved_document_ids": [
+        1,
+        2,
+        3
+      ],
+      "retrieved_chunk_ids": [
+        1,
+        2,
+        3
+      ],
+      "latency_ms": 5.5,
+      "retrieval_candidates": [
+        {
+          "chunk_id": 3,
+          "document_id": 3,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 3,
+          "title": "演示：内容表现统计口径",
+          "source_uri": "demo://content/metrics-policy",
+          "content": "# 内容表现统计口径（演示资料）\n每条已发布内容记录浏览量、点赞数、收藏数和评论数。收藏率定义为收藏数除以浏览量。当浏览量为零时，收藏率记为缺失，不应当显示为零或除以零。\n周报只比较同一平台、同一统计窗口的记录，并注明样本数量。人工录入的数据需要注明采集时间。小样本相关性不能证明某个提示词或模板必然带来增长，也不能据此承诺收入。",
+          "score": 0.7524,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 3,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.7524
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 1,
+          "document_id": 1,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 1,
+          "title": "演示：技术内容来源与引用规则",
+          "source_uri": "demo://content/evidence-policy",
+          "content": "# 技术内容来源与引用规则（演示资料）\n技术文章中的产品能力、API参数和版本信息必须给出可追溯的原始出处。优先采用官方文档、项目代码和可重复的运行结果。社区帖子可以提供线索，但不能直接当作能力验证。\n引用需要保存文档标题、来源地址、抓取或记录日期，以及所引用的正文片段。检索结果与问题无关时，应明确提示证据不足，并建议补充具体版本的官方资料。内容生成结果发布前必须人工核验。",
+          "score": 0.4356,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 1,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.4356
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 2,
+          "document_id": 2,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 2,
+          "title": "演示：发布前人工审核流程",
+          "source_uri": "demo://content/review-policy",
+          "content": "# 发布前人工审核流程（演示资料）\n每份内容草稿生成后进入待审核状态，审核人员检查事实引用、个人信息、措辞和版权来源。审核结果可以是通过或退回修改，退回时必须记录原因。\n通过审核仅代表允许导出发布包，不代表文章已经发布到外部平台。本项目不持有社交平台账号，不自动发文。需要由使用者在平台上完成发布，并手动登记发布时间与链接。",
+          "score": 0.4312,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 2,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.4312
+            },
+            "evidence_threshold": 0.55
+          }
+        }
+      ],
+      "citations": [
+        {
+          "chunk_id": 3,
+          "document_id": 3,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 3,
+          "title": "演示：内容表现统计口径",
+          "source_uri": "demo://content/metrics-policy",
+          "content": "# 内容表现统计口径（演示资料）\n每条已发布内容记录浏览量、点赞数、收藏数和评论数。收藏率定义为收藏数除以浏览量。当浏览量为零时，收藏率记为缺失，不应当显示为零或除以零。\n周报只比较同一平台、同一统计窗口的记录，并注明样本数量。人工录入的数据需要注明采集时间。小样本相关性不能证明某个提示词或模板必然带来增长，也不能据此承诺收入。",
+          "score": 0.7524,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 3,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.7524
+            },
+            "evidence_threshold": 0.55
+          }
+        }
+      ]
+    },
+    {
+      "question": "周报比较内容表现需要统一哪些统计条件？",
+      "should_refuse": false,
+      "refused": false,
+      "refusal_reason": "",
+      "recall_at_k": 1.0,
+      "chunk_recall_at_k": null,
+      "evidence_precision_at_k": 0.3333333333333333,
+      "candidate_precision_at_k": 0.3333333333333333,
+      "candidate_recall_at_1": 1.0,
+      "reciprocal_rank": 1.0,
+      "answer_evidence_precision": 1.0,
+      "answer_evidence_recall": 1.0,
+      "candidate_count": 3,
+      "adopted_evidence_count": 1,
+      "false_refusal": false,
+      "citation_ids_valid": true,
+      "retrieved_document_ids": [
+        1,
+        2,
+        3
+      ],
+      "retrieved_chunk_ids": [
+        1,
+        2,
+        3
+      ],
+      "latency_ms": 6.2,
+      "retrieval_candidates": [
+        {
+          "chunk_id": 3,
+          "document_id": 3,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 3,
+          "title": "演示：内容表现统计口径",
+          "source_uri": "demo://content/metrics-policy",
+          "content": "# 内容表现统计口径（演示资料）\n每条已发布内容记录浏览量、点赞数、收藏数和评论数。收藏率定义为收藏数除以浏览量。当浏览量为零时，收藏率记为缺失，不应当显示为零或除以零。\n周报只比较同一平台、同一统计窗口的记录，并注明样本数量。人工录入的数据需要注明采集时间。小样本相关性不能证明某个提示词或模板必然带来增长，也不能据此承诺收入。",
+          "score": 0.628,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 3,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.628
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 2,
+          "document_id": 2,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 2,
+          "title": "演示：发布前人工审核流程",
+          "source_uri": "demo://content/review-policy",
+          "content": "# 发布前人工审核流程（演示资料）\n每份内容草稿生成后进入待审核状态，审核人员检查事实引用、个人信息、措辞和版权来源。审核结果可以是通过或退回修改，退回时必须记录原因。\n通过审核仅代表允许导出发布包，不代表文章已经发布到外部平台。本项目不持有社交平台账号，不自动发文。需要由使用者在平台上完成发布，并手动登记发布时间与链接。",
+          "score": 0.4785,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 2,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.4785
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 1,
+          "document_id": 1,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 1,
+          "title": "演示：技术内容来源与引用规则",
+          "source_uri": "demo://content/evidence-policy",
+          "content": "# 技术内容来源与引用规则（演示资料）\n技术文章中的产品能力、API参数和版本信息必须给出可追溯的原始出处。优先采用官方文档、项目代码和可重复的运行结果。社区帖子可以提供线索，但不能直接当作能力验证。\n引用需要保存文档标题、来源地址、抓取或记录日期，以及所引用的正文片段。检索结果与问题无关时，应明确提示证据不足，并建议补充具体版本的官方资料。内容生成结果发布前必须人工核验。",
+          "score": 0.4654,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 1,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.4654
+            },
+            "evidence_threshold": 0.55
+          }
+        }
+      ],
+      "citations": [
+        {
+          "chunk_id": 3,
+          "document_id": 3,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 3,
+          "title": "演示：内容表现统计口径",
+          "source_uri": "demo://content/metrics-policy",
+          "content": "# 内容表现统计口径（演示资料）\n每条已发布内容记录浏览量、点赞数、收藏数和评论数。收藏率定义为收藏数除以浏览量。当浏览量为零时，收藏率记为缺失，不应当显示为零或除以零。\n周报只比较同一平台、同一统计窗口的记录，并注明样本数量。人工录入的数据需要注明采集时间。小样本相关性不能证明某个提示词或模板必然带来增长，也不能据此承诺收入。",
+          "score": 0.628,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 3,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.628
+            },
+            "evidence_threshold": 0.55
+          }
+        }
+      ]
+    },
+    {
+      "question": "模型请求超时后为什么不能无限重试？",
+      "should_refuse": false,
+      "refused": false,
+      "refusal_reason": "",
+      "recall_at_k": 1.0,
+      "chunk_recall_at_k": null,
+      "evidence_precision_at_k": 0.3333333333333333,
+      "candidate_precision_at_k": 0.3333333333333333,
+      "candidate_recall_at_1": 1.0,
+      "reciprocal_rank": 1.0,
+      "answer_evidence_precision": 1.0,
+      "answer_evidence_recall": 1.0,
+      "candidate_count": 3,
+      "adopted_evidence_count": 1,
+      "false_refusal": false,
+      "citation_ids_valid": true,
+      "retrieved_document_ids": [
+        1,
+        2,
+        4
+      ],
+      "retrieved_chunk_ids": [
+        1,
+        2,
+        4
+      ],
+      "latency_ms": 6.2,
+      "retrieval_candidates": [
+        {
+          "chunk_id": 4,
+          "document_id": 4,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 4,
+          "title": "演示：模型请求失败与任务恢复",
+          "source_uri": "demo://content/recovery-policy",
+          "content": "# 模型请求失败与任务恢复（演示资料）\n外部模型服务返回超时或限流时，记录失败步骤、错误类别和尝试次数。只对可恢复的网络故障进行有限重试，认证失败需要使用者检查配置。\n重试前确认上一次步骤是否已经保存结果，避免重复生成相同内容或重复写入发布记录。任务应保留输入摘要、每步状态和可追溯的输出；日志不得包含API密钥。进程退出后的恢复需要持久化检查点，不能只依赖内存任务。",
+          "score": 0.7088,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 4,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.7088
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 2,
+          "document_id": 2,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 2,
+          "title": "演示：发布前人工审核流程",
+          "source_uri": "demo://content/review-policy",
+          "content": "# 发布前人工审核流程（演示资料）\n每份内容草稿生成后进入待审核状态，审核人员检查事实引用、个人信息、措辞和版权来源。审核结果可以是通过或退回修改，退回时必须记录原因。\n通过审核仅代表允许导出发布包，不代表文章已经发布到外部平台。本项目不持有社交平台账号，不自动发文。需要由使用者在平台上完成发布，并手动登记发布时间与链接。",
+          "score": 0.4995,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 2,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.4995
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 1,
+          "document_id": 1,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 1,
+          "title": "演示：技术内容来源与引用规则",
+          "source_uri": "demo://content/evidence-policy",
+          "content": "# 技术内容来源与引用规则（演示资料）\n技术文章中的产品能力、API参数和版本信息必须给出可追溯的原始出处。优先采用官方文档、项目代码和可重复的运行结果。社区帖子可以提供线索，但不能直接当作能力验证。\n引用需要保存文档标题、来源地址、抓取或记录日期，以及所引用的正文片段。检索结果与问题无关时，应明确提示证据不足，并建议补充具体版本的官方资料。内容生成结果发布前必须人工核验。",
+          "score": 0.4622,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 1,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.4622
+            },
+            "evidence_threshold": 0.55
+          }
+        }
+      ],
+      "citations": [
+        {
+          "chunk_id": 4,
+          "document_id": 4,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 4,
+          "title": "演示：模型请求失败与任务恢复",
+          "source_uri": "demo://content/recovery-policy",
+          "content": "# 模型请求失败与任务恢复（演示资料）\n外部模型服务返回超时或限流时，记录失败步骤、错误类别和尝试次数。只对可恢复的网络故障进行有限重试，认证失败需要使用者检查配置。\n重试前确认上一次步骤是否已经保存结果，避免重复生成相同内容或重复写入发布记录。任务应保留输入摘要、每步状态和可追溯的输出；日志不得包含API密钥。进程退出后的恢复需要持久化检查点，不能只依赖内存任务。",
+          "score": 0.7088,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 4,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.7088
+            },
+            "evidence_threshold": 0.55
+          }
+        }
+      ]
+    },
+    {
+      "question": "服务中断后如何避免重复写入记录？",
+      "should_refuse": false,
+      "refused": false,
+      "refusal_reason": "",
+      "recall_at_k": 1.0,
+      "chunk_recall_at_k": null,
+      "evidence_precision_at_k": 0.3333333333333333,
+      "candidate_precision_at_k": 0.3333333333333333,
+      "candidate_recall_at_1": 1.0,
+      "reciprocal_rank": 1.0,
+      "answer_evidence_precision": 0.5,
+      "answer_evidence_recall": 1.0,
+      "candidate_count": 3,
+      "adopted_evidence_count": 2,
+      "false_refusal": false,
+      "citation_ids_valid": true,
+      "retrieved_document_ids": [
+        1,
+        2,
+        4
+      ],
+      "retrieved_chunk_ids": [
+        1,
+        2,
+        4
+      ],
+      "latency_ms": 5.3,
+      "retrieval_candidates": [
+        {
+          "chunk_id": 4,
+          "document_id": 4,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 4,
+          "title": "演示：模型请求失败与任务恢复",
+          "source_uri": "demo://content/recovery-policy",
+          "content": "# 模型请求失败与任务恢复（演示资料）\n外部模型服务返回超时或限流时，记录失败步骤、错误类别和尝试次数。只对可恢复的网络故障进行有限重试，认证失败需要使用者检查配置。\n重试前确认上一次步骤是否已经保存结果，避免重复生成相同内容或重复写入发布记录。任务应保留输入摘要、每步状态和可追溯的输出；日志不得包含API密钥。进程退出后的恢复需要持久化检查点，不能只依赖内存任务。",
+          "score": 0.6794,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 4,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.6794
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 2,
+          "document_id": 2,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 2,
+          "title": "演示：发布前人工审核流程",
+          "source_uri": "demo://content/review-policy",
+          "content": "# 发布前人工审核流程（演示资料）\n每份内容草稿生成后进入待审核状态，审核人员检查事实引用、个人信息、措辞和版权来源。审核结果可以是通过或退回修改，退回时必须记录原因。\n通过审核仅代表允许导出发布包，不代表文章已经发布到外部平台。本项目不持有社交平台账号，不自动发文。需要由使用者在平台上完成发布，并手动登记发布时间与链接。",
+          "score": 0.5839,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 2,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.5839
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 1,
+          "document_id": 1,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 1,
+          "title": "演示：技术内容来源与引用规则",
+          "source_uri": "demo://content/evidence-policy",
+          "content": "# 技术内容来源与引用规则（演示资料）\n技术文章中的产品能力、API参数和版本信息必须给出可追溯的原始出处。优先采用官方文档、项目代码和可重复的运行结果。社区帖子可以提供线索，但不能直接当作能力验证。\n引用需要保存文档标题、来源地址、抓取或记录日期，以及所引用的正文片段。检索结果与问题无关时，应明确提示证据不足，并建议补充具体版本的官方资料。内容生成结果发布前必须人工核验。",
+          "score": 0.5015,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 1,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.5015
+            },
+            "evidence_threshold": 0.55
+          }
+        }
+      ],
+      "citations": [
+        {
+          "chunk_id": 4,
+          "document_id": 4,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 4,
+          "title": "演示：模型请求失败与任务恢复",
+          "source_uri": "demo://content/recovery-policy",
+          "content": "# 模型请求失败与任务恢复（演示资料）\n外部模型服务返回超时或限流时，记录失败步骤、错误类别和尝试次数。只对可恢复的网络故障进行有限重试，认证失败需要使用者检查配置。\n重试前确认上一次步骤是否已经保存结果，避免重复生成相同内容或重复写入发布记录。任务应保留输入摘要、每步状态和可追溯的输出；日志不得包含API密钥。进程退出后的恢复需要持久化检查点，不能只依赖内存任务。",
+          "score": 0.6794,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 4,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.6794
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 2,
+          "document_id": 2,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 2,
+          "title": "演示：发布前人工审核流程",
+          "source_uri": "demo://content/review-policy",
+          "content": "# 发布前人工审核流程（演示资料）\n每份内容草稿生成后进入待审核状态，审核人员检查事实引用、个人信息、措辞和版权来源。审核结果可以是通过或退回修改，退回时必须记录原因。\n通过审核仅代表允许导出发布包，不代表文章已经发布到外部平台。本项目不持有社交平台账号，不自动发文。需要由使用者在平台上完成发布，并手动登记发布时间与链接。",
+          "score": 0.5839,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 2,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.5839
+            },
+            "evidence_threshold": 0.55
+          }
+        }
+      ]
+    },
+    {
+      "question": "火星探测器采用什么轨道转移方案？",
+      "should_refuse": true,
+      "refused": true,
+      "refusal_reason": "insufficient_evidence",
+      "recall_at_k": null,
+      "chunk_recall_at_k": null,
+      "evidence_precision_at_k": null,
+      "candidate_precision_at_k": null,
+      "candidate_recall_at_1": null,
+      "reciprocal_rank": null,
+      "answer_evidence_precision": null,
+      "answer_evidence_recall": null,
+      "candidate_count": 3,
+      "adopted_evidence_count": 0,
+      "false_refusal": false,
+      "citation_ids_valid": null,
+      "retrieved_document_ids": [
+        1,
+        2,
+        4
+      ],
+      "retrieved_chunk_ids": [
+        1,
+        2,
+        4
+      ],
+      "latency_ms": 5.5,
+      "retrieval_candidates": [
+        {
+          "chunk_id": 1,
+          "document_id": 1,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 1,
+          "title": "演示：技术内容来源与引用规则",
+          "source_uri": "demo://content/evidence-policy",
+          "content": "# 技术内容来源与引用规则（演示资料）\n技术文章中的产品能力、API参数和版本信息必须给出可追溯的原始出处。优先采用官方文档、项目代码和可重复的运行结果。社区帖子可以提供线索，但不能直接当作能力验证。\n引用需要保存文档标题、来源地址、抓取或记录日期，以及所引用的正文片段。检索结果与问题无关时，应明确提示证据不足，并建议补充具体版本的官方资料。内容生成结果发布前必须人工核验。",
+          "score": 0.3991,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 1,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.3991
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 4,
+          "document_id": 4,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 4,
+          "title": "演示：模型请求失败与任务恢复",
+          "source_uri": "demo://content/recovery-policy",
+          "content": "# 模型请求失败与任务恢复（演示资料）\n外部模型服务返回超时或限流时，记录失败步骤、错误类别和尝试次数。只对可恢复的网络故障进行有限重试，认证失败需要使用者检查配置。\n重试前确认上一次步骤是否已经保存结果，避免重复生成相同内容或重复写入发布记录。任务应保留输入摘要、每步状态和可追溯的输出；日志不得包含API密钥。进程退出后的恢复需要持久化检查点，不能只依赖内存任务。",
+          "score": 0.3545,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 4,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.3545
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 2,
+          "document_id": 2,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 2,
+          "title": "演示：发布前人工审核流程",
+          "source_uri": "demo://content/review-policy",
+          "content": "# 发布前人工审核流程（演示资料）\n每份内容草稿生成后进入待审核状态，审核人员检查事实引用、个人信息、措辞和版权来源。审核结果可以是通过或退回修改，退回时必须记录原因。\n通过审核仅代表允许导出发布包，不代表文章已经发布到外部平台。本项目不持有社交平台账号，不自动发文。需要由使用者在平台上完成发布，并手动登记发布时间与链接。",
+          "score": 0.3144,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 2,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.3144
+            },
+            "evidence_threshold": 0.55
+          }
+        }
+      ],
+      "citations": []
+    },
+    {
+      "question": "深圳今天下午会下雨吗？",
+      "should_refuse": true,
+      "refused": true,
+      "refusal_reason": "insufficient_evidence",
+      "recall_at_k": null,
+      "chunk_recall_at_k": null,
+      "evidence_precision_at_k": null,
+      "candidate_precision_at_k": null,
+      "candidate_recall_at_1": null,
+      "reciprocal_rank": null,
+      "answer_evidence_precision": null,
+      "answer_evidence_recall": null,
+      "candidate_count": 3,
+      "adopted_evidence_count": 0,
+      "false_refusal": false,
+      "citation_ids_valid": null,
+      "retrieved_document_ids": [
+        1,
+        2,
+        3
+      ],
+      "retrieved_chunk_ids": [
+        1,
+        2,
+        3
+      ],
+      "latency_ms": 4.6,
+      "retrieval_candidates": [
+        {
+          "chunk_id": 2,
+          "document_id": 2,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 2,
+          "title": "演示：发布前人工审核流程",
+          "source_uri": "demo://content/review-policy",
+          "content": "# 发布前人工审核流程（演示资料）\n每份内容草稿生成后进入待审核状态，审核人员检查事实引用、个人信息、措辞和版权来源。审核结果可以是通过或退回修改，退回时必须记录原因。\n通过审核仅代表允许导出发布包，不代表文章已经发布到外部平台。本项目不持有社交平台账号，不自动发文。需要由使用者在平台上完成发布，并手动登记发布时间与链接。",
+          "score": 0.2172,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 2,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.2172
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 3,
+          "document_id": 3,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 3,
+          "title": "演示：内容表现统计口径",
+          "source_uri": "demo://content/metrics-policy",
+          "content": "# 内容表现统计口径（演示资料）\n每条已发布内容记录浏览量、点赞数、收藏数和评论数。收藏率定义为收藏数除以浏览量。当浏览量为零时，收藏率记为缺失，不应当显示为零或除以零。\n周报只比较同一平台、同一统计窗口的记录，并注明样本数量。人工录入的数据需要注明采集时间。小样本相关性不能证明某个提示词或模板必然带来增长，也不能据此承诺收入。",
+          "score": 0.215,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 3,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.215
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 1,
+          "document_id": 1,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 1,
+          "title": "演示：技术内容来源与引用规则",
+          "source_uri": "demo://content/evidence-policy",
+          "content": "# 技术内容来源与引用规则（演示资料）\n技术文章中的产品能力、API参数和版本信息必须给出可追溯的原始出处。优先采用官方文档、项目代码和可重复的运行结果。社区帖子可以提供线索，但不能直接当作能力验证。\n引用需要保存文档标题、来源地址、抓取或记录日期，以及所引用的正文片段。检索结果与问题无关时，应明确提示证据不足，并建议补充具体版本的官方资料。内容生成结果发布前必须人工核验。",
+          "score": 0.1519,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 1,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.1519
+            },
+            "evidence_threshold": 0.55
+          }
+        }
+      ],
+      "citations": []
+    },
+    {
+      "question": "人体胰岛素分泌的生理机制是什么？",
+      "should_refuse": true,
+      "refused": true,
+      "refusal_reason": "insufficient_evidence",
+      "recall_at_k": null,
+      "chunk_recall_at_k": null,
+      "evidence_precision_at_k": null,
+      "candidate_precision_at_k": null,
+      "candidate_recall_at_1": null,
+      "reciprocal_rank": null,
+      "answer_evidence_precision": null,
+      "answer_evidence_recall": null,
+      "candidate_count": 3,
+      "adopted_evidence_count": 0,
+      "false_refusal": false,
+      "citation_ids_valid": null,
+      "retrieved_document_ids": [
+        1,
+        2,
+        4
+      ],
+      "retrieved_chunk_ids": [
+        1,
+        2,
+        4
+      ],
+      "latency_ms": 5.3,
+      "retrieval_candidates": [
+        {
+          "chunk_id": 1,
+          "document_id": 1,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 1,
+          "title": "演示：技术内容来源与引用规则",
+          "source_uri": "demo://content/evidence-policy",
+          "content": "# 技术内容来源与引用规则（演示资料）\n技术文章中的产品能力、API参数和版本信息必须给出可追溯的原始出处。优先采用官方文档、项目代码和可重复的运行结果。社区帖子可以提供线索，但不能直接当作能力验证。\n引用需要保存文档标题、来源地址、抓取或记录日期，以及所引用的正文片段。检索结果与问题无关时，应明确提示证据不足，并建议补充具体版本的官方资料。内容生成结果发布前必须人工核验。",
+          "score": 0.3434,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 1,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.3434
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 4,
+          "document_id": 4,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 4,
+          "title": "演示：模型请求失败与任务恢复",
+          "source_uri": "demo://content/recovery-policy",
+          "content": "# 模型请求失败与任务恢复（演示资料）\n外部模型服务返回超时或限流时，记录失败步骤、错误类别和尝试次数。只对可恢复的网络故障进行有限重试，认证失败需要使用者检查配置。\n重试前确认上一次步骤是否已经保存结果，避免重复生成相同内容或重复写入发布记录。任务应保留输入摘要、每步状态和可追溯的输出；日志不得包含API密钥。进程退出后的恢复需要持久化检查点，不能只依赖内存任务。",
+          "score": 0.3223,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 4,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.3223
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 2,
+          "document_id": 2,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 2,
+          "title": "演示：发布前人工审核流程",
+          "source_uri": "demo://content/review-policy",
+          "content": "# 发布前人工审核流程（演示资料）\n每份内容草稿生成后进入待审核状态，审核人员检查事实引用、个人信息、措辞和版权来源。审核结果可以是通过或退回修改，退回时必须记录原因。\n通过审核仅代表允许导出发布包，不代表文章已经发布到外部平台。本项目不持有社交平台账号，不自动发文。需要由使用者在平台上完成发布，并手动登记发布时间与链接。",
+          "score": 0.3116,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 2,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.3116
+            },
+            "evidence_threshold": 0.55
+          }
+        }
+      ],
+      "citations": []
+    },
+    {
+      "question": "请给出西班牙海鲜饭的烹饪温度和时间。",
+      "should_refuse": true,
+      "refused": true,
+      "refusal_reason": "insufficient_evidence",
+      "recall_at_k": null,
+      "chunk_recall_at_k": null,
+      "evidence_precision_at_k": null,
+      "candidate_precision_at_k": null,
+      "candidate_recall_at_1": null,
+      "reciprocal_rank": null,
+      "answer_evidence_precision": null,
+      "answer_evidence_recall": null,
+      "candidate_count": 3,
+      "adopted_evidence_count": 0,
+      "false_refusal": false,
+      "citation_ids_valid": null,
+      "retrieved_document_ids": [
+        2,
+        3,
+        4
+      ],
+      "retrieved_chunk_ids": [
+        2,
+        3,
+        4
+      ],
+      "latency_ms": 5.3,
+      "retrieval_candidates": [
+        {
+          "chunk_id": 3,
+          "document_id": 3,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 3,
+          "title": "演示：内容表现统计口径",
+          "source_uri": "demo://content/metrics-policy",
+          "content": "# 内容表现统计口径（演示资料）\n每条已发布内容记录浏览量、点赞数、收藏数和评论数。收藏率定义为收藏数除以浏览量。当浏览量为零时，收藏率记为缺失，不应当显示为零或除以零。\n周报只比较同一平台、同一统计窗口的记录，并注明样本数量。人工录入的数据需要注明采集时间。小样本相关性不能证明某个提示词或模板必然带来增长，也不能据此承诺收入。",
+          "score": 0.332,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 3,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.332
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 4,
+          "document_id": 4,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 4,
+          "title": "演示：模型请求失败与任务恢复",
+          "source_uri": "demo://content/recovery-policy",
+          "content": "# 模型请求失败与任务恢复（演示资料）\n外部模型服务返回超时或限流时，记录失败步骤、错误类别和尝试次数。只对可恢复的网络故障进行有限重试，认证失败需要使用者检查配置。\n重试前确认上一次步骤是否已经保存结果，避免重复生成相同内容或重复写入发布记录。任务应保留输入摘要、每步状态和可追溯的输出；日志不得包含API密钥。进程退出后的恢复需要持久化检查点，不能只依赖内存任务。",
+          "score": 0.3302,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 4,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.3302
+            },
+            "evidence_threshold": 0.55
+          }
+        },
+        {
+          "chunk_id": 2,
+          "document_id": 2,
+          "knowledge_base_id": 1,
+          "workspace_id": 1,
+          "source_id": 2,
+          "title": "演示：发布前人工审核流程",
+          "source_uri": "demo://content/review-policy",
+          "content": "# 发布前人工审核流程（演示资料）\n每份内容草稿生成后进入待审核状态，审核人员检查事实引用、个人信息、措辞和版权来源。审核结果可以是通过或退回修改，退回时必须记录原因。\n通过审核仅代表允许导出发布包，不代表文章已经发布到外部平台。本项目不持有社交平台账号，不自动发文。需要由使用者在平台上完成发布，并手动登记发布时间与链接。",
+          "score": 0.2906,
+          "chunk_index": 0,
+          "metadata": {
+            "source_id": 2,
+            "index_fingerprint": "62a6f67a13376506",
+            "retrieval_mode": "semantic",
+            "scores": {
+              "strategy": "semantic_cosine",
+              "score": 0.2906
+            },
+            "evidence_threshold": 0.55
+          }
+        }
+      ],
+      "citations": []
+    }
+  ],
+  "metric_definitions": {
+    "recall_at_k": "可回答样本中，top-k候选包含的标注文档比例，按样本取均值。未先做证据阈值筛选。",
+    "candidate_recall_at_1": "可回答样本中，排名第一候选包含的标注文档比例，按样本取均值。",
+    "evidence_precision_at_k": "兼容旧字段，等于candidate_precision_at_k；是候选相关比例，不是答案采用证据精度。",
+    "answer_evidence_precision": "实际被回答引用且与标注相关的证据数 / 所有实际引用证据数；无引用返回null。",
+    "answer_evidence_recall": "可回答样本中，实际引用覆盖的标注文档比例，误拒按0计，按样本取均值。"
+  },
+  "limitations": [
+    "小样本检索评测；不代表真实用户或生产效果。",
+    "候选召回与答案采用证据分别统计，阈值未为演示集调整，误拒样本保留。",
+    "使用原文摘录回答，未测试生成模型质量。",
+    "引用有效率仅检查ID存在，证据相关性按人工标注计算，未自动验证蕴含关系。"
+  ]
+}

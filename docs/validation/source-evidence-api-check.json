@@ -1,0 +1,23 @@
+{
+  "checked_at": "2026-09-19T03:25:30.476162+00:00",
+  "sources": {
+    "aihot": {
+      "status": "ready",
+      "count": 2,
+      "from_cache": false,
+      "all_unverified": true
+    },
+    "github": {
+      "status": "ready",
+      "count": 2,
+      "from_cache": true,
+      "all_unverified": true
+    }
+  },
+  "retrieval": {
+    "mode": "semantic",
+    "embedding_provider": "fastembed",
+    "embedding_model": "BAAI/bge-small-zh-v1.5",
+    "vector_store": "qdrant_local"
+  }
+}

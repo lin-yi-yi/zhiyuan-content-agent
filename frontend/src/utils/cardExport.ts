@@ -261,7 +261,7 @@ function drawCard(
   const highlightVisible = styleConfig.showHighlight && Boolean(highlight);
   const highlightHeight = highlightVisible ? 112 : 0;
   const clusterGap = highlightVisible ? 24 : 0;
-  const estimatedComponentHeight = estimateComponentHeight(card, componentKey, styleConfig, isCover);
+  const estimatedComponentHeight = estimateComponentHeight(ctx, card, componentKey, styleConfig, isCover);
   const clusterHeight = Math.min(
     contentAreaHeight,
     Math.max(estimatedComponentHeight + highlightHeight + clusterGap, 150),
@@ -299,15 +299,40 @@ function drawCard(
   }
 }
 
-function estimateComponentHeight(card: Card, componentKey: string, styleConfig: CardStyleConfig, isCover: boolean) {
+function estimateComponentHeight(ctx: CanvasRenderingContext2D, card: Card, componentKey: string, styleConfig: CardStyleConfig, isCover: boolean) {
   const lineCount = Math.max(1, getBodyLines(card.body).length);
   if (styleConfig.bodyFlow !== 'points' && !['code_block', 'summary_cta', 'hero_cover'].includes(componentKey)) {
-    const rows = Math.min(styleConfig.lineLimit, Math.max(1, getBodyBlocks(card.body, styleConfig.bodyFlow).length || lineCount));
-    return styleConfig.density === 'max'
+    const blocks = getBodyBlocks(card.body, styleConfig.bodyFlow).slice(0, styleConfig.lineLimit);
+    const rows = Math.max(1, blocks.length || lineCount);
+    const minimumHeight = styleConfig.density === 'max'
       ? Math.min(680, rows * 48 + Math.max(0, rows - 1) * 7 + 42)
       : styleConfig.density === 'dense'
       ? Math.min(560, rows * 58 + Math.max(0, rows - 1) * 10 + 54)
       : rows * 78 + Math.max(0, rows - 1) * 16 + 64;
+    // A paragraph may wrap onto many lines; match drawParagraphBody's font and
+    // width instead of treating one source paragraph as one rendered row.
+    const padding = Math.round(38 * styleConfig.densityScale);
+    const fontSize = Math.round((styleConfig.density === 'max' ? 21 : styleConfig.density === 'dense' ? 22 : 25) * styleConfig.bodyScale);
+    const lineHeight = Math.round(fontSize * (styleConfig.density === 'max' ? 1.28 : styleConfig.density === 'dense' ? 1.36 : 1.48) * styleConfig.lineHeightScale);
+    const gap = Math.round((styleConfig.bodyFlow === 'line_break' ? 10 : 16) * styleConfig.densityScale);
+    const width = CARD_WIDTH - 208 - padding;
+    let wrappedLines = 0;
+    ctx.save();
+    ctx.font = `750 ${fontSize}px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif`;
+    for (const block of blocks) {
+      let current = '';
+      for (const char of cleanLine(block)) {
+        if (current && ctx.measureText(current + char).width > width) {
+          wrappedLines += 1;
+          current = char;
+        } else {
+          current += char;
+        }
+      }
+      if (current) wrappedLines += 1;
+    }
+    ctx.restore();
+    return Math.max(minimumHeight, wrappedLines * lineHeight + padding * 2 + Math.max(0, blocks.length - 1) * gap);
   }
   if (componentKey === 'hero_cover') return isCover ? 190 : 170;
   if (componentKey === 'summary_cta') return 330;

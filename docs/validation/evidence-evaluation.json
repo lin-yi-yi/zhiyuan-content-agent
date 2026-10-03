@@ -1,0 +1,1726 @@
+{
+  "checked_at": "2026-09-19T03:22:15.314058+00:00",
+  "knowledge_base_id": 2,
+  "note_ids": {
+    "aurora": 1,
+    "lighthouse": 2,
+    "cedar": 3
+  },
+  "document_ids": {
+    "aurora": 5,
+    "lighthouse": 6,
+    "cedar": 7
+  },
+  "acceptance_checks": {
+    "pending_and_unconfirmed_blocked": true,
+    "index_idempotent": true,
+    "adopted_citations_have_live_note_and_claims": true,
+    "revoked_document_excluded": true,
+    "revocation_warning_visible": true,
+    "expired_note_cannot_be_approved": true
+  },
+  "acceptance_passed": true,
+  "retrieval_evaluation": {
+    "dataset_label": "信源治理合成开发集：3文档8题；非独立测试集、不调阈值、非生产效果",
+    "sample_count": 8,
+    "top_k": 3,
+    "answerable_count": 6,
+    "refusal_case_count": 2,
+    "checked_citation_count": 6,
+    "adopted_evidence_count": 6,
+    "retrieval": {
+      "mode": "semantic",
+      "configured": true,
+      "semantic_enabled": true,
+      "embedding_provider": "fastembed",
+      "embedding_model": "BAAI/bge-small-zh-v1.5",
+      "vector_store": "qdrant_local",
+      "index_fingerprint": "62a6f67a13376506",
+      "runtime_verified": false,
+      "missing_dependencies": [],
+      "semantic_min_score": 0.55,
+      "limitations": [
+        "配置检查不等于模型已下载或语义检索已验证。",
+        "单进程本地 Qdrant；多进程部署需改用独立向量服务。",
+        "阈值需用自己的标注问题校准，分数不是答案正确概率。"
+      ]
+    },
+    "metrics": {
+      "recall_at_k": 1.0,
+      "chunk_recall_at_k": null,
+      "evidence_precision_at_k": 0.3333,
+      "refusal_accuracy": 1.0,
+      "candidate_precision_at_k": 0.3333,
+      "candidate_recall_at_1": 1.0,
+      "mean_reciprocal_rank": 1.0,
+      "answer_evidence_precision": 1.0,
+      "answer_evidence_recall": 1.0,
+      "answerable_acceptance_rate": 1.0,
+      "citation_validity_rate": 1.0,
+      "mean_latency_ms": 7.8625
+    },
+    "cases": [
+      {
+        "question": "极光项目怎样判断推荐分的作用？",
+        "should_refuse": false,
+        "refused": false,
+        "refusal_reason": "",
+        "recall_at_k": 1.0,
+        "chunk_recall_at_k": null,
+        "evidence_precision_at_k": 0.3333333333333333,
+        "candidate_precision_at_k": 0.3333333333333333,
+        "candidate_recall_at_1": 1.0,
+        "reciprocal_rank": 1.0,
+        "answer_evidence_precision": 1.0,
+        "answer_evidence_recall": 1.0,
+        "candidate_count": 3,
+        "adopted_evidence_count": 1,
+        "false_refusal": false,
+        "citation_ids_valid": true,
+        "retrieved_document_ids": [
+          5,
+          6,
+          7
+        ],
+        "retrieved_chunk_ids": [
+          5,
+          6,
+          7
+        ],
+        "latency_ms": 12.9,
+        "retrieval_candidates": [
+          {
+            "chunk_id": 5,
+            "document_id": 5,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 9,
+            "title": "合成案例：极光项目的信源核验",
+            "source_uri": "https://example.com/synthetic/aurora",
+            "content": "极光项目的信源核验规范（完全虚构的开发样本）：维护者发布记录可以作为版本变化的一手出处，媒体转载只用于发现线索。每条结论必须保存原文摘录、来源链接和版本号。人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+            "score": 0.6177,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 9,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 1,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:15.433171+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "推荐分不能替代真实性核验",
+                    "excerpt": "人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+                    "source_url": "https://example.com/synthetic/aurora#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/aurora",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ee5e01e953a6649cabc242dec9bd7ec3004bdfa3b763e38d3c0ea73b76398f73",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.6177
+              },
+              "evidence_threshold": 0.55
+            }
+          },
+          {
+            "chunk_id": 6,
+            "document_id": 6,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 10,
+            "title": "合成案例：灯塔项目的资料时效",
+            "source_uri": "https://example.com/synthetic/lighthouse",
+            "content": "灯塔项目的资料时效规范（完全虚构的开发样本）：资料入库前记录适用版本和到期时间。资料到期后停止作为检索证据，页面提示重新核验。修订正文需要创建新版本笔记，并撤销旧版本的核验记录。撤销核验会立即停用关联文档，但保留记录以便审阅。",
+            "score": 0.4125,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 10,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 2,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.476183+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "到期资料停止参与检索",
+                    "excerpt": "资料到期后停止作为检索证据，页面提示重新核验。",
+                    "source_url": "https://example.com/synthetic/lighthouse#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/lighthouse",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ac41b7cad7b85d49f5c637a610494d91c95f5b546edf987384ba5cf9f2cce090",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.4125
+              },
+              "evidence_threshold": 0.55
+            }
+          },
+          {
+            "chunk_id": 7,
+            "document_id": 7,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 11,
+            "title": "合成案例：雪松项目的接口冷却",
+            "source_uri": "https://example.com/synthetic/cedar",
+            "content": "雪松项目的接口冷却规范（完全虚构的开发样本）：接口返回限流状态时，读取重试时间并暂停刷新。缓存只能暂时减少重复请求，不能永久保留撤销内容。上游明确撤销访问后清空相关缓存，并在界面展示错误。更换查询条件不能绕过提供方统一冷却时间。",
+            "score": 0.3941,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 11,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 3,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.521012+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "更换查询不能绕过统一冷却",
+                    "excerpt": "更换查询条件不能绕过提供方统一冷却时间。",
+                    "source_url": "https://example.com/synthetic/cedar#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/cedar",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "efb6bde2c6c7997b98a8661690c4766084e4b3df15bff27ebc928a7adb3d70e6",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.3941
+              },
+              "evidence_threshold": 0.55
+            }
+          }
+        ],
+        "citations": [
+          {
+            "chunk_id": 5,
+            "document_id": 5,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 9,
+            "title": "合成案例：极光项目的信源核验",
+            "source_uri": "https://example.com/synthetic/aurora",
+            "content": "极光项目的信源核验规范（完全虚构的开发样本）：维护者发布记录可以作为版本变化的一手出处，媒体转载只用于发现线索。每条结论必须保存原文摘录、来源链接和版本号。人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+            "score": 0.6177,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 9,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 1,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:15.433171+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "推荐分不能替代真实性核验",
+                    "excerpt": "人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+                    "source_url": "https://example.com/synthetic/aurora#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/aurora",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ee5e01e953a6649cabc242dec9bd7ec3004bdfa3b763e38d3c0ea73b76398f73",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.6177
+              },
+              "evidence_threshold": 0.55
+            }
+          }
+        ]
+      },
+      {
+        "question": "极光项目每条结论需要保存什么？",
+        "should_refuse": false,
+        "refused": false,
+        "refusal_reason": "",
+        "recall_at_k": 1.0,
+        "chunk_recall_at_k": null,
+        "evidence_precision_at_k": 0.3333333333333333,
+        "candidate_precision_at_k": 0.3333333333333333,
+        "candidate_recall_at_1": 1.0,
+        "reciprocal_rank": 1.0,
+        "answer_evidence_precision": 1.0,
+        "answer_evidence_recall": 1.0,
+        "candidate_count": 3,
+        "adopted_evidence_count": 1,
+        "false_refusal": false,
+        "citation_ids_valid": true,
+        "retrieved_document_ids": [
+          5,
+          6,
+          7
+        ],
+        "retrieved_chunk_ids": [
+          5,
+          6,
+          7
+        ],
+        "latency_ms": 8.5,
+        "retrieval_candidates": [
+          {
+            "chunk_id": 5,
+            "document_id": 5,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 9,
+            "title": "合成案例：极光项目的信源核验",
+            "source_uri": "https://example.com/synthetic/aurora",
+            "content": "极光项目的信源核验规范（完全虚构的开发样本）：维护者发布记录可以作为版本变化的一手出处，媒体转载只用于发现线索。每条结论必须保存原文摘录、来源链接和版本号。人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+            "score": 0.6784,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 9,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 1,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:15.433171+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "推荐分不能替代真实性核验",
+                    "excerpt": "人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+                    "source_url": "https://example.com/synthetic/aurora#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/aurora",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ee5e01e953a6649cabc242dec9bd7ec3004bdfa3b763e38d3c0ea73b76398f73",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.6784
+              },
+              "evidence_threshold": 0.55
+            }
+          },
+          {
+            "chunk_id": 6,
+            "document_id": 6,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 10,
+            "title": "合成案例：灯塔项目的资料时效",
+            "source_uri": "https://example.com/synthetic/lighthouse",
+            "content": "灯塔项目的资料时效规范（完全虚构的开发样本）：资料入库前记录适用版本和到期时间。资料到期后停止作为检索证据，页面提示重新核验。修订正文需要创建新版本笔记，并撤销旧版本的核验记录。撤销核验会立即停用关联文档，但保留记录以便审阅。",
+            "score": 0.5192,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 10,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 2,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.476183+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "到期资料停止参与检索",
+                    "excerpt": "资料到期后停止作为检索证据，页面提示重新核验。",
+                    "source_url": "https://example.com/synthetic/lighthouse#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/lighthouse",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ac41b7cad7b85d49f5c637a610494d91c95f5b546edf987384ba5cf9f2cce090",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.5192
+              },
+              "evidence_threshold": 0.55
+            }
+          },
+          {
+            "chunk_id": 7,
+            "document_id": 7,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 11,
+            "title": "合成案例：雪松项目的接口冷却",
+            "source_uri": "https://example.com/synthetic/cedar",
+            "content": "雪松项目的接口冷却规范（完全虚构的开发样本）：接口返回限流状态时，读取重试时间并暂停刷新。缓存只能暂时减少重复请求，不能永久保留撤销内容。上游明确撤销访问后清空相关缓存，并在界面展示错误。更换查询条件不能绕过提供方统一冷却时间。",
+            "score": 0.4578,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 11,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 3,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.521012+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "更换查询不能绕过统一冷却",
+                    "excerpt": "更换查询条件不能绕过提供方统一冷却时间。",
+                    "source_url": "https://example.com/synthetic/cedar#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/cedar",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "efb6bde2c6c7997b98a8661690c4766084e4b3df15bff27ebc928a7adb3d70e6",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.4578
+              },
+              "evidence_threshold": 0.55
+            }
+          }
+        ],
+        "citations": [
+          {
+            "chunk_id": 5,
+            "document_id": 5,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 9,
+            "title": "合成案例：极光项目的信源核验",
+            "source_uri": "https://example.com/synthetic/aurora",
+            "content": "极光项目的信源核验规范（完全虚构的开发样本）：维护者发布记录可以作为版本变化的一手出处，媒体转载只用于发现线索。每条结论必须保存原文摘录、来源链接和版本号。人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+            "score": 0.6784,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 9,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 1,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:15.433171+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "推荐分不能替代真实性核验",
+                    "excerpt": "人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+                    "source_url": "https://example.com/synthetic/aurora#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/aurora",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ee5e01e953a6649cabc242dec9bd7ec3004bdfa3b763e38d3c0ea73b76398f73",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.6784
+              },
+              "evidence_threshold": 0.55
+            }
+          }
+        ]
+      },
+      {
+        "question": "灯塔项目资料到期后怎么处理？",
+        "should_refuse": false,
+        "refused": false,
+        "refusal_reason": "",
+        "recall_at_k": 1.0,
+        "chunk_recall_at_k": null,
+        "evidence_precision_at_k": 0.3333333333333333,
+        "candidate_precision_at_k": 0.3333333333333333,
+        "candidate_recall_at_1": 1.0,
+        "reciprocal_rank": 1.0,
+        "answer_evidence_precision": 1.0,
+        "answer_evidence_recall": 1.0,
+        "candidate_count": 3,
+        "adopted_evidence_count": 1,
+        "false_refusal": false,
+        "citation_ids_valid": true,
+        "retrieved_document_ids": [
+          5,
+          6,
+          7
+        ],
+        "retrieved_chunk_ids": [
+          5,
+          6,
+          7
+        ],
+        "latency_ms": 6.9,
+        "retrieval_candidates": [
+          {
+            "chunk_id": 6,
+            "document_id": 6,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 10,
+            "title": "合成案例：灯塔项目的资料时效",
+            "source_uri": "https://example.com/synthetic/lighthouse",
+            "content": "灯塔项目的资料时效规范（完全虚构的开发样本）：资料入库前记录适用版本和到期时间。资料到期后停止作为检索证据，页面提示重新核验。修订正文需要创建新版本笔记，并撤销旧版本的核验记录。撤销核验会立即停用关联文档，但保留记录以便审阅。",
+            "score": 0.7589,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 10,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 2,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.476183+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "到期资料停止参与检索",
+                    "excerpt": "资料到期后停止作为检索证据，页面提示重新核验。",
+                    "source_url": "https://example.com/synthetic/lighthouse#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/lighthouse",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ac41b7cad7b85d49f5c637a610494d91c95f5b546edf987384ba5cf9f2cce090",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.7589
+              },
+              "evidence_threshold": 0.55
+            }
+          },
+          {
+            "chunk_id": 5,
+            "document_id": 5,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 9,
+            "title": "合成案例：极光项目的信源核验",
+            "source_uri": "https://example.com/synthetic/aurora",
+            "content": "极光项目的信源核验规范（完全虚构的开发样本）：维护者发布记录可以作为版本变化的一手出处，媒体转载只用于发现线索。每条结论必须保存原文摘录、来源链接和版本号。人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+            "score": 0.4917,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 9,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 1,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:15.433171+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "推荐分不能替代真实性核验",
+                    "excerpt": "人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+                    "source_url": "https://example.com/synthetic/aurora#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/aurora",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ee5e01e953a6649cabc242dec9bd7ec3004bdfa3b763e38d3c0ea73b76398f73",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.4917
+              },
+              "evidence_threshold": 0.55
+            }
+          },
+          {
+            "chunk_id": 7,
+            "document_id": 7,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 11,
+            "title": "合成案例：雪松项目的接口冷却",
+            "source_uri": "https://example.com/synthetic/cedar",
+            "content": "雪松项目的接口冷却规范（完全虚构的开发样本）：接口返回限流状态时，读取重试时间并暂停刷新。缓存只能暂时减少重复请求，不能永久保留撤销内容。上游明确撤销访问后清空相关缓存，并在界面展示错误。更换查询条件不能绕过提供方统一冷却时间。",
+            "score": 0.4744,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 11,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 3,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.521012+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "更换查询不能绕过统一冷却",
+                    "excerpt": "更换查询条件不能绕过提供方统一冷却时间。",
+                    "source_url": "https://example.com/synthetic/cedar#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/cedar",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "efb6bde2c6c7997b98a8661690c4766084e4b3df15bff27ebc928a7adb3d70e6",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.4744
+              },
+              "evidence_threshold": 0.55
+            }
+          }
+        ],
+        "citations": [
+          {
+            "chunk_id": 6,
+            "document_id": 6,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 10,
+            "title": "合成案例：灯塔项目的资料时效",
+            "source_uri": "https://example.com/synthetic/lighthouse",
+            "content": "灯塔项目的资料时效规范（完全虚构的开发样本）：资料入库前记录适用版本和到期时间。资料到期后停止作为检索证据，页面提示重新核验。修订正文需要创建新版本笔记，并撤销旧版本的核验记录。撤销核验会立即停用关联文档，但保留记录以便审阅。",
+            "score": 0.7589,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 10,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 2,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.476183+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "到期资料停止参与检索",
+                    "excerpt": "资料到期后停止作为检索证据，页面提示重新核验。",
+                    "source_url": "https://example.com/synthetic/lighthouse#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/lighthouse",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ac41b7cad7b85d49f5c637a610494d91c95f5b546edf987384ba5cf9f2cce090",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.7589
+              },
+              "evidence_threshold": 0.55
+            }
+          }
+        ]
+      },
+      {
+        "question": "灯塔项目如何修订正文和撤销旧版本？",
+        "should_refuse": false,
+        "refused": false,
+        "refusal_reason": "",
+        "recall_at_k": 1.0,
+        "chunk_recall_at_k": null,
+        "evidence_precision_at_k": 0.3333333333333333,
+        "candidate_precision_at_k": 0.3333333333333333,
+        "candidate_recall_at_1": 1.0,
+        "reciprocal_rank": 1.0,
+        "answer_evidence_precision": 1.0,
+        "answer_evidence_recall": 1.0,
+        "candidate_count": 3,
+        "adopted_evidence_count": 1,
+        "false_refusal": false,
+        "citation_ids_valid": true,
+        "retrieved_document_ids": [
+          5,
+          6,
+          7
+        ],
+        "retrieved_chunk_ids": [
+          5,
+          6,
+          7
+        ],
+        "latency_ms": 8.4,
+        "retrieval_candidates": [
+          {
+            "chunk_id": 6,
+            "document_id": 6,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 10,
+            "title": "合成案例：灯塔项目的资料时效",
+            "source_uri": "https://example.com/synthetic/lighthouse",
+            "content": "灯塔项目的资料时效规范（完全虚构的开发样本）：资料入库前记录适用版本和到期时间。资料到期后停止作为检索证据，页面提示重新核验。修订正文需要创建新版本笔记，并撤销旧版本的核验记录。撤销核验会立即停用关联文档，但保留记录以便审阅。",
+            "score": 0.7618,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 10,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 2,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.476183+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "到期资料停止参与检索",
+                    "excerpt": "资料到期后停止作为检索证据，页面提示重新核验。",
+                    "source_url": "https://example.com/synthetic/lighthouse#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/lighthouse",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ac41b7cad7b85d49f5c637a610494d91c95f5b546edf987384ba5cf9f2cce090",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.7618
+              },
+              "evidence_threshold": 0.55
+            }
+          },
+          {
+            "chunk_id": 5,
+            "document_id": 5,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 9,
+            "title": "合成案例：极光项目的信源核验",
+            "source_uri": "https://example.com/synthetic/aurora",
+            "content": "极光项目的信源核验规范（完全虚构的开发样本）：维护者发布记录可以作为版本变化的一手出处，媒体转载只用于发现线索。每条结论必须保存原文摘录、来源链接和版本号。人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+            "score": 0.4838,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 9,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 1,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:15.433171+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "推荐分不能替代真实性核验",
+                    "excerpt": "人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+                    "source_url": "https://example.com/synthetic/aurora#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/aurora",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ee5e01e953a6649cabc242dec9bd7ec3004bdfa3b763e38d3c0ea73b76398f73",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.4838
+              },
+              "evidence_threshold": 0.55
+            }
+          },
+          {
+            "chunk_id": 7,
+            "document_id": 7,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 11,
+            "title": "合成案例：雪松项目的接口冷却",
+            "source_uri": "https://example.com/synthetic/cedar",
+            "content": "雪松项目的接口冷却规范（完全虚构的开发样本）：接口返回限流状态时，读取重试时间并暂停刷新。缓存只能暂时减少重复请求，不能永久保留撤销内容。上游明确撤销访问后清空相关缓存，并在界面展示错误。更换查询条件不能绕过提供方统一冷却时间。",
+            "score": 0.4722,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 11,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 3,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.521012+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "更换查询不能绕过统一冷却",
+                    "excerpt": "更换查询条件不能绕过提供方统一冷却时间。",
+                    "source_url": "https://example.com/synthetic/cedar#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/cedar",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "efb6bde2c6c7997b98a8661690c4766084e4b3df15bff27ebc928a7adb3d70e6",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.4722
+              },
+              "evidence_threshold": 0.55
+            }
+          }
+        ],
+        "citations": [
+          {
+            "chunk_id": 6,
+            "document_id": 6,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 10,
+            "title": "合成案例：灯塔项目的资料时效",
+            "source_uri": "https://example.com/synthetic/lighthouse",
+            "content": "灯塔项目的资料时效规范（完全虚构的开发样本）：资料入库前记录适用版本和到期时间。资料到期后停止作为检索证据，页面提示重新核验。修订正文需要创建新版本笔记，并撤销旧版本的核验记录。撤销核验会立即停用关联文档，但保留记录以便审阅。",
+            "score": 0.7618,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 10,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 2,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.476183+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "到期资料停止参与检索",
+                    "excerpt": "资料到期后停止作为检索证据，页面提示重新核验。",
+                    "source_url": "https://example.com/synthetic/lighthouse#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/lighthouse",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ac41b7cad7b85d49f5c637a610494d91c95f5b546edf987384ba5cf9f2cce090",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.7618
+              },
+              "evidence_threshold": 0.55
+            }
+          }
+        ]
+      },
+      {
+        "question": "雪松项目接口限流时怎么处理？",
+        "should_refuse": false,
+        "refused": false,
+        "refusal_reason": "",
+        "recall_at_k": 1.0,
+        "chunk_recall_at_k": null,
+        "evidence_precision_at_k": 0.3333333333333333,
+        "candidate_precision_at_k": 0.3333333333333333,
+        "candidate_recall_at_1": 1.0,
+        "reciprocal_rank": 1.0,
+        "answer_evidence_precision": 1.0,
+        "answer_evidence_recall": 1.0,
+        "candidate_count": 3,
+        "adopted_evidence_count": 1,
+        "false_refusal": false,
+        "citation_ids_valid": true,
+        "retrieved_document_ids": [
+          5,
+          6,
+          7
+        ],
+        "retrieved_chunk_ids": [
+          5,
+          6,
+          7
+        ],
+        "latency_ms": 7.2,
+        "retrieval_candidates": [
+          {
+            "chunk_id": 7,
+            "document_id": 7,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 11,
+            "title": "合成案例：雪松项目的接口冷却",
+            "source_uri": "https://example.com/synthetic/cedar",
+            "content": "雪松项目的接口冷却规范（完全虚构的开发样本）：接口返回限流状态时，读取重试时间并暂停刷新。缓存只能暂时减少重复请求，不能永久保留撤销内容。上游明确撤销访问后清空相关缓存，并在界面展示错误。更换查询条件不能绕过提供方统一冷却时间。",
+            "score": 0.7758,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 11,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 3,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.521012+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "更换查询不能绕过统一冷却",
+                    "excerpt": "更换查询条件不能绕过提供方统一冷却时间。",
+                    "source_url": "https://example.com/synthetic/cedar#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/cedar",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "efb6bde2c6c7997b98a8661690c4766084e4b3df15bff27ebc928a7adb3d70e6",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.7758
+              },
+              "evidence_threshold": 0.55
+            }
+          },
+          {
+            "chunk_id": 6,
+            "document_id": 6,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 10,
+            "title": "合成案例：灯塔项目的资料时效",
+            "source_uri": "https://example.com/synthetic/lighthouse",
+            "content": "灯塔项目的资料时效规范（完全虚构的开发样本）：资料入库前记录适用版本和到期时间。资料到期后停止作为检索证据，页面提示重新核验。修订正文需要创建新版本笔记，并撤销旧版本的核验记录。撤销核验会立即停用关联文档，但保留记录以便审阅。",
+            "score": 0.4321,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 10,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 2,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.476183+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "到期资料停止参与检索",
+                    "excerpt": "资料到期后停止作为检索证据，页面提示重新核验。",
+                    "source_url": "https://example.com/synthetic/lighthouse#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/lighthouse",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ac41b7cad7b85d49f5c637a610494d91c95f5b546edf987384ba5cf9f2cce090",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.4321
+              },
+              "evidence_threshold": 0.55
+            }
+          },
+          {
+            "chunk_id": 5,
+            "document_id": 5,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 9,
+            "title": "合成案例：极光项目的信源核验",
+            "source_uri": "https://example.com/synthetic/aurora",
+            "content": "极光项目的信源核验规范（完全虚构的开发样本）：维护者发布记录可以作为版本变化的一手出处，媒体转载只用于发现线索。每条结论必须保存原文摘录、来源链接和版本号。人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+            "score": 0.365,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 9,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 1,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:15.433171+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "推荐分不能替代真实性核验",
+                    "excerpt": "人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+                    "source_url": "https://example.com/synthetic/aurora#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/aurora",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ee5e01e953a6649cabc242dec9bd7ec3004bdfa3b763e38d3c0ea73b76398f73",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.365
+              },
+              "evidence_threshold": 0.55
+            }
+          }
+        ],
+        "citations": [
+          {
+            "chunk_id": 7,
+            "document_id": 7,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 11,
+            "title": "合成案例：雪松项目的接口冷却",
+            "source_uri": "https://example.com/synthetic/cedar",
+            "content": "雪松项目的接口冷却规范（完全虚构的开发样本）：接口返回限流状态时，读取重试时间并暂停刷新。缓存只能暂时减少重复请求，不能永久保留撤销内容。上游明确撤销访问后清空相关缓存，并在界面展示错误。更换查询条件不能绕过提供方统一冷却时间。",
+            "score": 0.7758,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 11,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 3,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.521012+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "更换查询不能绕过统一冷却",
+                    "excerpt": "更换查询条件不能绕过提供方统一冷却时间。",
+                    "source_url": "https://example.com/synthetic/cedar#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/cedar",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "efb6bde2c6c7997b98a8661690c4766084e4b3df15bff27ebc928a7adb3d70e6",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.7758
+              },
+              "evidence_threshold": 0.55
+            }
+          }
+        ]
+      },
+      {
+        "question": "雪松项目更换查询可以绕过冷却吗？",
+        "should_refuse": false,
+        "refused": false,
+        "refusal_reason": "",
+        "recall_at_k": 1.0,
+        "chunk_recall_at_k": null,
+        "evidence_precision_at_k": 0.3333333333333333,
+        "candidate_precision_at_k": 0.3333333333333333,
+        "candidate_recall_at_1": 1.0,
+        "reciprocal_rank": 1.0,
+        "answer_evidence_precision": 1.0,
+        "answer_evidence_recall": 1.0,
+        "candidate_count": 3,
+        "adopted_evidence_count": 1,
+        "false_refusal": false,
+        "citation_ids_valid": true,
+        "retrieved_document_ids": [
+          5,
+          6,
+          7
+        ],
+        "retrieved_chunk_ids": [
+          5,
+          6,
+          7
+        ],
+        "latency_ms": 7.4,
+        "retrieval_candidates": [
+          {
+            "chunk_id": 7,
+            "document_id": 7,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 11,
+            "title": "合成案例：雪松项目的接口冷却",
+            "source_uri": "https://example.com/synthetic/cedar",
+            "content": "雪松项目的接口冷却规范（完全虚构的开发样本）：接口返回限流状态时，读取重试时间并暂停刷新。缓存只能暂时减少重复请求，不能永久保留撤销内容。上游明确撤销访问后清空相关缓存，并在界面展示错误。更换查询条件不能绕过提供方统一冷却时间。",
+            "score": 0.7734,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 11,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 3,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.521012+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "更换查询不能绕过统一冷却",
+                    "excerpt": "更换查询条件不能绕过提供方统一冷却时间。",
+                    "source_url": "https://example.com/synthetic/cedar#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/cedar",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "efb6bde2c6c7997b98a8661690c4766084e4b3df15bff27ebc928a7adb3d70e6",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.7734
+              },
+              "evidence_threshold": 0.55
+            }
+          },
+          {
+            "chunk_id": 6,
+            "document_id": 6,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 10,
+            "title": "合成案例：灯塔项目的资料时效",
+            "source_uri": "https://example.com/synthetic/lighthouse",
+            "content": "灯塔项目的资料时效规范（完全虚构的开发样本）：资料入库前记录适用版本和到期时间。资料到期后停止作为检索证据，页面提示重新核验。修订正文需要创建新版本笔记，并撤销旧版本的核验记录。撤销核验会立即停用关联文档，但保留记录以便审阅。",
+            "score": 0.4531,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 10,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 2,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.476183+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "到期资料停止参与检索",
+                    "excerpt": "资料到期后停止作为检索证据，页面提示重新核验。",
+                    "source_url": "https://example.com/synthetic/lighthouse#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/lighthouse",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ac41b7cad7b85d49f5c637a610494d91c95f5b546edf987384ba5cf9f2cce090",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.4531
+              },
+              "evidence_threshold": 0.55
+            }
+          },
+          {
+            "chunk_id": 5,
+            "document_id": 5,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 9,
+            "title": "合成案例：极光项目的信源核验",
+            "source_uri": "https://example.com/synthetic/aurora",
+            "content": "极光项目的信源核验规范（完全虚构的开发样本）：维护者发布记录可以作为版本变化的一手出处，媒体转载只用于发现线索。每条结论必须保存原文摘录、来源链接和版本号。人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+            "score": 0.4374,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 9,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 1,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:15.433171+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "推荐分不能替代真实性核验",
+                    "excerpt": "人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+                    "source_url": "https://example.com/synthetic/aurora#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/aurora",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ee5e01e953a6649cabc242dec9bd7ec3004bdfa3b763e38d3c0ea73b76398f73",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.4374
+              },
+              "evidence_threshold": 0.55
+            }
+          }
+        ],
+        "citations": [
+          {
+            "chunk_id": 7,
+            "document_id": 7,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 11,
+            "title": "合成案例：雪松项目的接口冷却",
+            "source_uri": "https://example.com/synthetic/cedar",
+            "content": "雪松项目的接口冷却规范（完全虚构的开发样本）：接口返回限流状态时，读取重试时间并暂停刷新。缓存只能暂时减少重复请求，不能永久保留撤销内容。上游明确撤销访问后清空相关缓存，并在界面展示错误。更换查询条件不能绕过提供方统一冷却时间。",
+            "score": 0.7734,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 11,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 3,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.521012+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "更换查询不能绕过统一冷却",
+                    "excerpt": "更换查询条件不能绕过提供方统一冷却时间。",
+                    "source_url": "https://example.com/synthetic/cedar#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/cedar",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "efb6bde2c6c7997b98a8661690c4766084e4b3df15bff27ebc928a7adb3d70e6",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.7734
+              },
+              "evidence_threshold": 0.55
+            }
+          }
+        ]
+      },
+      {
+        "question": "土星环的主要成分是什么？",
+        "should_refuse": true,
+        "refused": true,
+        "refusal_reason": "insufficient_evidence",
+        "recall_at_k": null,
+        "chunk_recall_at_k": null,
+        "evidence_precision_at_k": null,
+        "candidate_precision_at_k": null,
+        "candidate_recall_at_1": null,
+        "reciprocal_rank": null,
+        "answer_evidence_precision": null,
+        "answer_evidence_recall": null,
+        "candidate_count": 3,
+        "adopted_evidence_count": 0,
+        "false_refusal": false,
+        "citation_ids_valid": null,
+        "retrieved_document_ids": [
+          5,
+          6,
+          7
+        ],
+        "retrieved_chunk_ids": [
+          5,
+          6,
+          7
+        ],
+        "latency_ms": 5.9,
+        "retrieval_candidates": [
+          {
+            "chunk_id": 5,
+            "document_id": 5,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 9,
+            "title": "合成案例：极光项目的信源核验",
+            "source_uri": "https://example.com/synthetic/aurora",
+            "content": "极光项目的信源核验规范（完全虚构的开发样本）：维护者发布记录可以作为版本变化的一手出处，媒体转载只用于发现线索。每条结论必须保存原文摘录、来源链接和版本号。人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+            "score": 0.3601,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 9,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 1,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:15.433171+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "推荐分不能替代真实性核验",
+                    "excerpt": "人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+                    "source_url": "https://example.com/synthetic/aurora#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/aurora",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ee5e01e953a6649cabc242dec9bd7ec3004bdfa3b763e38d3c0ea73b76398f73",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.3601
+              },
+              "evidence_threshold": 0.55
+            }
+          },
+          {
+            "chunk_id": 6,
+            "document_id": 6,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 10,
+            "title": "合成案例：灯塔项目的资料时效",
+            "source_uri": "https://example.com/synthetic/lighthouse",
+            "content": "灯塔项目的资料时效规范（完全虚构的开发样本）：资料入库前记录适用版本和到期时间。资料到期后停止作为检索证据，页面提示重新核验。修订正文需要创建新版本笔记，并撤销旧版本的核验记录。撤销核验会立即停用关联文档，但保留记录以便审阅。",
+            "score": 0.2546,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 10,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 2,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.476183+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "到期资料停止参与检索",
+                    "excerpt": "资料到期后停止作为检索证据，页面提示重新核验。",
+                    "source_url": "https://example.com/synthetic/lighthouse#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/lighthouse",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ac41b7cad7b85d49f5c637a610494d91c95f5b546edf987384ba5cf9f2cce090",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.2546
+              },
+              "evidence_threshold": 0.55
+            }
+          },
+          {
+            "chunk_id": 7,
+            "document_id": 7,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 11,
+            "title": "合成案例：雪松项目的接口冷却",
+            "source_uri": "https://example.com/synthetic/cedar",
+            "content": "雪松项目的接口冷却规范（完全虚构的开发样本）：接口返回限流状态时，读取重试时间并暂停刷新。缓存只能暂时减少重复请求，不能永久保留撤销内容。上游明确撤销访问后清空相关缓存，并在界面展示错误。更换查询条件不能绕过提供方统一冷却时间。",
+            "score": 0.2083,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 11,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 3,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.521012+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "更换查询不能绕过统一冷却",
+                    "excerpt": "更换查询条件不能绕过提供方统一冷却时间。",
+                    "source_url": "https://example.com/synthetic/cedar#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/cedar",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "efb6bde2c6c7997b98a8661690c4766084e4b3df15bff27ebc928a7adb3d70e6",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.2083
+              },
+              "evidence_threshold": 0.55
+            }
+          }
+        ],
+        "citations": []
+      },
+      {
+        "question": "意大利面需要煮几分钟？",
+        "should_refuse": true,
+        "refused": true,
+        "refusal_reason": "insufficient_evidence",
+        "recall_at_k": null,
+        "chunk_recall_at_k": null,
+        "evidence_precision_at_k": null,
+        "candidate_precision_at_k": null,
+        "candidate_recall_at_1": null,
+        "reciprocal_rank": null,
+        "answer_evidence_precision": null,
+        "answer_evidence_recall": null,
+        "candidate_count": 3,
+        "adopted_evidence_count": 0,
+        "false_refusal": false,
+        "citation_ids_valid": null,
+        "retrieved_document_ids": [
+          5,
+          6,
+          7
+        ],
+        "retrieved_chunk_ids": [
+          5,
+          6,
+          7
+        ],
+        "latency_ms": 5.7,
+        "retrieval_candidates": [
+          {
+            "chunk_id": 6,
+            "document_id": 6,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 10,
+            "title": "合成案例：灯塔项目的资料时效",
+            "source_uri": "https://example.com/synthetic/lighthouse",
+            "content": "灯塔项目的资料时效规范（完全虚构的开发样本）：资料入库前记录适用版本和到期时间。资料到期后停止作为检索证据，页面提示重新核验。修订正文需要创建新版本笔记，并撤销旧版本的核验记录。撤销核验会立即停用关联文档，但保留记录以便审阅。",
+            "score": 0.2906,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 10,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 2,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.476183+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "到期资料停止参与检索",
+                    "excerpt": "资料到期后停止作为检索证据，页面提示重新核验。",
+                    "source_url": "https://example.com/synthetic/lighthouse#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/lighthouse",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ac41b7cad7b85d49f5c637a610494d91c95f5b546edf987384ba5cf9f2cce090",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.2906
+              },
+              "evidence_threshold": 0.55
+            }
+          },
+          {
+            "chunk_id": 7,
+            "document_id": 7,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 11,
+            "title": "合成案例：雪松项目的接口冷却",
+            "source_uri": "https://example.com/synthetic/cedar",
+            "content": "雪松项目的接口冷却规范（完全虚构的开发样本）：接口返回限流状态时，读取重试时间并暂停刷新。缓存只能暂时减少重复请求，不能永久保留撤销内容。上游明确撤销访问后清空相关缓存，并在界面展示错误。更换查询条件不能绕过提供方统一冷却时间。",
+            "score": 0.2863,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 11,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 3,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:16.521012+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "更换查询不能绕过统一冷却",
+                    "excerpt": "更换查询条件不能绕过提供方统一冷却时间。",
+                    "source_url": "https://example.com/synthetic/cedar#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/cedar",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "efb6bde2c6c7997b98a8661690c4766084e4b3df15bff27ebc928a7adb3d70e6",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.2863
+              },
+              "evidence_threshold": 0.55
+            }
+          },
+          {
+            "chunk_id": 5,
+            "document_id": 5,
+            "knowledge_base_id": 2,
+            "workspace_id": 1,
+            "source_id": 9,
+            "title": "合成案例：极光项目的信源核验",
+            "source_uri": "https://example.com/synthetic/aurora",
+            "content": "极光项目的信源核验规范（完全虚构的开发样本）：维护者发布记录可以作为版本变化的一手出处，媒体转载只用于发现线索。每条结论必须保存原文摘录、来源链接和版本号。人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+            "score": 0.2035,
+            "chunk_index": 0,
+            "metadata": {
+              "source_id": 9,
+              "index_fingerprint": "62a6f67a13376506",
+              "retrieval_mode": "semantic",
+              "evidence": {
+                "note_id": 1,
+                "status": "verified",
+                "verified_at": "2026-09-19T03:22:15.433171+00:00",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00",
+                "version_label": "synthetic-v1",
+                "citations": [
+                  {
+                    "claim": "推荐分不能替代真实性核验",
+                    "excerpt": "人工核对后单独确认入库，不能用推荐分替代真实性核验。",
+                    "source_url": "https://example.com/synthetic/aurora#policy",
+                    "locator": "人工编写的合成规范"
+                  }
+                ],
+                "source_url": "https://example.com/synthetic/aurora",
+                "provider": "manual",
+                "rights_basis": "own",
+                "content_hash": "ee5e01e953a6649cabc242dec9bd7ec3004bdfa3b763e38d3c0ea73b76398f73",
+                "published_at": null
+              },
+              "freshness": {
+                "status": "current",
+                "expires_at": "2026-10-19T03:22:15.314058+00:00"
+              },
+              "scores": {
+                "strategy": "semantic_cosine",
+                "score": 0.2035
+              },
+              "evidence_threshold": 0.55
+            }
+          }
+        ],
+        "citations": []
+      }
+    ],
+    "metric_definitions": {
+      "recall_at_k": "可回答样本中，top-k候选包含的标注文档比例，按样本取均值。未先做证据阈值筛选。",
+      "candidate_recall_at_1": "可回答样本中，排名第一候选包含的标注文档比例，按样本取均值。",
+      "evidence_precision_at_k": "兼容旧字段，等于candidate_precision_at_k；是候选相关比例，不是答案采用证据精度。",
+      "answer_evidence_precision": "实际被回答引用且与标注相关的证据数 / 所有实际引用证据数；无引用返回null。",
+      "answer_evidence_recall": "可回答样本中，实际引用覆盖的标注文档比例，误拒按0计，按样本取均值。"
+    },
+    "limitations": [
+      "小样本检索评测；不代表真实用户或生产效果。",
+      "候选召回与答案采用证据分别统计，阈值未为演示集调整，误拒样本保留。",
+      "使用原文摘录回答，未测试生成模型质量。",
+      "引用有效率仅检查ID存在，证据相关性按人工标注计算，未自动验证蕴含关系。"
+    ]
+  },
+  "limitations": [
+    "全部是本人编写的合成样本，不是实际资讯或独立盲测。",
+    "采用正在运行的检索配置；回答使用本地摘录，未调用生成模型。",
+    "撤销后可能召回其他不相关文档；这里只检查被撤销证据不再参与，相关性另按标注评测。",
+    "验收资料保留在独立知识库中，避免混入默认用户资料。"
+  ]
+}

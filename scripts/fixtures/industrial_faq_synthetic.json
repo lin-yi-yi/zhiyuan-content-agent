@@ -1,0 +1,65 @@
+{
+  "dataset_id": "industrial-faq-synthetic-v1",
+  "label": "星桥工业产品 FAQ 固定合成开发集 v1；非客户资料、非独立盲测",
+  "provenance": "全部由本轮开发助手编写样本和预设标签，尚待用户逐题人工复核；仅验证本地流程和规则，没有真实产品、客户授权或采购建议。",
+  "annotation_review_status": "awaiting_user_review",
+  "real_authorized_samples": [],
+  "annotation_policy": "预设预期文档和必须出现的事实短语；标签尚待用户人工复核。程序仅检查逐字短语和引用定位，不判断完整语义蕴含。保留错答、漏答、误拒。",
+  "documents": [
+    {
+      "key": "spec", "group": "main", "title": "合成星桥 XP-24 参数手册", "version_label": "synthetic-XP24-v1",
+      "content": "合成星桥 XP-24 参数手册（完全虚构的演示设备）：额定电压为 24 V DC，额定流量为 12 L/min。适用介质为清水，适用环境温度为 5 至 35 摄氏度。本手册没有提供实际价格、销量、节能比例、危险环境认证或客户使用效果；任何未列明参数都需补充确认。",
+      "citations": [
+        {"claim": "XP-24 额定电压", "excerpt": "额定电压为 24 V DC", "locator": "参数手册第1段", "product_model": "合成星桥 XP-24", "parameter": "额定电压", "value": "24 V DC"},
+        {"claim": "XP-24 额定流量", "excerpt": "额定流量为 12 L/min", "locator": "参数手册第1段", "product_model": "合成星桥 XP-24", "parameter": "额定流量", "value": "12 L/min"}
+      ]
+    },
+    {
+      "key": "maintenance", "group": "main", "title": "合成星桥 XP-24 维护说明", "version_label": "synthetic-maintenance-v1",
+      "content": "合成星桥 XP-24 维护说明（虚构开发样本）：维护前须切断电源，并确认设备已停机。滤芯检查周期为每 30 天一次；发现破损须停止使用并联系设备负责人。完成维护后记录日期与检查结果。本说明只用于软件流程演示，不是实际设备操作指导。",
+      "citations": [
+        {"claim": "维护前先断电停机", "excerpt": "维护前须切断电源，并确认设备已停机。", "locator": "维护说明第1段"},
+        {"claim": "滤芯检查周期", "excerpt": "滤芯检查周期为每 30 天一次", "locator": "维护说明第1段", "product_model": "合成星桥 XP-24", "parameter": "滤芯检查周期", "value": "每 30 天一次"}
+      ]
+    },
+    {
+      "key": "service", "group": "main", "title": "合成星桥 XP-24 服务边界", "version_label": "synthetic-service-v1",
+      "content": "合成星桥 XP-24 服务边界（虚构开发样本）：质保期限为验收后 12 个月。服务范围仅含制造缺陷维修，不包含滤芯耗材和不当操作损坏。上门服务城市及服务响应时间尚未确认，应交由负责人补充资料，不得自行承诺。本记录没有真实合同效力。",
+      "citations": [
+        {"claim": "质保期限", "excerpt": "质保期限为验收后 12 个月。", "locator": "服务边界第1段", "product_model": "合成星桥 XP-24", "parameter": "质保期限", "value": "验收后 12 个月"}
+      ]
+    },
+    {
+      "key": "expired", "group": "expired", "title": "合成星桥 XP-60 过期规格", "version_label": "synthetic-XP60-old",
+      "content": "合成星桥 XP-60 旧规格（虚构开发样本）：旧资料记载接口为 G1/2。此记录用于模拟已经核验入库、随后有效期结束的材料。资料过期后需要重新核验，不能将旧参数直接用于新交付。本样本不描述真实设备。",
+      "citations": [{"claim": "XP-60 旧接口规格", "excerpt": "旧资料记载接口为 G1/2。", "locator": "旧规格第1段", "product_model": "合成星桥 XP-60", "parameter": "接口", "value": "G1/2"}]
+    },
+    {
+      "key": "conflict", "group": "main", "state": "conflicting_pending", "title": "合成星桥 XP-24 矛盾修订", "version_label": "synthetic-XP24-unconfirmed-v2",
+      "content": "合成星桥 XP-24 矛盾修订（虚构开发样本）：额定电压为 48 V DC。该值与当前已核验的 24 V DC 手册互相冲突，尚无材料证明新稿替代旧稿，必须先人工澄清。本样本用于检查不能同时核验冲突参数的门禁。",
+      "citations": [{"claim": "矛盾修订电压", "excerpt": "额定电压为 48 V DC。", "locator": "矛盾修订第1段", "product_model": "合成星桥 XP-24", "parameter": "额定电压", "value": "48 V DC"}]
+    }
+  ],
+  "structured_contract_cases": [
+    {"id": "contract_voltage", "group": "main", "question": "合成星桥 XP-24 额定电压是多少？", "expected_document_keys": ["spec"], "required_fact_phrases": ["24 V DC"], "should_refuse": false,
+      "required_facts": [{"product_model": "合成星桥 XP-24", "parameter": "额定电压"}]},
+    {"id": "contract_missing_price", "group": "main", "question": "合成星桥 XP-24 售价为多少人民币？", "expected_document_keys": [], "required_fact_phrases": [], "should_refuse": true,
+      "required_facts": [{"product_model": "合成星桥 XP-24", "parameter": "售价"}]},
+    {"id": "contract_missing_response_time", "group": "main", "question": "合成星桥 XP-24 上门服务响应时间是多少小时？", "expected_document_keys": [], "required_fact_phrases": [], "should_refuse": true,
+      "required_facts": [{"product_model": "合成星桥 XP-24", "parameter": "上门服务响应时间"}]},
+    {"id": "contract_partial_coverage", "group": "main", "question": "合成星桥 XP-24 额定电压和售价各是多少？", "expected_document_keys": [], "required_fact_phrases": [], "should_refuse": true,
+      "required_facts": [{"product_model": "合成星桥 XP-24", "parameter": "额定电压"}, {"product_model": "合成星桥 XP-24", "parameter": "售价"}]}
+  ],
+  "cases": [
+    {"id": "voltage", "group": "main", "question": "合成星桥 XP-24 额定电压是多少？", "expected_document_keys": ["spec"], "required_fact_phrases": ["24 V DC"], "should_refuse": false},
+    {"id": "flow", "group": "main", "question": "合成星桥 XP-24 额定流量是多少？", "expected_document_keys": ["spec"], "required_fact_phrases": ["12 L/min"], "should_refuse": false},
+    {"id": "maintenance", "group": "main", "question": "合成星桥 XP-24 维护前须采取什么措施？", "expected_document_keys": ["maintenance"], "required_fact_phrases": ["切断电源", "设备已停机"], "should_refuse": false},
+    {"id": "filter", "group": "main", "question": "合成星桥 XP-24 滤芯检查周期是多少？", "expected_document_keys": ["maintenance"], "required_fact_phrases": ["每 30 天一次"], "should_refuse": false},
+    {"id": "warranty", "group": "main", "question": "合成星桥 XP-24 质保期限是多少？", "expected_document_keys": ["service"], "required_fact_phrases": ["验收后 12 个月"], "should_refuse": false},
+    {"id": "missing_price", "group": "main", "question": "合成星桥 XP-24 售价为多少人民币？", "expected_document_keys": [], "required_fact_phrases": [], "should_refuse": true},
+    {"id": "missing_response_time", "group": "main", "question": "合成星桥 XP-24 上门服务响应时间是多少小时？", "expected_document_keys": [], "required_fact_phrases": [], "should_refuse": true},
+    {"id": "unrelated", "group": "main", "question": "意大利面的煮制时间？", "expected_document_keys": [], "required_fact_phrases": [], "should_refuse": true},
+    {"id": "expired_material", "group": "expired", "question": "合成星桥 XP-60 接口规格是多少？", "expected_document_keys": [], "required_fact_phrases": [], "should_refuse": true},
+    {"id": "empty_scope", "group": "empty", "question": "合成星桥 XP-24 额定电压是多少？", "expected_document_keys": [], "required_fact_phrases": [], "should_refuse": true}
+  ]
+}

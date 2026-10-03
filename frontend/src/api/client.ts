@@ -1,15 +1,42 @@
 const API_BASE = '';
+let requestOrganization: string | null = null;
+let requestCsrf: string | null = null;
+let requestGeneration = 0;
+const pendingRequests = new Set<AbortController>();
 
-async function request<T>(url: string, opts?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${url}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...opts,
-  });
+export function configureRequestContext(organizationId: string | null, csrf: string | null) {
+  if (requestOrganization !== organizationId || requestCsrf !== csrf) {
+    requestGeneration += 1;
+    pendingRequests.forEach(controller => controller.abort());
+    pendingRequests.clear();
+  }
+  requestOrganization = organizationId;
+  requestCsrf = csrf;
+}
+
+export async function request<T>(url: string, opts?: RequestInit): Promise<T> {
+  const generation = requestGeneration;
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  if (opts?.signal?.aborted) controller.abort();
+  opts?.signal?.addEventListener('abort', abort, {once:true});
+  pendingRequests.add(controller);
+  const headers = new Headers(opts?.headers);
+  headers.set('Content-Type', 'application/json');
+  if (requestOrganization) headers.set('X-Organization-ID', requestOrganization);
+  if (requestCsrf && !['GET','HEAD','OPTIONS'].includes((opts?.method || 'GET').toUpperCase())) headers.set('X-CSRF-Token', requestCsrf);
+  try {
+  const res = await fetch(`${API_BASE}${url}`, {...opts, headers, credentials:'same-origin', signal:controller.signal});
+  if (generation !== requestGeneration) throw new DOMException('组织已切换', 'AbortError');
+  if (res.status === 401 && !url.startsWith('/api/saas/auth/')) window.dispatchEvent(new Event('saas-session-expired'));
   if (!res.ok) {
     const text = await res.text();
     try {
       const data = JSON.parse(text);
-      throw new Error(data.detail || text || `HTTP ${res.status}`);
+      const detail = Array.isArray(data.detail)
+        ? data.detail.map((item: {loc?: string[]; msg?: string}) => `${item.loc?.slice(1).join('.') || '参数'}：${item.msg || '无效'}`).join('；')
+        : data.detail;
+      throw new Error(detail || text || `HTTP ${res.status}`);
     } catch (error) {
       if (error instanceof Error && error.message && error.message !== text) {
         throw error;
@@ -18,7 +45,13 @@ async function request<T>(url: string, opts?: RequestInit): Promise<T> {
     }
   }
   if (res.status === 204) return undefined as T;
-  return res.json();
+  const result = await res.json();
+  if (generation !== requestGeneration) throw new DOMException('组织已切换', 'AbortError');
+  return result;
+  } finally {
+    pendingRequests.delete(controller);
+    opts?.signal?.removeEventListener('abort', abort);
+  }
 }
 
 export interface Topic {
@@ -312,7 +345,7 @@ export interface ContentPrediction {
 
 export interface ContentPredictionCreate {
   draft_id: number;
-  publish_log_id?: number | null;
+  publish_log_id?: null;
   platform?: string;
   predicted_views?: number;
   predicted_likes?: number;
@@ -379,7 +412,10 @@ export interface ReviewChecklistUpdateItem {
 }
 
 export interface AgentRunCreate {
+  required_facts?: Array<{product_model: string; parameter: string}>;
   goal: string;
+  brand_profile_id?: number | null;
+  workflow_key?: 'knowledge_post' | 'product_faq' | 'case_story' | null;
   mode?: 'research' | 'inspiration';
   research_depth?: 'quick' | 'deep';
   target_audience?: string;
@@ -411,6 +447,7 @@ export interface AgentStep {
   completed_at: string | null;
   created_at: string;
   updated_at: string;
+  duration_ms?: number | null;
 }
 
 export interface AgentRun {
@@ -573,6 +610,8 @@ export interface RagSearchHit {
 export interface RagSearchResponse {
   items: RagSearchHit[];
   total: number;
+  strategy?: string;
+  retrieval?: {mode?: string; strategy?: string};
 }
 
 export interface RagAnswerResponse {
@@ -581,6 +620,7 @@ export interface RagAnswerResponse {
   refusal_reason: string;
   coverage: Record<string, unknown>;
   citations: RagSearchHit[];
+  retrieval?: {mode?: string; strategy?: string};
 }
 
 export interface Metric {
@@ -621,7 +661,8 @@ export interface WeeklyReport {
   report_text: string;
   performance_summary?: {
     totals?: Record<string, unknown>;
-    rates?: Record<string, number>;
+    rates?: Record<string, number | null> | null;
+    data_coverage?: {published_posts:number;measured_posts:number;missing_metric_posts:number;missing_metric_log_ids:number[]};
     prediction_calibration?: Record<string, unknown>;
   } | null;
   best_topics: { items?: Array<Record<string, unknown>> } | null;
@@ -832,14 +873,14 @@ export const api = {
   executeAgentTool: (body: AgentToolExecuteRequest) =>
     request<AgentToolExecuteResponse>('/api/v04/tools/execute', { method: 'POST', body: JSON.stringify(body) }),
 
-  listKnowledgeBases: () => request<KnowledgeBase[]>('/api/v04/knowledge-bases'),
+  listKnowledgeBases: (workspaceId?:number) => request<KnowledgeBase[]>(`/api/v04/knowledge-bases${workspaceId?`?workspace_id=${workspaceId}`:''}`),
 
   indexSourceForRag: (body: RagIndexSourceRequest) =>
     request<RagIndexSourceResult>('/api/v04/rag/index-source', { method: 'POST', body: JSON.stringify(body) }),
 
-  searchRag: (body: { query: string; knowledge_base_id?: number | null; top_k?: number }) =>
+  searchRag: (body: { query: string; workspace_id?:number; knowledge_base_id?: number | null; top_k?: number;retrieval_mode?:'semantic'|'lexical'|'hybrid' }) =>
     request<RagSearchResponse>('/api/v04/rag/search', { method: 'POST', body: JSON.stringify(body) }),
 
-  answerWithRag: (body: { query: string; knowledge_base_id?: number | null; provider?: string; model?: string; top_k?: number }) =>
+  answerWithRag: (body: { query: string; workspace_id?:number; knowledge_base_id?: number | null; provider?: string; model?: string; top_k?: number;retrieval_mode?:'semantic'|'lexical'|'hybrid' }) =>
     request<RagAnswerResponse>('/api/v04/rag/answer', { method: 'POST', body: JSON.stringify(body) }),
 };

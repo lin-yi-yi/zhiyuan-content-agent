@@ -97,11 +97,13 @@ def get_default_workspace(db: Session) -> Workspace:
     workspace = db.query(Workspace).filter(Workspace.is_default.is_(True)).order_by(Workspace.id).first()
     if workspace:
         return workspace
+    from app.saas.context import is_saas_mode
+    saas = is_saas_mode()
     workspace = Workspace(
         name="默认工作区",
         slug="default",
-        description="本地单用户内容增长与 RAG 实验工作区。",
-        data_boundary="仅用于本机项目数据；RAG 检索必须限制在当前 workspace_id 内。",
+        description="组织知识与内容工作区。" if saas else "本地单用户内容增长与 RAG 实验工作区。",
+        data_boundary="仅当前已授权组织；组织拥有独立业务库和向量目录，知识库继续按范围过滤。" if saas else "仅用于本机项目数据；RAG 检索必须限制在当前 workspace_id 内。",
         is_default=True,
     )
     db.add(workspace)
@@ -121,7 +123,10 @@ def get_workspace_or_default(db: Session, workspace_id: int | None = None) -> Wo
 
 def workspace_context(db: Session, workspace_id: int | None = None) -> WorkspaceContext:
     workspace = get_workspace_or_default(db, workspace_id)
-    return WorkspaceContext(workspace_id=workspace.id, workspace_slug=workspace.slug)
+    from app.saas.context import current_tenant
+    tenant = current_tenant.get()
+    return WorkspaceContext(workspace_id=workspace.id, workspace_slug=workspace.slug,
+                            actor=tenant.user_id if tenant else "local_user")
 
 
 def assert_workspace_scope(context: WorkspaceContext, workspace_id: int) -> None:

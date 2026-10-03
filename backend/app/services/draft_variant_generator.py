@@ -9,6 +9,8 @@ from app.models.card import Card
 from app.models.draft import Draft
 from app.models.topic import Topic
 from app.schemas.draft_variant import DraftVariantGenerateRequest
+from app.services.review_lifecycle import has_workflow
+from app.services.workflow_support import WorkflowConflict
 
 PROMPT_PATH = Path(__file__).parent.parent / "agents" / "prompts" / "draft_variant_generation.md"
 
@@ -59,6 +61,8 @@ async def generate_draft_variant(draft_id: int, req: DraftVariantGenerateRequest
     source_draft = db.query(Draft).filter(Draft.id == draft_id).first()
     if not source_draft:
         raise ValueError("草稿不存在")
+    if has_workflow(draft_id, db):
+        raise WorkflowConflict("此草稿关联 Agent 任务，不能在这里生成独立变体。请返回原任务修改内容并重新提交审核。")
     topic = db.query(Topic).filter(Topic.id == source_draft.topic_id).first()
 
     max_card_count = max(2, min(req.max_card_count or 7, 7))

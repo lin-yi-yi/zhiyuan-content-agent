@@ -13,3 +13,23 @@ venv/
 *.db
 *.tsbuildinfo
 .codex-run/
+.codex/
+.data/
+.pytest_cache/
+*.db-wal
+*.db-shm
+backend/.coverage
+backend/htmlcov/
+
+# SaaS operator credentials and local environment
+.env.saas
+.env.saas.local
+
+.env.*
+!.env.example
+!.env.saas.example
+
+# Local acceptance recordings; publish the curated validation reports instead.
+docs/validation/p0-2026-10-03/
+docs/validation/p1-2026-10-03/
+docs/validation/*.log

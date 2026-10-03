@@ -1,3 +1,4 @@
+import { useWorkspace } from '../components/WorkspaceContext';
 import { useEffect, useMemo, useState } from 'react';
 import {
   SourceDetail,
@@ -46,6 +47,7 @@ const emptyIdea: SourceTopicIdea = {
 };
 
 export default function SourceLibraryPage() {
+  const {canWrite,canReview}=useWorkspace();
   const [sources, setSources] = useState<SourceItem[]>([]);
   const [stats, setStats] = useState<SourceStats | null>(null);
   const [typeFilter, setTypeFilter] = useState('');
@@ -263,8 +265,8 @@ export default function SourceLibraryPage() {
                   )}
                   {detail.duplicate_hint && <div className="source-duplicate-hint">{detail.duplicate_hint}</div>}
                   <div className="source-detail-actions">
-                    {detail.url && <a href={detail.url} target="_blank">查看原文</a>}
-                    <button className="btn btn-sm" onClick={handleIndexForRag} disabled={ragIndexing}>
+                    {detail.url && /^https?:\/\//i.test(detail.url) && <a href={detail.url} target="_blank" rel="noreferrer">查看原文</a>}
+                    <button className="btn btn-sm" onClick={handleIndexForRag} disabled={!canWrite || (ragIndexing)}>
                       {ragIndexing ? '索引中...' : '索引到知识库'}
                     </button>
                   </div>
@@ -303,24 +305,24 @@ export default function SourceLibraryPage() {
                 <div className="form-row">
                   <div className="form-group">
                     <label>目标人群</label>
-                    <input value={targetAudience} onChange={e => setTargetAudience(e.target.value)} />
+                    <input disabled={!canWrite} value={targetAudience} onChange={e => setTargetAudience(e.target.value)} />
                   </div>
                   <div className="form-group">
                     <label>内容类型</label>
-                    <select value={contentType} onChange={e => setContentType(e.target.value)}>
+                    <select disabled={!canWrite} value={contentType} onChange={e => setContentType(e.target.value)}>
                       {CONTENT_TYPES.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
                     </select>
                   </div>
                   <div className="form-group">
                     <label>模型</label>
-                    <select value={provider} onChange={e => setProvider(e.target.value)}>
+                    <select disabled={!canWrite} value={provider} onChange={e => setProvider(e.target.value)}>
                       <option value="local">local 规则模型</option>
                       <option value="doubao">豆包 / 火山方舟</option>
                       <option value="deepseek">DeepSeek</option>
                     </select>
                   </div>
                 </div>
-                <button className="btn btn-primary" onClick={handleGenerateIdeas} disabled={loading}>
+                <button className="btn btn-primary" onClick={handleGenerateIdeas} disabled={!canWrite || (loading)}>
                   {loading ? '生成中...' : '从这条素材生成 5 个角度'}
                 </button>
               </div>
@@ -350,22 +352,22 @@ export default function SourceLibraryPage() {
                     <div className="source-idea-editor__header">
                       <h3>入库前编辑</h3>
                       <label className="checkbox-row" style={{ margin: 0 }}>
-                        <input type="checkbox" checked={autoScore} onChange={e => setAutoScore(e.target.checked)} />
+                        <input disabled={!canWrite} type="checkbox" checked={autoScore} onChange={e => setAutoScore(e.target.checked)} />
                         <span>入库后自动评分</span>
                       </label>
                     </div>
                     <div className="form-group">
                       <label>标题</label>
-                      <input value={editingIdea.title} onChange={e => setEditingIdea({ ...editingIdea, title: e.target.value })} />
+                      <input disabled={!canWrite} value={editingIdea.title} onChange={e => setEditingIdea({ ...editingIdea, title: e.target.value })} />
                     </div>
                     <div className="form-row">
                       <div className="form-group">
                         <label>内容角度</label>
-                        <input value={editingIdea.content_angle} onChange={e => setEditingIdea({ ...editingIdea, content_angle: e.target.value })} />
+                        <input disabled={!canWrite} value={editingIdea.content_angle} onChange={e => setEditingIdea({ ...editingIdea, content_angle: e.target.value })} />
                       </div>
                       <div className="form-group">
                         <label>评分</label>
-                        <input
+                        <input disabled={!canWrite}
                           type="number"
                           min={0}
                           max={100}
@@ -376,24 +378,24 @@ export default function SourceLibraryPage() {
                     </div>
                     <div className="form-group">
                       <label>目标人群</label>
-                      <input value={editingIdea.target_audience} onChange={e => setEditingIdea({ ...editingIdea, target_audience: e.target.value })} />
+                      <input disabled={!canWrite} value={editingIdea.target_audience} onChange={e => setEditingIdea({ ...editingIdea, target_audience: e.target.value })} />
                     </div>
                     <div className="form-group">
                       <label>摘要</label>
-                      <textarea rows={4} value={editingIdea.summary} onChange={e => setEditingIdea({ ...editingIdea, summary: e.target.value })} />
+                      <textarea disabled={!canWrite} rows={4} value={editingIdea.summary} onChange={e => setEditingIdea({ ...editingIdea, summary: e.target.value })} />
                     </div>
                     <div className="form-row">
                       <div className="form-group">
                         <label>推荐理由</label>
-                        <textarea rows={3} value={editingIdea.reason} onChange={e => setEditingIdea({ ...editingIdea, reason: e.target.value })} />
+                        <textarea disabled={!canWrite} rows={3} value={editingIdea.reason} onChange={e => setEditingIdea({ ...editingIdea, reason: e.target.value })} />
                       </div>
                       <div className="form-group">
                         <label>风险提醒</label>
-                        <textarea rows={3} value={editingIdea.risk_tip} onChange={e => setEditingIdea({ ...editingIdea, risk_tip: e.target.value })} />
+                        <textarea disabled={!canWrite} rows={3} value={editingIdea.risk_tip} onChange={e => setEditingIdea({ ...editingIdea, risk_tip: e.target.value })} />
                       </div>
                     </div>
                     {editingIdea.duplicate_hint && <div className="source-duplicate-hint">{editingIdea.duplicate_hint}</div>}
-                    <button className="btn btn-primary" onClick={handleConfirmIdea} disabled={loading || !editingIdea.title.trim()}>
+                    <button className="btn btn-primary" onClick={handleConfirmIdea} disabled={!canWrite || (loading || !editingIdea.title.trim())}>
                       {loading ? '入库中...' : '确认入库为新选题'}
                     </button>
                   </div>

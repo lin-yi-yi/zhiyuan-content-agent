@@ -1,6 +1,6 @@
 """选题池 CRUD + 评分"""
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import StrictBool, BaseModel
 from sqlalchemy.orm import Session
 
 import re
@@ -25,7 +25,7 @@ class ImportUrlRequest(BaseModel):
     url: str
     source_type: str = ""
     fallback_summary: str = ""
-    auto_score: bool = False
+    auto_score: StrictBool = False
     provider: str = ""
     model: str = ""
 
@@ -60,7 +60,7 @@ class ImportUrlConfirmRequest(BaseModel):
     target_audience: str = ""
     suggestion_reason: str = ""
     risk_tip: str = ""
-    auto_score: bool = False
+    auto_score: StrictBool = False
     provider: str = ""
     model: str = ""
 
@@ -112,7 +112,7 @@ class CustomTopicIdeasResponse(BaseModel):
 
 
 class CustomTopicConfirmRequest(CustomTopicIdeaOut):
-    auto_score: bool = False
+    auto_score: StrictBool = False
     provider: str = ""
     model: str = ""
 
@@ -221,8 +221,8 @@ async def custom_topic_ideas(body: CustomTopicIdeasRequest, db: Session = Depend
         )
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"自定义选题生成失败: {str(e)}")
+    except Exception:
+        raise HTTPException(status_code=500, detail="自定义选题生成失败，请检查配置或稍后重试。") from None
 
     return CustomTopicIdeasResponse(
         mode=result.mode,
@@ -290,7 +290,7 @@ async def confirm_custom_topic_idea(body: CustomTopicConfirmRequest, db: Session
 async def _create_imported_topic(
     imported: ImportedSource,
     db: Session,
-    auto_score: bool = False,
+    auto_score: StrictBool = False,
     provider: str = "",
     model: str = "",
     suggestion: TopicSuggestion | None = None,
@@ -489,8 +489,8 @@ async def score_topic_endpoint(topic_id: int, req: ScoreRequest = ScoreRequest()
         return result
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"评分失败: {str(e)}")
+    except Exception:
+        raise HTTPException(status_code=500, detail="评分失败，请检查配置或稍后重试。") from None
 
 
 @router.post("/{topic_id}/generate-draft")
@@ -509,18 +509,18 @@ async def generate_draft_endpoint(topic_id: int, req: ScoreRequest = ScoreReques
     try:
         try:
             draft = await generate_draft(topic, db, provider=req.provider, model=req.model or None)
-        except Exception as e:
-            raise RuntimeError(f"DraftAgent 发布包生成失败: {str(e)}") from e
+        except Exception:
+            raise HTTPException(500, "发布包生成失败，请检查配置或稍后重试。") from None
 
         try:
             cards = await generate_cards(draft, db, provider=req.provider, model=req.model or None)
-        except Exception as e:
-            raise RuntimeError(f"CardAgent 卡片生成失败: {str(e)}") from e
+        except Exception:
+            raise HTTPException(500, "卡片生成失败，请检查配置或稍后重试。") from None
 
         try:
             await check_compliance(draft, db, provider=req.provider, model=req.model or None)
-        except Exception as e:
-            raise RuntimeError(f"ComplianceAgent 合规检查失败: {str(e)}") from e
+        except Exception:
+            raise HTTPException(500, "合规检查失败，请检查配置或稍后重试。") from None
 
         topic.status = "generated"
         db.commit()
@@ -529,5 +529,7 @@ async def generate_draft_endpoint(topic_id: int, req: ScoreRequest = ScoreReques
             "draft": DraftOut.model_validate(draft).model_dump(),
             "cards": [CardOut.model_validate(c).model_dump() for c in cards],
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="发布包处理失败，请稍后重试。") from None

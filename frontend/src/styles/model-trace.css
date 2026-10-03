@@ -1,0 +1,9 @@
+.model-trace-totals{display:flex;flex-wrap:wrap;gap:12px 24px;font-size:12px;margin:14px 0}
+.model-trace-table-wrap{overflow-x:auto;margin:16px 0}
+.model-trace-table{border-collapse:collapse;width:100%;font-size:12px;text-align:left}
+.model-trace-table caption{text-align:left;color:var(--text-secondary);padding-bottom:10px}
+.model-trace-table th,.model-trace-table td{padding:12px 10px;border-bottom:1px solid var(--border);vertical-align:top;min-width:130px;max-width:280px;overflow-wrap:anywhere}
+.model-trace-table small{display:block;color:var(--text-secondary);line-height:1.8;margin-top:5px}
+.model-trace-table dl{max-width:220px;margin-top:10px}
+.model-trace-table dt{color:var(--text-secondary);margin-top:8px}
+.model-trace-table dd{margin:4px 0;font-family:ui-monospace,monospace;font-size:10px;overflow-wrap:anywhere}
