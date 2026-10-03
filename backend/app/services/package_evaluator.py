@@ -95,12 +95,14 @@ def evaluate_local(draft: Draft, cards: list[Card]) -> dict:
     scores.workflow_usability = min(10, workflow_score)
 
     # 6. 卡片节奏 (0-10)
-    if len(cards) >= 5:
+    if any(card.card_type == "cover" for card in cards) and any(
+        card.card_type != "cover" and card.body for card in cards
+    ):
         scores.card_rhythm = 8
-        strengths.append("卡片数量合适（≥5 页），结构完整")
-    elif len(cards) >= 3:
+        strengths.append("具备封面和内容页，页数按实际资料组织")
+    elif cards:
         scores.card_rhythm = 5
-        issues.append(Issue(level="medium", card_page=None, message="卡片不足 5 页，建议补到 7 页标准结构"))
+        issues.append(Issue(level="medium", card_page=None, message="请检查是否包含封面和有实际内容的正文页"))
     else:
         scores.card_rhythm = 3
         issues.append(Issue(level="high", card_page=None, message="卡片数量不足，缺少完整节奏"))
@@ -192,6 +194,7 @@ async def evaluate_with_llm(draft: Draft, cards: list[Card], provider: str = "de
 风险提示：{draft.risk_tips or []}
 
 卡片内容：
+本次实际为 {len(cards)} 页，请按信息完整性和证据覆盖评估，不要求固定页数，不为凑页数添加无来源内容。
 {cards_text[:3000]}"""
 
     client = llm_router.get_task_client("package_evaluation", provider=provider or None, model=model or None)

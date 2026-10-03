@@ -1,9 +1,10 @@
 """URL / GitHub 信源导入服务。"""
 from dataclasses import dataclass
 from html.parser import HTMLParser
+import re
 from urllib.parse import urlparse
 
-import httpx
+from app.services.safe_fetch import SourceFetchError, UnsafeSourceURL, normalize_public_url, safe_fetch
 
 
 @dataclass
@@ -71,6 +72,8 @@ async def import_source_from_url(url: str, source_type: str = "", fallback_summa
     if is_github_repo_url(normalized_url):
         try:
             return await import_github_repo(normalized_url)
+        except UnsafeSourceURL:
+            raise
         except Exception:
             if not fallback_summary:
                 raise
@@ -85,6 +88,8 @@ async def import_source_from_url(url: str, source_type: str = "", fallback_summa
 
     try:
         return await import_webpage(normalized_url, source_type=source_type or "other")
+    except UnsafeSourceURL:
+        raise
     except Exception:
         if not fallback_summary:
             raise
@@ -102,18 +107,22 @@ async def import_source_from_url(url: str, source_type: str = "", fallback_summa
 async def import_github_repo(url: str) -> ImportedSource:
     owner, repo = parse_github_repo(url)
     headers = {"Accept": "application/vnd.github+json"}
-    async with httpx.AsyncClient(timeout=20, follow_redirects=True, headers={"User-Agent": "ai-content-agent/0.2"}) as client:
-        repo_resp = await client.get(f"https://api.github.com/repos/{owner}/{repo}", headers=headers)
-        repo_resp.raise_for_status()
+    repo_resp = await safe_fetch(
+        f"https://api.github.com/repos/{owner}/{repo}", headers=headers, allowed_hosts={"api.github.com"},
+    )
+    try:
         repo_data = repo_resp.json()
+        if not isinstance(repo_data, dict):
+            raise ValueError
+    except (ValueError, TypeError):
+        raise SourceFetchError("GitHub 未返回有效仓库信息") from None
 
-        readme_text = ""
-        readme_resp = await client.get(
-            f"https://api.github.com/repos/{owner}/{repo}/readme",
-            headers={"Accept": "application/vnd.github.raw"},
-        )
-        if readme_resp.status_code < 400:
-            readme_text = readme_resp.text
+    readme_resp = await safe_fetch(
+        f"https://api.github.com/repos/{owner}/{repo}/readme",
+        headers={"Accept": "application/vnd.github.raw"}, allowed_hosts={"api.github.com"},
+        allowed_error_statuses=frozenset({404}),
+    )
+    readme_text = readme_resp.text if readme_resp.status_code < 400 else ""
 
     full_name = repo_data.get("full_name") or f"{owner}/{repo}"
     description = repo_data.get("description") or ""
@@ -134,13 +143,11 @@ async def import_github_repo(url: str) -> ImportedSource:
 
 
 async def import_webpage(url: str, source_type: str) -> ImportedSource:
-    async with httpx.AsyncClient(timeout=20, follow_redirects=True, headers={"User-Agent": "ai-content-agent/0.2"}) as client:
-        resp = await client.get(url)
-        resp.raise_for_status()
-        content_type = resp.headers.get("content-type", "")
-        if "text/html" not in content_type and "text/plain" not in content_type:
-            raise ValueError(f"暂不支持的内容类型: {content_type}")
-        html = resp.text
+    resp = await safe_fetch(url)
+    content_type = resp.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+    if content_type not in {"text/html", "text/plain"}:
+        raise SourceFetchError("暂不支持该信源的内容类型")
+    html = resp.text
 
     parser = ReadableHTMLParser()
     parser.feed(html)
@@ -162,15 +169,7 @@ async def import_webpage(url: str, source_type: str) -> ImportedSource:
 
 
 def normalize_url(url: str) -> str:
-    value = url.strip()
-    if not value:
-        raise ValueError("URL 不能为空")
-    if not value.startswith(("http://", "https://")):
-        value = "https://" + value
-    parsed = urlparse(value)
-    if not parsed.netloc:
-        raise ValueError("URL 格式不正确")
-    return value
+    return normalize_public_url(url)
 
 
 def is_github_repo_url(url: str) -> bool:
@@ -179,11 +178,14 @@ def is_github_repo_url(url: str) -> bool:
 
 
 def parse_github_repo(url: str) -> tuple[str, str]:
-    parsed = urlparse(url)
+    parsed = urlparse(normalize_url(url))
     parts = path_parts(parsed.path)
-    if len(parts) < 2:
+    if parsed.hostname not in {"github.com", "www.github.com"} or len(parts) < 2:
         raise ValueError("GitHub 仓库链接需要包含 owner/repo")
-    return parts[0], parts[1].removesuffix(".git")
+    owner, repo = parts[0], parts[1].removesuffix(".git")
+    if not re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})", owner) or not re.fullmatch(r"[A-Za-z0-9_.-]{1,100}", repo) or repo in {".", ".."}:
+        raise UnsafeSourceURL("GitHub 仓库路径格式不正确")
+    return owner, repo
 
 
 def repo_title_from_url(url: str) -> str:

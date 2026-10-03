@@ -9,6 +9,8 @@ from app.db.session import get_db
 from app.models.card import Card
 from app.models.draft import Draft
 from app.schemas.card import CardCreate, CardMove, CardOut, CardUpdate
+from app.services.review_lifecycle import invalidate_review_for_edit
+from app.services.workflow_support import WorkflowConflict
 
 
 class BatchStyleRequest(BaseModel):
@@ -18,6 +20,17 @@ class BatchStyleRequest(BaseModel):
 
 def _cards_for_draft(db: Session, draft_id: int) -> list[Card]:
     return db.query(Card).filter(Card.draft_id == draft_id).order_by(Card.page_index, Card.id).all()
+
+
+def _invalidate_cards_review(db: Session, draft_id: int) -> None:
+    draft = db.get(Draft, draft_id)
+    if draft is None:
+        raise HTTPException(404, "发布包不存在")
+    try:
+        invalidate_review_for_edit(draft, db, "卡片内容或排版已修改，旧审核结论失效")
+    except WorkflowConflict as exc:
+        db.rollback()
+        raise HTTPException(409, str(exc)) from exc
 
 
 def _renumber_cards(db: Session, draft_id: int) -> list[Card]:
@@ -71,6 +84,8 @@ def create_card(draft_id: int, body: CardCreate, db: Session = Depends(get_db)):
     if not draft:
         raise HTTPException(404, "发布包不存在")
 
+    _invalidate_cards_review(db, draft_id)
+
     cards = _cards_for_draft(db, draft_id)
     target_index = body.page_index if body.page_index is not None else len(cards) + 1
     target_index = max(1, min(target_index, len(cards) + 1))
@@ -103,7 +118,10 @@ def update_card(card_id: int, body: CardUpdate, db: Session = Depends(get_db)):
     c = db.query(Card).filter(Card.id == card_id).first()
     if not c:
         raise HTTPException(404, "卡片不存在")
-    for k, v in body.model_dump(exclude_unset=True).items():
+    values = body.model_dump(exclude_unset=True)
+    if any(getattr(c, key) != value for key, value in values.items()):
+        _invalidate_cards_review(db, c.draft_id)
+    for k, v in values.items():
         setattr(c, k, v)
     db.commit()
     db.refresh(c)
@@ -115,6 +133,7 @@ def duplicate_card(card_id: int, db: Session = Depends(get_db)):
     card = db.query(Card).filter(Card.id == card_id).first()
     if not card:
         raise HTTPException(404, "卡片不存在")
+    _invalidate_cards_review(db, card.draft_id)
     cards = _cards_for_draft(db, card.draft_id)
     for item in cards:
         if item.page_index > card.page_index:
@@ -144,6 +163,7 @@ def split_card(card_id: int, db: Session = Depends(get_db)):
     card = db.query(Card).filter(Card.id == card_id).first()
     if not card:
         raise HTTPException(404, "卡片不存在")
+    _invalidate_cards_review(db, card.draft_id)
 
     first_body, second_body = _split_body(card.body)
     if not second_body:
@@ -186,6 +206,7 @@ def move_card(card_id: int, body: CardMove, db: Session = Depends(get_db)):
     target_index = current_index - 1 if body.direction == "up" else current_index + 1
     if target_index < 0 or target_index >= len(cards):
         return [CardOut.model_validate(c) for c in cards]
+    _invalidate_cards_review(db, card.draft_id)
     moved = cards.pop(current_index)
     cards.insert(target_index, moved)
     for index, item in enumerate(cards, start=1):
@@ -200,6 +221,7 @@ def delete_card(card_id: int, db: Session = Depends(get_db)):
     if not card:
         raise HTTPException(404, "卡片不存在")
     draft_id = card.draft_id
+    _invalidate_cards_review(db, draft_id)
     db.delete(card)
     db.flush()
     _renumber_cards(db, draft_id)
@@ -213,6 +235,9 @@ def batch_update_style(draft_id: int, body: BatchStyleRequest, db: Session = Dep
     cards = db.query(Card).filter(Card.draft_id == draft_id).order_by(Card.page_index).all()
     if not cards:
         raise HTTPException(404, "该草稿没有卡片")
+    if any((body.layout_key and c.layout_key != body.layout_key) or
+           (body.theme_key and c.theme_key != body.theme_key) for c in cards):
+        _invalidate_cards_review(db, draft_id)
     for c in cards:
         if body.layout_key:
             c.layout_key = body.layout_key

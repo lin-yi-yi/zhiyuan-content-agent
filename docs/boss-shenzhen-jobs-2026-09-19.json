@@ -1,0 +1,755 @@
+{
+  "schema_version": "1.0",
+  "title": "深圳 AI 应用 / Agent / RAG：BOSS 公开招聘线索核验",
+  "query_date": "2026-09-19",
+  "timezone": "Asia/Shanghai",
+  "primary_platform": "BOSS直聘",
+  "research_status": "partial_evidence",
+  "sample_count": 10,
+  "full_jd_count": 0,
+  "current_opening_verified_count": 0,
+  "scope": "本科、应届/经验不限/1-3年优先；仅以可追溯的BOSS页面作为主样本。",
+  "limitations": [
+    "这是有目的选择的小样本，不是市场统计，不可推导岗位占比、薪资预期或求职成功率。",
+    "10条有BOSS公开列表/公司页证据；其中出海网后经正常Chrome访问读到部分详情，其余9条详情仍受安全检查或验证限制。没有绕过验证或登录。",
+    "查询日不等于发布或更新日。出海网页面标注更新时间2026-09-18和招聘中；首次发布日未知，HR未确认。其余9条日期与在招状态均未核实。",
+    "搜索引擎摘要、公开列表和详情可能对应不同缓存或更新时点；不将搜索抓取时间当作岗位日期。",
+    "部分正文和职责摘要不能代表完整硬性/加分要求；null表示未核实，不代表没有要求。职位技术标签不等于全部必须掌握。",
+    "没有进行自动投递、联系招聘者或采集私人联系信息；没有用其他招聘平台替代BOSS主样本。"
+  ],
+  "evidence_grade_definitions": {
+    "A": "正常访问具体BOSS详情正文，已读职责与任职要求；招聘日期和状态仍须单独有证据。",
+    "B": "只读取搜索引擎收录的具体BOSS详情正文，未核实实时页面与在招。",
+    "C": "读取BOSS公开列表/公司页的岗位标签及截断摘要，有具体岗位链接，但无完整JD。",
+    "D": "仅有搜索结果简短摘要或外部转述；不用于本次主样本。",
+    "P": "通过正常浏览器访问具体 BOSS 详情，读取部分职责和任职要求；剩余内容需要登录，非完整JD。"
+  },
+  "query_log": [
+    {
+      "query": "site.zhipin.com/job_detail/ 深圳 \"AI应用\" \"1-3年\" RAG",
+      "outcome": "返回公开分类页，随后打开页面及其中具体岗位链接"
+    },
+    {
+      "query": "site.zhipin.com/job_detail/ 深圳 \"Agent\" \"经验不限\" 本科",
+      "outcome": "返回公开分类页"
+    },
+    {
+      "query": "site.zhipin.com \"AI\" \"RAG\" \"职位描述\" \"深圳\" \"1-3年\"",
+      "outcome": "公开分类页提供职责片段，不能视作完整详情"
+    },
+    {
+      "query": "\"AI Agent 开发工程师（数据中台方向）\" \"智汇创想\"",
+      "outcome": "BOSS公司页和分类页互证公司、岗位及经验标签"
+    },
+    {
+      "query": "已发现具体岗位标识检索",
+      "outcome": "未获得可读的BOSS详情全文"
+    },
+    {
+      "query": "正常打开10条BOSS具体岗位链接",
+      "outcome": "均进入安全检查/验证页面，停止，不绕过"
+    },
+    {
+      "query": "在Google Chrome正常打开出海网具体BOSS岗位详情",
+      "outcome": "读取部分正文及招聘中标记；页面更新时间2026-09-18；登录截断处停止，非完整JD"
+    }
+  ],
+  "recommendation_basis": "以下为根据有限职责片段提出的作品能力建议，不称为深圳岗位普遍硬性要求。",
+  "common_capability_signals": [
+    {
+      "capability": "从业务需求到可演示应用",
+      "supported_by": [
+        "boss-beyond-power-ai",
+        "boss-chuhaiwang-ai",
+        "boss-shuangzijingling-ai"
+      ],
+      "project_proof": "选一个固定场景，展示输入、处理、结果、部署和失败处理。",
+      "classification": "职责主题"
+    },
+    {
+      "capability": "后端与前端接入",
+      "supported_by": [
+        "boss-anker-ai",
+        "boss-huawei-ai-graduate",
+        "boss-gaomu-intern-fullstack"
+      ],
+      "project_proof": "界面调用后端接口，显示任务状态、结果和错误。",
+      "classification": "职责主题"
+    },
+    {
+      "capability": "RAG作为应用中的检索能力",
+      "supported_by": [
+        "boss-chuhaiwang-ai",
+        "boss-kunyuan-ai",
+        "boss-huozhong-ai",
+        "boss-huawei-ai-graduate",
+        "boss-huawei-rag"
+      ],
+      "project_proof": "提供来源、检索结果与缺乏证据时的处理，保留小规模评测。",
+      "classification": "职责主题"
+    },
+    {
+      "capability": "Agent工具与完整任务流程",
+      "supported_by": [
+        "boss-chuhaiwang-ai",
+        "boss-kunyuan-ai",
+        "boss-zhihuichuangxiang-agent"
+      ],
+      "project_proof": "受限工具、执行记录与人工检查；不用无边界多Agent堆叠。",
+      "classification": "职责主题"
+    },
+    {
+      "capability": "效果比较与持续改进",
+      "supported_by": [
+        "boss-chuhaiwang-ai",
+        "boss-huozhong-ai",
+        "boss-beyond-power-ai"
+      ],
+      "project_proof": "保存同批用例的结果、耗时、错误和改进理由。",
+      "classification": "职责主题"
+    }
+  ],
+  "project_scope_recommendation": {
+    "recommendation": "优先打磨一个业务闭环清楚的现有Agent项目，再接入最小可验证RAG能力；Obsidian先作为Markdown输入来源。",
+    "stack_policy": "沿用当前项目中能解释和调试的主力语言与框架。此证据集不足以将Python、Java、某个Agent框架、向量数据库产品或MCP称作共同必需项。",
+    "do_not_infer": [
+      "不能从职责关键词推出所有技术均需熟练",
+      "不能从经验不限推出低门槛",
+      "不能从列表存在推出目前在招",
+      "不能把AI生成的项目代码当成候选人已掌握的能力"
+    ]
+  },
+  "jobs": [
+    {
+      "id": "boss-beyond-power-ai",
+      "company": "Beyond Power",
+      "title": "AI 应用开发工程师",
+      "city": "深圳",
+      "location": "深圳龙岗区坂田",
+      "platform": "BOSS直聘",
+      "source_url": "https://www.zhipin.com/job_detail/663f7459fa68207c0nZ629q9ElVZ.html",
+      "discovery_url": "https://www.zhipin.com/zhaopin/4ad7cfcdefcf1f150nB509y9Fw~~/",
+      "additional_evidence_urls": [],
+      "query_date": "2026-09-19",
+      "published_at": null,
+      "updated_at": null,
+      "recruitment_status": "unknown",
+      "evidence_grade": "C",
+      "evidence_type": "boss_public_listing_excerpt",
+      "detail_body_read": false,
+      "detail_access_result": "安全检查页面，未读取完整JD",
+      "education": {
+        "label": "本科",
+        "evidence_scope": "公开列表标签，详情未核验"
+      },
+      "experience": {
+        "label": "1-3年",
+        "category": "experienced",
+        "evidence_scope": "公开列表标签，详情未核验"
+      },
+      "graduation_year": null,
+      "eligibility_note": "个人项目不能直接替代工作年限，是否接受初级候选人需核验",
+      "hard_requirements": [
+        {
+          "requirement": "本科",
+          "evidence": "列表标签"
+        },
+        {
+          "requirement": "1-3年",
+          "evidence": "列表标签"
+        }
+      ],
+      "hard_technical_requirements": null,
+      "preferred_requirements": null,
+      "requirements_completeness": "未读取任职要求全文；null 表示未知，不代表没有要求",
+      "responsibilities_summary": "评估 AI 工具，验证业务原型并推进产品化。",
+      "skill_keywords": [
+        "AI应用",
+        "工具评测",
+        "原型验证"
+      ],
+      "keyword_scope": "只标记本次公开摘要中可见的职责主题，不能等同硬性要求",
+      "project_evidence_suggestions": [
+        "保留工具选型依据、可运行原型及效果比较。"
+      ],
+      "suggestions_are_analyst_inference": true,
+      "current_opening_verified": false,
+      "include_in_market_statistics": false,
+      "full_jd": false,
+      "completeness": "listing_excerpt",
+      "page_recruitment_status": null
+    },
+    {
+      "id": "boss-chuhaiwang-ai",
+      "company": "出海网",
+      "title": "ai应用开发工程师",
+      "city": "深圳",
+      "location": "深圳龙华区民治",
+      "platform": "BOSS直聘",
+      "source_url": "https://www.zhipin.com/job_detail/bc8d82b424f472490nF_39i8ElpW.html",
+      "discovery_url": "https://www.zhipin.com/zhaopin/4ad7cfcdefcf1f150nB509y9Fw~~/",
+      "additional_evidence_urls": [],
+      "query_date": "2026-09-19",
+      "published_at": null,
+      "updated_at": "2026-09-18",
+      "recruitment_status": "page_marked_open",
+      "evidence_grade": "P",
+      "evidence_type": "boss_detail_partial_normal_browser",
+      "detail_body_read": true,
+      "detail_access_result": "通过正常Google Chrome页面无障碍快照读取部分正文；其余需登录。未绕过登录或验证。",
+      "education": {
+        "label": "本科",
+        "evidence_scope": "公开列表标签，详情未核验"
+      },
+      "experience": {
+        "label": "经验不限",
+        "category": "unspecified",
+        "evidence_scope": "公开列表标签，详情未核验"
+      },
+      "graduation_year": null,
+      "eligibility_note": "正常详情页显示本科、经验不限且标注招聘中；正文仍要求LLM应用经验。具体届别、剩余条件与名额未获HR确认。",
+      "hard_requirements": [
+        {
+          "requirement": "计算机、人工智能、软件等相关专业本科及以上",
+          "evidence": "详情可见任职要求第1条"
+        },
+        {
+          "requirement": "LLM应用经验，熟悉OpenAI/Claude API",
+          "evidence": "详情可见第2条前半部分；后续内容截断"
+        }
+      ],
+      "hard_technical_requirements": [
+        "LLM应用经验",
+        "熟悉OpenAI/Claude API"
+      ],
+      "preferred_requirements": null,
+      "requirements_completeness": "任职要求第1条及第2条前半部分可见；Function Calling所在后半句截断，其余硬性条件和加分项未知。",
+      "responsibilities_summary": "为财务、人事与客服交付LLM应用；建设知识检索、客服数据处理、工具调用和多步骤Agent流程，并检查生成质量。",
+      "skill_keywords": [
+        "LLM应用",
+        "RAG",
+        "知识库",
+        "客服数据清洗",
+        "Tool/Function Calling",
+        "多轮对话",
+        "基础记忆",
+        "Agent工作流",
+        "Prompt",
+        "输出质量校验"
+      ],
+      "keyword_scope": "来自详情可见职责；职责关键词与页面技术标签均不自动视为全部硬性要求。",
+      "project_evidence_suggestions": [
+        "演示需求到发布的完整链路，解释日志、失败处理和迭代。"
+      ],
+      "suggestions_are_analyst_inference": true,
+      "current_opening_verified": false,
+      "include_in_market_statistics": false,
+      "full_jd": false,
+      "completeness": "partial-login",
+      "page_recruitment_status": "招聘中",
+      "updated_at_meaning": "页面更新时间，不是首次发布日期",
+      "platform_skill_tags": [
+        "C++",
+        "Django",
+        "MySQL",
+        "运维",
+        "MongoDB",
+        "Oracle",
+        "Python",
+        "Kubernetes"
+      ],
+      "platform_skill_tags_note": "仅为平台技术标签，不能推断每项均为必需项。",
+      "evidence_capture": {
+        "method": "Google Chrome normal-page accessibility snapshot",
+        "query_date": "2026-09-19",
+        "scope": "部分职责、任职要求和页面状态",
+        "access_boundary": "remaining text requires login"
+      }
+    },
+    {
+      "id": "boss-zhihuichuangxiang-agent",
+      "company": "智汇创想",
+      "title": "AI Agent 开发工程师（数据中台方向）",
+      "city": "深圳",
+      "location": "深圳龙岗区坂田",
+      "platform": "BOSS直聘",
+      "source_url": "https://m.zhipin.com/job_detail/2ca0b1d190623a250nB-09i-EVJV.html",
+      "discovery_url": "https://m.zhipin.com/companys/1fcfca8edd99ee7d1XJy0920.html",
+      "additional_evidence_urls": [
+        "https://www.zhipin.com/zhaopin/acba9dd716e6aa7503x809i0EQ~~/"
+      ],
+      "query_date": "2026-09-19",
+      "published_at": null,
+      "updated_at": null,
+      "recruitment_status": "unknown",
+      "evidence_grade": "C",
+      "evidence_type": "boss_public_listing_excerpt",
+      "detail_body_read": false,
+      "detail_access_result": "安全检查页面，未读取完整JD",
+      "education": {
+        "label": "本科",
+        "evidence_scope": "公开列表标签，详情未核验"
+      },
+      "experience": {
+        "label": "1-3年",
+        "category": "experienced",
+        "evidence_scope": "公开列表标签，详情未核验"
+      },
+      "graduation_year": null,
+      "eligibility_note": "个人项目不能直接替代工作年限，是否接受初级候选人需核验",
+      "hard_requirements": [
+        {
+          "requirement": "本科",
+          "evidence": "列表标签"
+        },
+        {
+          "requirement": "1-3年",
+          "evidence": "列表标签"
+        }
+      ],
+      "hard_technical_requirements": null,
+      "preferred_requirements": null,
+      "requirements_completeness": "未读取任职要求全文；null 表示未知，不代表没有要求",
+      "responsibilities_summary": "结合数据中台完成查询、分析和报告。",
+      "skill_keywords": [
+        "Agent",
+        "数据查询",
+        "分析",
+        "报告生成"
+      ],
+      "keyword_scope": "只标记本次公开摘要中可见的职责主题，不能等同硬性要求",
+      "project_evidence_suggestions": [
+        "展示带来源的数据检索和结构化报告，保留各步骤记录。"
+      ],
+      "suggestions_are_analyst_inference": true,
+      "current_opening_verified": false,
+      "include_in_market_statistics": false,
+      "full_jd": false,
+      "completeness": "listing_excerpt",
+      "page_recruitment_status": null
+    },
+    {
+      "id": "boss-anker-ai",
+      "company": "Anker",
+      "title": "AI应用开发工程师",
+      "city": "深圳",
+      "location": "深圳宝安区西乡",
+      "platform": "BOSS直聘",
+      "source_url": "https://www.zhipin.com/job_detail/e5db998e27373d2b0nB_29q6EVNU.html",
+      "discovery_url": "https://www.zhipin.com/zhaopin/4ad7cfcdefcf1f150nB509y9Fw~~/",
+      "additional_evidence_urls": [],
+      "query_date": "2026-09-19",
+      "published_at": null,
+      "updated_at": null,
+      "recruitment_status": "unknown",
+      "evidence_grade": "C",
+      "evidence_type": "boss_public_listing_excerpt",
+      "detail_body_read": false,
+      "detail_access_result": "安全检查页面，未读取完整JD",
+      "education": {
+        "label": "本科",
+        "evidence_scope": "公开列表标签，详情未核验"
+      },
+      "experience": {
+        "label": "经验不限",
+        "category": "unspecified",
+        "evidence_scope": "公开列表标签，详情未核验"
+      },
+      "graduation_year": null,
+      "eligibility_note": "经验不限标签不等于无技术门槛或确认接受所有毕业年份",
+      "hard_requirements": [
+        {
+          "requirement": "本科",
+          "evidence": "列表标签"
+        },
+        {
+          "requirement": "经验不限",
+          "evidence": "列表标签"
+        }
+      ],
+      "hard_technical_requirements": null,
+      "preferred_requirements": null,
+      "requirements_completeness": "未读取任职要求全文；null 表示未知，不代表没有要求",
+      "responsibilities_summary": "进行全栈开发，将 AI 能力整合进实际功能。",
+      "skill_keywords": [
+        "全栈",
+        "大模型",
+        "AI集成"
+      ],
+      "keyword_scope": "只标记本次公开摘要中可见的职责主题，不能等同硬性要求",
+      "project_evidence_suggestions": [
+        "前端能发起任务并展示后端结果，异常能被用户理解。"
+      ],
+      "suggestions_are_analyst_inference": true,
+      "current_opening_verified": false,
+      "include_in_market_statistics": false,
+      "full_jd": false,
+      "completeness": "listing_excerpt",
+      "page_recruitment_status": null
+    },
+    {
+      "id": "boss-shuangzijingling-ai",
+      "company": "双子精灵",
+      "title": "AI应用开发工程师",
+      "city": "深圳",
+      "location": "深圳南山区深圳湾",
+      "platform": "BOSS直聘",
+      "source_url": "https://www.zhipin.com/job_detail/bc322260d1d35b980nZ6396_ElpW.html",
+      "discovery_url": "https://www.zhipin.com/zhaopin/4ad7cfcdefcf1f150nB509y9Fw~~/",
+      "additional_evidence_urls": [],
+      "query_date": "2026-09-19",
+      "published_at": null,
+      "updated_at": null,
+      "recruitment_status": "unknown",
+      "evidence_grade": "C",
+      "evidence_type": "boss_public_listing_excerpt",
+      "detail_body_read": false,
+      "detail_access_result": "安全检查页面，未读取完整JD",
+      "education": {
+        "label": "本科",
+        "evidence_scope": "公开列表标签，详情未核验"
+      },
+      "experience": {
+        "label": "1-3年",
+        "category": "experienced",
+        "evidence_scope": "公开列表标签，详情未核验"
+      },
+      "graduation_year": null,
+      "eligibility_note": "个人项目不能直接替代工作年限，是否接受初级候选人需核验",
+      "hard_requirements": [
+        {
+          "requirement": "本科",
+          "evidence": "列表标签"
+        },
+        {
+          "requirement": "1-3年",
+          "evidence": "列表标签"
+        }
+      ],
+      "hard_technical_requirements": null,
+      "preferred_requirements": null,
+      "requirements_completeness": "未读取任职要求全文；null 表示未知，不代表没有要求",
+      "responsibilities_summary": "推动 AI 在企业场景中落地；摘要提及相关开发经验。",
+      "skill_keywords": [
+        "AI应用",
+        "业务落地"
+      ],
+      "keyword_scope": "只标记本次公开摘要中可见的职责主题，不能等同硬性要求",
+      "project_evidence_suggestions": [
+        "选择一个业务场景，用可复现输入和输出证明完成效果。"
+      ],
+      "suggestions_are_analyst_inference": true,
+      "current_opening_verified": false,
+      "include_in_market_statistics": false,
+      "full_jd": false,
+      "completeness": "listing_excerpt",
+      "page_recruitment_status": null
+    },
+    {
+      "id": "boss-kunyuan-ai",
+      "company": "坤元",
+      "title": "AI应用开发工程师",
+      "city": "深圳",
+      "location": "深圳龙岗区坂田",
+      "platform": "BOSS直聘",
+      "source_url": "https://www.zhipin.com/job_detail/ba9d73051b1ff9350nV_3ty9FFtZ.html",
+      "discovery_url": "https://www.zhipin.com/zhaopin/4ad7cfcdefcf1f150nB509y9Fw~~/",
+      "additional_evidence_urls": [],
+      "query_date": "2026-09-19",
+      "published_at": null,
+      "updated_at": null,
+      "recruitment_status": "unknown",
+      "evidence_grade": "C",
+      "evidence_type": "boss_public_listing_excerpt",
+      "detail_body_read": false,
+      "detail_access_result": "安全检查页面，未读取完整JD",
+      "education": {
+        "label": "本科",
+        "evidence_scope": "公开列表标签，详情未核验"
+      },
+      "experience": {
+        "label": "1-3年",
+        "category": "experienced",
+        "evidence_scope": "公开列表标签，详情未核验"
+      },
+      "graduation_year": null,
+      "eligibility_note": "个人项目不能直接替代工作年限，是否接受初级候选人需核验",
+      "hard_requirements": [
+        {
+          "requirement": "本科",
+          "evidence": "列表标签"
+        },
+        {
+          "requirement": "1-3年",
+          "evidence": "列表标签"
+        }
+      ],
+      "hard_technical_requirements": null,
+      "preferred_requirements": null,
+      "requirements_completeness": "未读取任职要求全文；null 表示未知，不代表没有要求",
+      "responsibilities_summary": "以 RAG 和函数调用支持管理问答与流程执行。",
+      "skill_keywords": [
+        "Agent",
+        "RAG",
+        "函数调用",
+        "意图识别"
+      ],
+      "keyword_scope": "只标记本次公开摘要中可见的职责主题，不能等同硬性要求",
+      "project_evidence_suggestions": [
+        "让检索结果参与决策，通过受限工具执行并记录结果。"
+      ],
+      "suggestions_are_analyst_inference": true,
+      "current_opening_verified": false,
+      "include_in_market_statistics": false,
+      "full_jd": false,
+      "completeness": "listing_excerpt",
+      "page_recruitment_status": null
+    },
+    {
+      "id": "boss-huozhong-ai",
+      "company": "四川火种燃烧科技",
+      "title": "AI应用开发工程师",
+      "city": "深圳",
+      "location": "深圳",
+      "platform": "BOSS直聘",
+      "source_url": "https://www.zhipin.com/job_detail/c22c4bebf30a43680nB_2dS5GFZZ.html",
+      "discovery_url": "https://www.zhipin.com/zhaopin/4ad7cfcdefcf1f150nB509y9Fw~~/",
+      "additional_evidence_urls": [],
+      "query_date": "2026-09-19",
+      "published_at": null,
+      "updated_at": null,
+      "recruitment_status": "unknown",
+      "evidence_grade": "C",
+      "evidence_type": "boss_public_listing_excerpt",
+      "detail_body_read": false,
+      "detail_access_result": "安全检查页面，未读取完整JD",
+      "education": {
+        "label": "本科",
+        "evidence_scope": "公开列表标签，详情未核验"
+      },
+      "experience": {
+        "label": "1-3年",
+        "category": "experienced",
+        "evidence_scope": "公开列表标签，详情未核验"
+      },
+      "graduation_year": null,
+      "eligibility_note": "个人项目不能直接替代工作年限，是否接受初级候选人需核验",
+      "hard_requirements": [
+        {
+          "requirement": "本科",
+          "evidence": "列表标签"
+        },
+        {
+          "requirement": "1-3年",
+          "evidence": "列表标签"
+        }
+      ],
+      "hard_technical_requirements": null,
+      "preferred_requirements": null,
+      "requirements_completeness": "未读取任职要求全文；null 表示未知，不代表没有要求",
+      "responsibilities_summary": "集成模型，改善提示、检索与上下文处理。",
+      "skill_keywords": [
+        "模型集成",
+        "Prompt",
+        "RAG",
+        "上下文",
+        "准确性",
+        "响应速度"
+      ],
+      "keyword_scope": "只标记本次公开摘要中可见的职责主题，不能等同硬性要求",
+      "project_evidence_suggestions": [
+        "对同一批问题比较改动前后结果、延迟与失败案例。"
+      ],
+      "suggestions_are_analyst_inference": true,
+      "current_opening_verified": false,
+      "include_in_market_statistics": false,
+      "full_jd": false,
+      "completeness": "listing_excerpt",
+      "page_recruitment_status": null
+    },
+    {
+      "id": "boss-huawei-ai-graduate",
+      "company": "华为技术有限公司",
+      "title": "AI应用开发工程师",
+      "city": "深圳",
+      "location": "深圳",
+      "platform": "BOSS直聘",
+      "source_url": "https://www.zhipin.com/job_detail/7d786aed826b551b0nFy29W8EVFZ.html",
+      "discovery_url": "https://www.zhipin.com/zhaopin/4ad7cfcdefcf1f150nB509y9Fw~~/",
+      "additional_evidence_urls": [],
+      "query_date": "2026-09-19",
+      "published_at": null,
+      "updated_at": null,
+      "recruitment_status": "unknown",
+      "evidence_grade": "C",
+      "evidence_type": "boss_public_listing_excerpt",
+      "detail_body_read": false,
+      "detail_access_result": "安全检查页面，未读取完整JD",
+      "education": {
+        "label": "本科",
+        "evidence_scope": "公开列表标签，详情未核验"
+      },
+      "experience": {
+        "label": "在校/应届",
+        "category": "student_or_graduate",
+        "evidence_scope": "公开列表标签，详情未核验"
+      },
+      "graduation_year": null,
+      "eligibility_note": "届别、是否接受已毕业者及当前名额未核验",
+      "hard_requirements": [
+        {
+          "requirement": "本科",
+          "evidence": "列表标签"
+        },
+        {
+          "requirement": "在校/应届",
+          "evidence": "列表标签"
+        }
+      ],
+      "hard_technical_requirements": null,
+      "preferred_requirements": null,
+      "requirements_completeness": "未读取任职要求全文；null 表示未知，不代表没有要求",
+      "responsibilities_summary": "以后端或全栈方式接入 AI，并建设 RAG 能力。",
+      "skill_keywords": [
+        "后端",
+        "全栈",
+        "RAG",
+        "文档分析",
+        "自动化流程"
+      ],
+      "keyword_scope": "只标记本次公开摘要中可见的职责主题，不能等同硬性要求",
+      "project_evidence_suggestions": [
+        "实现文档处理、检索、引用以及后端接口。"
+      ],
+      "suggestions_are_analyst_inference": true,
+      "current_opening_verified": false,
+      "include_in_market_statistics": false,
+      "full_jd": false,
+      "completeness": "listing_excerpt",
+      "page_recruitment_status": null
+    },
+    {
+      "id": "boss-huawei-rag",
+      "company": "华为技术有限公司",
+      "title": "RAG应用&搜索大模型增强开发工程师",
+      "city": "深圳",
+      "location": "深圳龙岗区坂田",
+      "platform": "BOSS直聘",
+      "source_url": "https://m.zhipin.com/job_detail/d539689d3b1dd3e61H162dy5FlNW.html",
+      "discovery_url": "https://m.zhipin.com/zhaopin/adab58dd80ab27cd0nF60927FQ~~/",
+      "additional_evidence_urls": [],
+      "query_date": "2026-09-19",
+      "published_at": null,
+      "updated_at": null,
+      "recruitment_status": "unknown",
+      "evidence_grade": "C",
+      "evidence_type": "boss_public_listing_excerpt",
+      "detail_body_read": false,
+      "detail_access_result": "安全验证页面，未读取完整JD",
+      "education": {
+        "label": "本科",
+        "evidence_scope": "公开列表标签，详情未核验"
+      },
+      "experience": {
+        "label": "经验不限",
+        "category": "unspecified",
+        "evidence_scope": "公开列表标签，详情未核验"
+      },
+      "graduation_year": null,
+      "eligibility_note": "经验不限标签不等于无技术门槛或确认接受所有毕业年份",
+      "hard_requirements": [
+        {
+          "requirement": "本科",
+          "evidence": "列表标签"
+        },
+        {
+          "requirement": "经验不限",
+          "evidence": "列表标签"
+        }
+      ],
+      "hard_technical_requirements": null,
+      "preferred_requirements": null,
+      "requirements_completeness": "未读取任职要求全文；null 表示未知，不代表没有要求",
+      "responsibilities_summary": "团队涉及搜索、向量检索、文档解析与知识库。",
+      "skill_keywords": [
+        "RAG",
+        "搜索",
+        "向量检索",
+        "文档解析",
+        "知识库"
+      ],
+      "keyword_scope": "只标记本次公开摘要中可见的职责主题，不能等同硬性要求",
+      "project_evidence_suggestions": [
+        "展示文档分块和检索误差分析；不宣称实现企业级检索引擎。"
+      ],
+      "suggestions_are_analyst_inference": true,
+      "current_opening_verified": false,
+      "include_in_market_statistics": false,
+      "full_jd": false,
+      "completeness": "listing_excerpt",
+      "page_recruitment_status": null
+    },
+    {
+      "id": "boss-gaomu-intern-fullstack",
+      "company": "高木学习",
+      "title": "实习全栈开发工程师（大模型/转正岗）",
+      "city": "深圳",
+      "location": "深圳南山区科技园",
+      "platform": "BOSS直聘",
+      "source_url": "https://m.zhipin.com/job_detail/9f6897f4e00f8a6103Z-09y7EFBX.html",
+      "discovery_url": "https://m.zhipin.com/zhaopin/adab58dd80ab27cd0nF60927FQ~~/",
+      "additional_evidence_urls": [],
+      "query_date": "2026-09-19",
+      "published_at": null,
+      "updated_at": null,
+      "recruitment_status": "unknown",
+      "evidence_grade": "C",
+      "evidence_type": "boss_public_listing_excerpt",
+      "detail_body_read": false,
+      "detail_access_result": "安全验证页面，未读取完整JD",
+      "education": {
+        "label": "本科",
+        "evidence_scope": "公开列表标签，详情未核验"
+      },
+      "experience": {
+        "label": "实习；摘要称接受应届/实习生",
+        "category": "internship_or_graduate",
+        "evidence_scope": "职位标题及公开列表摘要"
+      },
+      "graduation_year": null,
+      "eligibility_note": "属于实习/转正线索，不作为立即全职机会；须核验毕业生资格及转正条件",
+      "hard_requirements": [
+        {
+          "requirement": "本科",
+          "evidence": "列表标签"
+        },
+        {
+          "requirement": "实习；摘要称接受应届/实习生",
+          "evidence": "标题/摘要"
+        }
+      ],
+      "hard_technical_requirements": null,
+      "preferred_requirements": null,
+      "requirements_completeness": "未读取任职要求全文；null 表示未知，不代表没有要求",
+      "responsibilities_summary": "参与前后端与 AI 模块开发，摘要提及转正机会。",
+      "skill_keywords": [
+        "全栈",
+        "前端",
+        "后端",
+        "AI模块"
+      ],
+      "keyword_scope": "只标记本次公开摘要中可见的职责主题，不能等同硬性要求",
+      "project_evidence_suggestions": [
+        "完成一个前后端贯通的可演示功能，并能独立修改排错。"
+      ],
+      "suggestions_are_analyst_inference": true,
+      "current_opening_verified": false,
+      "include_in_market_statistics": false,
+      "full_jd": false,
+      "completeness": "listing_excerpt",
+      "page_recruitment_status": null
+    }
+  ],
+  "partial_jd_count": 1,
+  "page_open_label_count": 1
+}

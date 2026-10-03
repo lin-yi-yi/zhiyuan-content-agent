@@ -41,8 +41,16 @@ class ModelRouter:
         self._clients: dict[str, BaseLLMClient] = {}
 
     def get_client(self, provider: Optional[str] = None, model: Optional[str] = None) -> BaseLLMClient:
+        from app.saas.context import is_saas_mode
+        if is_saas_mode():
+            from app.saas.connections import enforce_provider, ConnectionUnavailable
+            provider = enforce_provider(provider)
+            configured_model = self.PROVIDERS[provider]["model"]
+            if model and model != configured_model:
+                raise ConnectionUnavailable("请使用运营已配置的模型")
+            model = configured_model
         provider = provider or settings.DEFAULT_LLM_PROVIDER
-        model = model or settings.DEFAULT_LLM_MODEL
+        model = model or self.PROVIDERS.get(provider, {}).get("model", "")
         cache_key = f"{provider}:{model}"
         if cache_key in self._clients:
             return self._clients[cache_key]
@@ -72,6 +80,9 @@ class ModelRouter:
         return self.get_client()
 
     def get_task_client(self, task_type: str, provider: Optional[str] = None, model: Optional[str] = None) -> BaseLLMClient:
+        from app.saas.context import is_saas_mode
+        if is_saas_mode():
+            return self.get_client(provider, model)
         defaults = {
             "topic_score": (settings.TOPIC_SCORE_PROVIDER, settings.TOPIC_SCORE_MODEL),
             "draft_generation": (settings.DRAFT_GENERATION_PROVIDER, settings.DRAFT_GENERATION_MODEL),
@@ -83,9 +94,23 @@ class ModelRouter:
             task_type,
             (settings.DEFAULT_LLM_PROVIDER, settings.DEFAULT_LLM_MODEL),
         )
-        return self.get_client(provider or default_provider, model or default_model)
+        # A selected provider must use its own default model, not another vendor's.
+        selected = provider or default_provider
+        selected_model = model or (default_model if selected == default_provider else None)
+        return self.get_client(selected, selected_model)
 
     def list_available_providers(self) -> list[dict]:
+        from app.saas.context import current_tenant, is_saas_mode
+        if is_saas_mode():
+            from app.saas.connections import connection_snapshot
+            context = current_tenant.get()
+            if context is None:
+                return []
+            cards = connection_snapshot(context.organization_id)["connections"]
+            return [{"provider": c["provider"], "model": self.PROVIDERS[c["provider"]]["model"],
+                     "configured": c["configured"], "enabled": c["effective_enabled"],
+                     "is_default": c["is_default"], "status": c["status"]}
+                    for c in cards if c["kind"] == "model"]
         result = []
         for name, cfg in self.PROVIDERS.items():
             result.append({
@@ -102,7 +127,7 @@ class ModelRouter:
             resp = client.chat("你是一个助手", "回复：连接成功", max_tokens=20)
             return {"provider": provider, "ok": True, "response": resp[:50]}
         except Exception as e:
-            return {"provider": provider, "ok": False, "error": str(e)}
+            return {"provider": provider, "ok": False, "error": "连接未通过，请检查接入设置、服务状态和运营日志"}
 
 
 router = ModelRouter()

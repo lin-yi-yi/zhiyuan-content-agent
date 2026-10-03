@@ -1,6 +1,6 @@
 """Allowlisted internal tools for bounded v0.4 function calling."""
 from dataclasses import asdict, dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy.orm import Session
@@ -11,12 +11,14 @@ from app.agent_core.boundaries import (
     require_capability,
 )
 from app.agent_core.rag_service import answer_question, index_source, search_knowledge
+from app.agent_core.embeddings import retrieval_status
 
 
 class RagSearchArguments(BaseModel):
     query: str = Field(..., min_length=1, max_length=1000)
     top_k: int = Field(5, ge=1, le=12)
     min_score: float = Field(0.08, ge=0, le=1)
+    retrieval_mode: Literal["lexical", "semantic", "hybrid"] | None = None
 
 
 class RagAnswerArguments(BaseModel):
@@ -24,6 +26,7 @@ class RagAnswerArguments(BaseModel):
     provider: str = Field("local", max_length=80)
     model: str = Field("", max_length=160)
     top_k: int = Field(5, ge=1, le=12)
+    retrieval_mode: Literal["lexical", "semantic", "hybrid"] | None = None
 
 
 class SourceIndexArguments(BaseModel):
@@ -175,11 +178,13 @@ def _execute_rag_search(
         knowledge_base_id=knowledge_base_id,
         top_k=parsed.top_k,
         min_score=parsed.min_score,
+        retrieval_mode=parsed.retrieval_mode,
     )
     return {
         "items": [item.to_dict() for item in hits],
         "total": len(hits),
-        "strategy": "local_hybrid_v1",
+        "strategy": retrieval_status(parsed.retrieval_mode).get("strategy"),
+        "retrieval": retrieval_status(parsed.retrieval_mode),
     }
 
 
@@ -198,6 +203,7 @@ def _execute_rag_answer(
         provider=parsed.provider or "local",
         model=parsed.model or "",
         top_k=parsed.top_k,
+        retrieval_mode=parsed.retrieval_mode,
     )
 
 

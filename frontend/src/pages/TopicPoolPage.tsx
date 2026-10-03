@@ -1,3 +1,4 @@
+import { useWorkspace } from '../components/WorkspaceContext';
 import { useEffect, useState } from 'react';
 import {
   api,
@@ -46,6 +47,7 @@ const DEFAULT_CUSTOM_FORM: CustomTopicIdeasRequest = {
 };
 
 export default function TopicPoolPage() {
+  const {canWrite,canReview}=useWorkspace();
   const [topics, setTopics] = useState<Topic[]>([]);
   const [total, setTotal] = useState(0);
   const [statusFilter, setStatusFilter] = useState('');
@@ -229,9 +231,9 @@ export default function TopicPoolPage() {
           ))}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn" onClick={() => setShowCustomForm(true)}>自定义创作</button>
-          <button className="btn" onClick={() => setShowImportForm(true)}>从 URL 导入</button>
-          <button className="btn btn-primary" onClick={() => setShowForm(true)}>+ 新增选题</button>
+          <button disabled={!canWrite} className="btn" onClick={() => setShowCustomForm(true)}>自定义创作</button>
+          <button disabled={!canWrite} className="btn" onClick={() => setShowImportForm(true)}>从 URL 导入</button>
+          <button disabled={!canWrite} className="btn btn-primary" onClick={() => setShowForm(true)}>+ 新增选题</button>
         </div>
       </div>
 
@@ -261,12 +263,12 @@ export default function TopicPoolPage() {
               <td><span className={`badge badge-${t.status}`}>{STATUS_LABELS[t.status]}</span></td>
               <td>
                 <button className="btn btn-sm" style={{ marginRight: 4 }}
-                        onClick={() => handleScore(t.id)} disabled={loading}>评分</button>
+                        onClick={() => handleScore(t.id)} disabled={!canWrite || (loading)}>评分</button>
                 <button className="btn btn-sm btn-primary" style={{ marginRight: 4 }}
-                        onClick={() => handleGenerate(t.id)} disabled={loading}>
+                        onClick={() => handleGenerate(t.id)} disabled={!canWrite || (loading)}>
                   生成
                 </button>
-                <button className="btn btn-sm btn-danger" onClick={() => handleDelete(t.id)}>删除</button>
+                <button disabled={!canWrite} className="btn btn-sm btn-danger" onClick={() => handleDelete(t.id)}>删除</button>
               </td>
             </tr>
           ))}
@@ -279,28 +281,28 @@ export default function TopicPoolPage() {
             <h2>新增选题</h2>
             <div className="form-group">
               <label>标题 *</label>
-              <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
+              <input disabled={!canWrite} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
                      placeholder="输入选题标题" />
             </div>
             <div className="form-group">
               <label>来源类型</label>
-              <select value={form.source_type} onChange={e => setForm({ ...form, source_type: e.target.value })}>
+              <select disabled={!canWrite} value={form.source_type} onChange={e => setForm({ ...form, source_type: e.target.value })}>
                 {Object.entries(SOURCE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
             </div>
             <div className="form-group">
               <label>来源网址</label>
-              <input value={form.url || ''} onChange={e => setForm({ ...form, url: e.target.value })}
+              <input disabled={!canWrite} value={form.url || ''} onChange={e => setForm({ ...form, url: e.target.value })}
                      placeholder="https://..." />
             </div>
             <div className="form-group">
               <label>原始摘要</label>
-              <textarea value={form.raw_summary || ''} onChange={e => setForm({ ...form, raw_summary: e.target.value })}
+              <textarea disabled={!canWrite} value={form.raw_summary || ''} onChange={e => setForm({ ...form, raw_summary: e.target.value })}
                         placeholder="粘贴原文或摘要..." />
             </div>
             <div className="form-actions">
               <button className="btn" onClick={() => setShowForm(false)}>取消</button>
-              <button className="btn btn-primary" onClick={handleCreate} disabled={loading}>
+              <button className="btn btn-primary" onClick={handleCreate} disabled={!canWrite || (loading)}>
                 {loading ? '创建中...' : '创建选题'}
               </button>
             </div>
@@ -314,7 +316,7 @@ export default function TopicPoolPage() {
             <h2>从 URL 导入选题</h2>
             <div className="form-group">
               <label>URL *</label>
-              <input
+              <input disabled={!canWrite}
                 value={importForm.url}
                 onChange={e => { setImportForm({ ...importForm, url: e.target.value }); setImportPreview(null); }}
                 placeholder="https://github.com/langchain-ai/langgraph"
@@ -322,7 +324,7 @@ export default function TopicPoolPage() {
             </div>
             <div className="form-group">
               <label>来源类型</label>
-              <select value={importForm.source_type || ''} onChange={e => { setImportForm({ ...importForm, source_type: e.target.value }); setImportPreview(null); }}>
+              <select disabled={!canWrite} value={importForm.source_type || ''} onChange={e => { setImportForm({ ...importForm, source_type: e.target.value }); setImportPreview(null); }}>
                 <option value="">自动判断</option>
                 <option value="github">GitHub</option>
                 <option value="official_blog">官方博客</option>
@@ -332,14 +334,14 @@ export default function TopicPoolPage() {
             </div>
             <div className="form-group">
               <label>备用摘要</label>
-              <textarea
+              <textarea disabled={!canWrite}
                 value={importForm.fallback_summary || ''}
                 onChange={e => { setImportForm({ ...importForm, fallback_summary: e.target.value }); setImportPreview(null); }}
                 placeholder="如果网页或 GitHub 读取失败，可以在这里粘贴 README、文章摘要或关键段落。"
               />
             </div>
             <label className="checkbox-row">
-              <input
+              <input disabled={!canWrite}
                 type="checkbox"
                 checked={Boolean(importForm.auto_score)}
                 onChange={e => setImportForm({ ...importForm, auto_score: e.target.checked })}
@@ -352,7 +354,7 @@ export default function TopicPoolPage() {
                 {(importPreview.suggestions || []).length > 0 && (
                   <div className="suggestion-grid">
                     {importPreview.suggestions.map((suggestion, index) => (
-                      <button
+                      <button disabled={!canWrite}
                         key={`${suggestion.title}-${index}`}
                         className={`suggestion-card ${selectedSuggestionIndex === index ? 'active' : ''}`}
                         onClick={() => {
@@ -369,21 +371,21 @@ export default function TopicPoolPage() {
                 )}
                 <div className="form-group">
                   <label>选题标题</label>
-                  <input
+                  <input disabled={!canWrite}
                     value={importPreview.topic_title}
                     onChange={e => setImportPreview({ ...importPreview, topic_title: e.target.value })}
                   />
                 </div>
                 <div className="form-group">
                   <label>信源标题</label>
-                  <input
+                  <input disabled={!canWrite}
                     value={importPreview.title}
                     onChange={e => setImportPreview({ ...importPreview, title: e.target.value })}
                   />
                 </div>
                 <div className="form-group">
                   <label>确认来源类型</label>
-                  <select value={importPreview.source_type} onChange={e => setImportPreview({ ...importPreview, source_type: e.target.value })}>
+                  <select disabled={!canWrite} value={importPreview.source_type} onChange={e => setImportPreview({ ...importPreview, source_type: e.target.value })}>
                     <option value="github">GitHub</option>
                     <option value="official_blog">官方博客</option>
                     <option value="aihot">AI HOT</option>
@@ -392,7 +394,7 @@ export default function TopicPoolPage() {
                 </div>
                 <div className="form-group">
                   <label>选题摘要</label>
-                  <textarea
+                  <textarea disabled={!canWrite}
                     value={importPreview.summary}
                     onChange={e => setImportPreview({ ...importPreview, summary: e.target.value })}
                     rows={5}
@@ -402,10 +404,10 @@ export default function TopicPoolPage() {
             )}
             <div className="form-actions">
               <button className="btn" onClick={resetImportForm}>取消</button>
-              <button className="btn" onClick={handlePreviewUrl} disabled={loading}>
+              <button className="btn" onClick={handlePreviewUrl} disabled={!canWrite || (loading)}>
                 {loading ? '读取中...' : '预览信源'}
               </button>
-              <button className="btn btn-primary" onClick={handleConfirmImport} disabled={loading || !importPreview}>
+              <button className="btn btn-primary" onClick={handleConfirmImport} disabled={!canWrite || (loading || !importPreview)}>
                 {loading ? '导入中...' : '确认导入'}
               </button>
             </div>
@@ -418,14 +420,14 @@ export default function TopicPoolPage() {
           <div className="modal custom-topic-modal">
             <h2>自定义选题创作</h2>
             <div className="custom-mode-grid">
-              <button
+              <button disabled={!canWrite}
                 className={`custom-mode-card ${customForm.mode === 'research' ? 'active' : ''}`}
                 onClick={() => { setCustomForm({ ...customForm, mode: 'research' }); setCustomPreview(null); }}
               >
                 <strong>AI 自动调研</strong>
                 <span>适合只有方向时，让 Agent 先整理中文公开资料和选题角度。</span>
               </button>
-              <button
+              <button disabled={!canWrite}
                 className={`custom-mode-card ${customForm.mode === 'inspiration' ? 'active' : ''}`}
                 onClick={() => { setCustomForm({ ...customForm, mode: 'inspiration' }); setCustomPreview(null); }}
               >
@@ -436,7 +438,7 @@ export default function TopicPoolPage() {
 
             <div className="form-group">
               <label>主题 *</label>
-              <input
+              <input disabled={!canWrite}
                 value={customForm.theme}
                 onChange={e => { setCustomForm({ ...customForm, theme: e.target.value }); setCustomPreview(null); }}
                 placeholder="例如：普通人怎么用 AI 自动化副业内容"
@@ -446,7 +448,7 @@ export default function TopicPoolPage() {
             <div className="form-row">
               <div className="form-group">
                 <label>目标人群</label>
-                <input
+                <input disabled={!canWrite}
                   value={customForm.target_audience || ''}
                   onChange={e => { setCustomForm({ ...customForm, target_audience: e.target.value }); setCustomPreview(null); }}
                   placeholder="AI 新手 / 职场人 / 自媒体人"
@@ -454,7 +456,7 @@ export default function TopicPoolPage() {
               </div>
               <div className="form-group">
                 <label>内容类型</label>
-                <select
+                <select disabled={!canWrite}
                   value={customForm.content_type || 'auto'}
                   onChange={e => { setCustomForm({ ...customForm, content_type: e.target.value }); setCustomPreview(null); }}
                 >
@@ -466,7 +468,7 @@ export default function TopicPoolPage() {
             <div className="form-row">
               <div className="form-group">
                 <label>调研深度</label>
-                <select
+                <select disabled={!canWrite}
                   value={customForm.research_depth}
                   onChange={e => { setCustomForm({ ...customForm, research_depth: e.target.value as 'quick' | 'deep' }); setCustomPreview(null); }}
                 >
@@ -476,7 +478,7 @@ export default function TopicPoolPage() {
               </div>
               <div className="form-group">
                 <label>模型</label>
-                <select
+                <select disabled={!canWrite}
                   value={customForm.provider || 'local'}
                   onChange={e => { setCustomForm({ ...customForm, provider: e.target.value }); setCustomPreview(null); }}
                 >
@@ -489,7 +491,7 @@ export default function TopicPoolPage() {
 
             <div className="form-group">
               <label>想表达的观点</label>
-              <textarea
+              <textarea disabled={!canWrite}
                 value={customForm.viewpoint || ''}
                 onChange={e => { setCustomForm({ ...customForm, viewpoint: e.target.value }); setCustomPreview(null); }}
                 placeholder="例如：普通人不要追求全自动，先把一个小流程跑通。"
@@ -499,7 +501,7 @@ export default function TopicPoolPage() {
 
             <div className="form-group">
               <label>个人经验 / 案例</label>
-              <textarea
+              <textarea disabled={!canWrite}
                 value={customForm.personal_case || ''}
                 onChange={e => { setCustomForm({ ...customForm, personal_case: e.target.value }); setCustomPreview(null); }}
                 placeholder="可选。没有真实案例也可以留空，系统会标记为观点创作/未核验。"
@@ -510,7 +512,7 @@ export default function TopicPoolPage() {
             {customForm.mode === 'research' && (
               <div className="form-group">
                 <label>补充来源链接</label>
-                <textarea
+                <textarea disabled={!canWrite}
                   value={(customForm.source_urls || []).join('\n')}
                   onChange={e => {
                     setCustomForm({ ...customForm, source_urls: e.target.value.split(/\n+/).map(item => item.trim()).filter(Boolean) });
@@ -523,7 +525,7 @@ export default function TopicPoolPage() {
             )}
 
             <label className="checkbox-row">
-              <input
+              <input disabled={!canWrite}
                 type="checkbox"
                 checked={customAutoScore}
                 onChange={e => setCustomAutoScore(e.target.checked)}
@@ -558,7 +560,7 @@ export default function TopicPoolPage() {
                 )}
                 <div className="suggestion-grid">
                   {customPreview.ideas.map((idea, index) => (
-                    <button
+                    <button disabled={!canWrite}
                       key={`${idea.title}-${index}`}
                       className={`suggestion-card ${selectedCustomIdeaIndex === index ? 'active' : ''}`}
                       onClick={() => handleSelectCustomIdea(idea, index)}
@@ -581,7 +583,7 @@ export default function TopicPoolPage() {
                     </div>
                     <div className="form-group">
                       <label>标题</label>
-                      <input
+                      <input disabled={!canWrite}
                         value={customEditingIdea.title}
                         onChange={e => setCustomEditingIdea({ ...customEditingIdea, title: e.target.value })}
                       />
@@ -589,14 +591,14 @@ export default function TopicPoolPage() {
                     <div className="form-row">
                       <div className="form-group">
                         <label>内容角度</label>
-                        <input
+                        <input disabled={!canWrite}
                           value={customEditingIdea.content_angle}
                           onChange={e => setCustomEditingIdea({ ...customEditingIdea, content_angle: e.target.value })}
                         />
                       </div>
                       <div className="form-group">
                         <label>评分</label>
-                        <input
+                        <input disabled={!canWrite}
                           type="number"
                           min={0}
                           max={100}
@@ -607,14 +609,14 @@ export default function TopicPoolPage() {
                     </div>
                     <div className="form-group">
                       <label>目标人群</label>
-                      <input
+                      <input disabled={!canWrite}
                         value={customEditingIdea.target_audience}
                         onChange={e => setCustomEditingIdea({ ...customEditingIdea, target_audience: e.target.value })}
                       />
                     </div>
                     <div className="form-group">
                       <label>摘要</label>
-                      <textarea
+                      <textarea disabled={!canWrite}
                         rows={4}
                         value={customEditingIdea.summary}
                         onChange={e => setCustomEditingIdea({ ...customEditingIdea, summary: e.target.value })}
@@ -623,7 +625,7 @@ export default function TopicPoolPage() {
                     <div className="form-row">
                       <div className="form-group">
                         <label>推荐理由</label>
-                        <textarea
+                        <textarea disabled={!canWrite}
                           rows={3}
                           value={customEditingIdea.reason}
                           onChange={e => setCustomEditingIdea({ ...customEditingIdea, reason: e.target.value })}
@@ -631,7 +633,7 @@ export default function TopicPoolPage() {
                       </div>
                       <div className="form-group">
                         <label>风险提醒</label>
-                        <textarea
+                        <textarea disabled={!canWrite}
                           rows={3}
                           value={customEditingIdea.risk_tip}
                           onChange={e => setCustomEditingIdea({ ...customEditingIdea, risk_tip: e.target.value })}
@@ -648,10 +650,10 @@ export default function TopicPoolPage() {
 
             <div className="form-actions">
               <button className="btn" onClick={resetCustomForm}>取消</button>
-              <button className="btn" onClick={handlePreviewCustomIdeas} disabled={loading || !customForm.theme.trim()}>
+              <button className="btn" onClick={handlePreviewCustomIdeas} disabled={!canWrite || (loading || !customForm.theme.trim())}>
                 {loading ? '生成中...' : '生成 5 个建议'}
               </button>
-              <button className="btn btn-primary" onClick={handleConfirmCustomIdea} disabled={loading || !customPreview}>
+              <button className="btn btn-primary" onClick={handleConfirmCustomIdea} disabled={!canWrite || (loading || !customPreview)}>
                 {loading ? '入库中...' : '确认入库'}
               </button>
             </div>

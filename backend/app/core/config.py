@@ -4,17 +4,21 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-ENV_PATH = Path(__file__).parent.parent.parent.parent / ".env"
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+SAAS = os.getenv("SAAS_MODE", "false").lower() in {"true", "1", "yes", "on"}
+ENV_PATH = Path(os.getenv("SAAS_ENV_FILE", str(PROJECT_ROOT / ".env.saas"))) if SAAS else PROJECT_ROOT / ".env"
 load_dotenv(ENV_PATH)
 
 
 class Settings:
+    AIHOT_ENABLED = os.getenv("AIHOT_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
+    GITHUB_ENABLED = os.getenv("GITHUB_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
     APP_ENV = os.getenv("APP_ENV", "local")
     APP_NAME = os.getenv("APP_NAME", "AI Content Growth Agent")
     BACKEND_CORS_ORIGINS = os.getenv("BACKEND_CORS_ORIGINS", "http://localhost:5173")
-    DATABASE_URL = os.getenv("DATABASE_URL", "mysql+pymysql://root@127.0.0.1:3306/ai_content_agent?charset=utf8mb4")
-    DEFAULT_LLM_PROVIDER = os.getenv("DEFAULT_LLM_PROVIDER", "deepseek")
-    DEFAULT_LLM_MODEL = os.getenv("DEFAULT_LLM_MODEL", "deepseek-chat")
+    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///:memory:" if SAAS else f"sqlite:///{PROJECT_ROOT / 'content-agent.db'}")
+    DEFAULT_LLM_PROVIDER = os.getenv("DEFAULT_LLM_PROVIDER", "local")
+    DEFAULT_LLM_MODEL = os.getenv("DEFAULT_LLM_MODEL", "local-rule-based-v0")
     TOPIC_SCORE_PROVIDER = os.getenv("TOPIC_SCORE_PROVIDER", DEFAULT_LLM_PROVIDER)
     TOPIC_SCORE_MODEL = os.getenv("TOPIC_SCORE_MODEL", DEFAULT_LLM_MODEL)
     DRAFT_GENERATION_PROVIDER = os.getenv("DRAFT_GENERATION_PROVIDER", DEFAULT_LLM_PROVIDER)
@@ -23,6 +27,8 @@ class Settings:
     CARD_GENERATION_MODEL = os.getenv("CARD_GENERATION_MODEL", DEFAULT_LLM_MODEL)
     COMPLIANCE_CHECK_PROVIDER = os.getenv("COMPLIANCE_CHECK_PROVIDER", DEFAULT_LLM_PROVIDER)
     COMPLIANCE_CHECK_MODEL = os.getenv("COMPLIANCE_CHECK_MODEL", DEFAULT_LLM_MODEL)
+    # Operator-supplied exact provider/model prices; no market-price defaults.
+    MODEL_PRICING_JSON = os.getenv("MODEL_PRICING_JSON", "[]")
 
 
 settings = Settings()

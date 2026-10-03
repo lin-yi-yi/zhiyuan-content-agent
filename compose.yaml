@@ -1,0 +1,19 @@
+services:
+  content-agent:
+    build: .
+    ports:
+      - "127.0.0.1:8765:8765"
+    volumes:
+      - content-data:/app/.data
+    environment:
+      RAG_RETRIEVAL_MODE: ${RAG_RETRIEVAL_MODE:-semantic}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/api/ready')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+volumes:
+  content-data:

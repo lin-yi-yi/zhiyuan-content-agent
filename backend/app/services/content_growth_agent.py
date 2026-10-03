@@ -1,30 +1,63 @@
 """内容增长 Agent 总调度器。"""
-from datetime import datetime
-from typing import Any
+import json
+from app.saas.context import current_tenant, is_saas_mode
+from datetime import UTC, datetime
+from typing import Any, TypedDict
+
+from langgraph.graph import END, START, StateGraph
 
 from sqlalchemy.orm import Session
 
 from app.agent_core.boundaries import get_knowledge_base_or_default, workspace_context
-from app.agent_core.rag_service import search_knowledge
+from app.agent_core.embeddings import RetrievalError
+from app.agent_core.rag_service import assess_required_facts, missing_fact_labels, search_knowledge, select_evidence
 from app.db.session import SessionLocal
 from app.models.agent_run import AgentRun, AgentStep
 from app.models.card import Card
 from app.models.draft import Draft
 from app.models.source import Source
 from app.models.topic import Topic
-from app.schemas.agent_run import AgentRunCreate, AgentRunResult
+from app.llm.openai_compatible import ModelCallError
+from app.llm.tracing import model_trace_context
+from app.schemas.agent_run import AgentRunCreate, AgentRunResult, AgentReviewCreate
 from app.schemas.card import CardOut
 from app.schemas.draft import DraftOut
 from app.schemas.topic import TopicOut
 from app.services.card_generator import generate_cards
+from app.services.evidence_cards import build_evidence_cards
 from app.services.compliance_checker import check_compliance
 from app.services.custom_topic_creator import CustomTopicIdea, ResearchReference, generate_custom_topic_ideas
 from app.services.draft_generator import generate_draft
 from app.services.package_evaluator import evaluate_draft
 from app.services.topic_scorer import score_topic
+from app.services.workflow_support import (
+    AtomicStepSession, CitationError, EvidenceError, WorkflowCancelled, WorkflowConflict,
+    complete_sentence_excerpt, generate_evidence_draft, validate_citations,
+)
+from app.services.review_lifecycle import archive_review, draft_snapshot_hash, validate_review_evidence
 
 
 REVISION_THRESHOLD = 75
+
+
+def _utcnow() -> datetime:
+    """Database timestamps use naive UTC for compatibility with existing tables."""
+    return datetime.now(UTC).replace(tzinfo=None)
+
+
+def _safe_failure(exc: Exception) -> tuple[str, str, str]:
+    """Persist controlled domain messages, never arbitrary SQL/SDK exception text."""
+    safe_codes = {
+        EvidenceError: "INSUFFICIENT_EVIDENCE",
+        CitationError: "INVALID_CITATIONS",
+        WorkflowConflict: "WORKFLOW_CONFLICT",
+        RetrievalError: "RETRIEVAL_FAILED",
+        ModelCallError: "MODEL_CALL_FAILED",
+    }
+    error_type = type(exc).__name__[:80]
+    if type(exc) in safe_codes:
+        return safe_codes[type(exc)], str(exc)[:1000], error_type
+    return "STEP_FAILED", f"步骤执行失败，请检查配置、依赖和数据后重试。错误类型：{error_type}", error_type
 
 STEP_PLAN = [
     ("retrieve_context", "知识库检索上下文"),
@@ -38,11 +71,21 @@ STEP_PLAN = [
     ("revise_package", "自动轻量改稿"),
     ("reevaluate_package", "改稿后再次评分"),
     ("agent_decision", "生成执行决策和下一步建议"),
+    ("human_review", "人工审核来源和草稿"),
 ]
 
 
 def create_agent_run(req: AgentRunCreate, db: Session) -> AgentRunResult:
     """创建 Agent Run 和步骤，后台任务会继续执行。"""
+    from app.services.business_brief import resolve_business_brief
+    brief = resolve_business_brief(req, db)
+    if brief:
+        profile = brief.get("profile") or {}
+        req = req.model_copy(update={
+            "knowledge_base_id": brief["knowledge_base_id"],
+            "workspace_id": brief["workspace_id"],
+            "target_audience": req.target_audience or profile.get("audience", ""),
+        })
     provider = req.provider or "local"
     run = AgentRun(
         goal=req.goal.strip(),
@@ -51,41 +94,56 @@ def create_agent_run(req: AgentRunCreate, db: Session) -> AgentRunResult:
         model_name=req.model or None,
         status="pending",
         current_step="queued",
-        result_json={"_request": req.model_dump()},
+        result_json={"_request": req.model_dump(), "brief": brief, "workflow": {
+            "engine": "langgraph", "version": "content-v1", "attempt": 1,
+            "persistence": "atomic_sql_steps", "scope": "organization" if is_saas_mode() else "local_single_user",
+            "generation_mode": "local_rules" if provider == "local" else "llm",
+        }},
     )
     db.add(run)
-    db.commit()
-    db.refresh(run)
+    db.flush()
     _create_steps(run.id, db)
     return get_agent_run(run.id, db)  # type: ignore[return-value]
 
 
 async def execute_agent_run(run_id: int) -> None:
-    """后台执行 Agent Run，从第一个未完成步骤继续。"""
+    """Only the caller that atomically claims a pending run executes its graph."""
     db = SessionLocal()
     try:
+        claimed = db.query(AgentRun).filter(AgentRun.id == run_id, AgentRun.status == "pending").update(
+            {"status": "running", "error_message": None}, synchronize_session=False,
+        )
+        db.commit()
+        if not claimed:
+            return
         run = db.query(AgentRun).filter(AgentRun.id == run_id).first()
         if not run:
             return
-        req = _request_from_run(run)
+        try:
+            req = _request_from_run(run)
+        except (ValueError, TypeError):
+            req = None
         if not req:
             run.status = "failed"
             run.error_message = "缺少 Agent 请求参数，无法继续执行"
             db.commit()
             return
-        run.status = "running"
-        run.error_message = None
-        db.commit()
         await _execute_steps(run, req, db)
     finally:
         db.close()
 
 
 def prepare_retry_agent_run(run_id: int, db: Session) -> AgentRunResult | None:
-    """把失败步骤及后续步骤重置为 pending，等待后台重试。"""
+    """Explicit retry; compare-and-set rejects concurrent or repeated retries."""
     run = db.query(AgentRun).filter(AgentRun.id == run_id).first()
     if not run:
         return None
+    claimed = db.query(AgentRun).filter(AgentRun.id == run_id, AgentRun.status == "failed").update(
+        {"status": "pending"}, synchronize_session=False,
+    )
+    if not claimed:
+        db.rollback()
+        raise WorkflowConflict("只有失败任务可以重试；运行中、已取消或已审核任务不能重复执行。")
     failed_step = (
         db.query(AgentStep)
         .filter(AgentStep.run_id == run_id, AgentStep.status == "failed")
@@ -93,7 +151,19 @@ def prepare_retry_agent_run(run_id: int, db: Session) -> AgentRunResult | None:
         .first()
     )
     if not failed_step:
-        return get_agent_run(run_id, db)
+        failed_step = db.query(AgentStep).filter(
+            AgentStep.run_id == run_id, AgentStep.status.notin_(["completed", "skipped"]),
+        ).order_by(AgentStep.step_index).first()
+    if not failed_step:
+        db.rollback()
+        raise WorkflowConflict("该任务没有可恢复的失败步骤，请新建任务。")
+
+    previous_attempt = {
+        "attempt": int((run.result_json or {}).get("workflow", {}).get("attempt") or 1),
+        "failure": (run.result_json or {}).get("failure") or {"message": run.error_message},
+        "failed_step": failed_step.key,
+        "duration_ms": failed_step.duration_ms,
+    }
 
     downstream = (
         db.query(AgentStep)
@@ -111,9 +181,134 @@ def prepare_retry_agent_run(run_id: int, db: Session) -> AgentRunResult | None:
     run.status = "pending"
     run.current_step = "queued"
     run.error_message = None
-    run.result_json = _prune_results_for_retry(run.result_json or {}, failed_step.key)
+    data = _prune_results_for_retry(run.result_json or {}, failed_step.key)
+    workflow = dict(data.get("workflow") or {})
+    workflow["history"] = [*(workflow.get("history") or []), previous_attempt][-20:]
+    workflow["attempt"] = int(workflow.get("attempt") or 1) + 1
+    workflow["last_retry_at"] = _utcnow().isoformat()
+    data["workflow"] = workflow
+    run.result_json = data
     db.commit()
     return get_agent_run(run_id, db)
+
+
+def cancel_agent_run(run_id: int, db: Session) -> AgentRunResult | None:
+    run = db.get(AgentRun, run_id)
+    if not run:
+        return None
+    if run.status == "cancelled":
+        return get_agent_run(run_id, db)
+    changed = db.query(AgentRun).filter(
+        AgentRun.id == run_id, AgentRun.status.in_(["pending", "running", "awaiting_review"]),
+    ).update({"status": "cancelled", "current_step": "cancelled"}, synchronize_session=False)
+    if not changed:
+        db.rollback()
+        raise WorkflowConflict("该任务已结束，不能取消。")
+    db.expire(run)
+    data = dict(run.result_json or {})
+    data["cancellation"] = {"at": _utcnow().isoformat(), "scope": "stop_at_node_boundary"}
+    run.result_json = data
+    db.query(AgentStep).filter(AgentStep.run_id == run_id, AgentStep.status.in_(["pending", "running", "awaiting_review"])).update(
+        {"status": "cancelled", "completed_at": _utcnow()}, synchronize_session=False,
+    )
+    db.commit()
+    db.expire_all()
+    return get_agent_run(run_id, db)
+
+
+def review_agent_run(run_id: int, req: AgentReviewCreate, db: Session) -> AgentRunResult | None:
+    run = db.get(AgentRun, run_id)
+    if not run:
+        return None
+    status = "approved" if req.decision == "approve" else "rejected"
+    changed = db.query(AgentRun).filter(AgentRun.id == run_id, AgentRun.status == "awaiting_review").update(
+        {"status": status, "current_step": status}, synchronize_session=False,
+    )
+    if not changed:
+        db.rollback()
+        raise WorkflowConflict("只有待人工审核任务可以提交审核，已提交的审核不能覆盖。")
+    db.expire(run)
+    draft = db.get(Draft, run.draft_id) if run.draft_id else None
+    if not draft:
+        db.rollback()
+        raise WorkflowConflict("草稿不存在，不能审核。")
+    if req.decision == "approve":
+        try:
+            validate_review_evidence(run, draft, db)
+        except WorkflowConflict:
+            db.rollback()
+            raise
+    review = {"decision": req.decision, "note": req.note.strip(), "at": _utcnow().isoformat(),
+              "actor": (current_tenant.get().user_id if current_tenant.get() else "local_user"), "publishes_content": False,
+              "content_hash": draft_snapshot_hash(draft, db)}
+    data = dict(run.result_json or {})
+    data.pop("review_invalidated", None)
+    run.result_json = {**data, "review": review}
+    draft.status = status
+    step = _steps_by_key(run_id, AtomicStepSession(db))["human_review"]
+    step.status = "completed"
+    step.completed_at = _utcnow()
+    step.output_json = review
+    db.commit()
+    return get_agent_run(run_id, db)
+
+
+def submit_agent_run_review(run_id: int, db: Session) -> AgentRunResult | None:
+    run = db.get(AgentRun, run_id)
+    if run is None:
+        return None
+    changed = db.query(AgentRun).filter(AgentRun.id == run_id, AgentRun.status == "rejected").update(
+        {"status": "awaiting_review", "current_step": "human_review"}, synchronize_session=False,
+    )
+    if not changed:
+        db.rollback()
+        raise WorkflowConflict("只有已退回的任务可以重新提交审核。")
+    db.expire(run)
+    draft = db.get(Draft, run.draft_id) if run.draft_id else None
+    if draft is None:
+        db.rollback()
+        raise WorkflowConflict("草稿不存在，不能重新提交审核。")
+    try:
+        validate_review_evidence(run, draft, db)
+    except WorkflowConflict:
+        db.rollback()
+        raise
+    data = archive_review(run.result_json or {}, "重新提交人工审核")
+    data["last_submitted_at"] = _utcnow().isoformat()
+    run.result_json = data
+    draft.status = "awaiting_review"
+    step = _steps_by_key(run_id, AtomicStepSession(db))["human_review"]
+    step.status, step.started_at, step.completed_at = "awaiting_review", _utcnow(), None
+    step.output_json = None
+    db.commit()
+    return get_agent_run(run_id, db)
+
+
+def recover_interrupted_agent_runs(db: Session) -> int:
+    """Call once at startup, after schema initialization, in a single-process app.
+
+    Interrupted work is made visible and never auto-replayed (API calls can cost).
+    Completed SQL nodes and their artifacts survive; the unfinished node is retried.
+    """
+    runs = db.query(AgentRun).filter(AgentRun.status.in_(["pending", "running"])).all()
+    for run in runs:
+        step = db.query(AgentStep).filter(
+            AgentStep.run_id == run.id, AgentStep.status.notin_(["completed", "skipped"]),
+        ).order_by(AgentStep.step_index).first()
+        message = "服务在任务完成前中断。已保留完成步骤，请显式重试继续；未完成的模型调用可能再次计费。"
+        if step:
+            step.status = "failed"
+            step.error_message = message
+            step.completed_at = _utcnow()
+            run.current_step = step.key
+        run.status = "failed"
+        run.error_message = message
+        run.result_json = {**(run.result_json or {}), "failure": {
+            "code": "INTERRUPTED", "message": message, "recoverable": True,
+            "at": _utcnow().isoformat(),
+        }}
+    db.commit()
+    return len(runs)
 
 
 def get_agent_run(run_id: int, db: Session) -> AgentRunResult | None:
@@ -138,43 +333,184 @@ async def run_content_growth_agent(req: AgentRunCreate, db: Session) -> AgentRun
     return refreshed
 
 
-async def _execute_steps(run: AgentRun, req: AgentRunCreate, db: Session) -> None:
+class ContentWorkflowState(TypedDict, total=False):
+    run_id: int
+    topic_id: int
+    draft_id: int
+    selected_idea: dict
+    evaluation: dict
+
+
+def build_content_graph(run: AgentRun, req: AgentRunCreate, db: Session):
+    """A bounded graph with a quality branch and a persisted human-review gate.
+
+    The graph re-enters at START on explicit retry. Completed nodes return their
+    SQL checkpoints, so only failed and downstream nodes execute side effects.
+    """
     steps = _steps_by_key(run.id, db)
-    try:
-        await _step_retrieve_context(run, req, steps["retrieve_context"], db)
-        selected_idea = await _step_topic_ideas(run, req, steps["topic_ideas"], db)
-        topic = await _step_create_topic(run, selected_idea, steps["create_topic"], db)
-        topic = await _step_score_topic(run, req, topic, steps["score_topic"], db)
-        draft = await _step_generate_draft(run, req, topic, steps["generate_draft"], db)
-        cards = await _step_generate_cards(run, req, draft, steps["generate_cards"], db)
-        await _step_compliance(run, req, draft, steps["compliance_check"], db)
-        evaluation = await _step_evaluate(run, req, draft, cards, steps["evaluate_package"], db, result_key="evaluation")
-        final_evaluation = evaluation
-        if int(evaluation.get("overall_score") or 0) < REVISION_THRESHOLD:
-            await _step_revise(run, draft, cards, evaluation, steps["revise_package"], db)
-            cards = db.query(Card).filter(Card.draft_id == draft.id).order_by(Card.page_index).all()
-            final_evaluation = await _step_evaluate(run, req, draft, cards, steps["reevaluate_package"], db, result_key="reevaluation")
-        else:
-            _skip_step(steps["revise_package"], {"reason": f"质量评分已达到 {REVISION_THRESHOLD} 分，无需自动改稿"}, db)
-            _skip_step(steps["reevaluate_package"], {"reason": "未触发自动改稿"}, db)
-        await _step_agent_decision(run, req, topic, draft, cards, final_evaluation, steps["agent_decision"], db)
-        topic.status = "generated"
-        run.status = "completed"
-        run.current_step = "completed"
+    builder = StateGraph(ContentWorkflowState)
+
+    def topic():
+        value = db.get(Topic, run.selected_topic_id) if run.selected_topic_id else None
+        if not value:
+            raise ValueError("选题检查点不存在")
+        return value
+
+    def draft():
+        value = db.get(Draft, run.draft_id) if run.draft_id else None
+        if not value:
+            raise ValueError("草稿检查点不存在")
+        return value
+
+    def cards():
+        return db.query(Card).filter(Card.draft_id == run.draft_id).order_by(Card.page_index).all()
+
+    async def dispatch(key, state, node_db):
+        step = steps[key]
+        if key == "retrieve_context":
+            await _step_retrieve_context(run, req, step, node_db)
+        elif key == "topic_ideas":
+            idea = await _step_topic_ideas(run, req, step, node_db)
+            return {"selected_idea": _idea_payload(idea)}
+        elif key == "create_topic":
+            value = await _step_create_topic(run, _idea_from_payload(state["selected_idea"]), step, node_db)
+            return {"topic_id": value.id}
+        elif key == "score_topic":
+            await _step_score_topic(run, req, topic(), step, node_db)
+        elif key == "generate_draft":
+            value = await _step_generate_draft(run, req, topic(), step, node_db)
+            return {"draft_id": value.id}
+        elif key == "generate_cards":
+            await _step_generate_cards(run, req, draft(), step, node_db)
+        elif key == "compliance_check":
+            await _step_compliance(run, req, draft(), step, node_db)
+        elif key in {"evaluate_package", "reevaluate_package"}:
+            result_key = "evaluation" if key == "evaluate_package" else "reevaluation"
+            value = await _step_evaluate(run, req, draft(), cards(), step, node_db, result_key)
+            return {"evaluation": value}
+        elif key == "revise_package":
+            await _step_revise(run, draft(), cards(), state["evaluation"], step, node_db)
+        elif key == "agent_decision":
+            await _step_agent_decision(run, req, topic(), draft(), cards(), state["evaluation"], step, node_db)
+        return {}
+
+    def node_for(key):
+        async def node(state):
+            # End the read transaction before consulting the current cancellation state.
+            db.rollback()
+            db.refresh(run)
+            if run.status == "cancelled":
+                raise WorkflowCancelled()
+            if run.status != "running":
+                raise WorkflowConflict("任务已离开执行状态")
+            step = steps[key]
+            db.refresh(step)
+            if step.status not in {"completed", "skipped"} or (key == "retrieve_context" and req.required_facts):
+                _start_step(run, step, {"run_id": run.id, "engine": "langgraph"}, db)
+            attempt = int(((run.result_json or {}).get("workflow") or {}).get("attempt") or 1)
+            # ContextVars follow this node's async execution and reset even when
+            # the node fails. Model logs commit independently of node artifacts.
+            with model_trace_context(run.id, step.id, key, attempt):
+                output = await dispatch(key, state, AtomicStepSession(db))
+            # Cancellation is cooperative: a running remote call cannot be recalled.
+            with SessionLocal() as observer:
+                status = observer.query(AgentRun.status).filter(AgentRun.id == run.id).scalar()
+            if status == "cancelled":
+                db.rollback()
+                raise WorkflowCancelled()
+            db.commit()
+            return output
+        return node
+
+    keys = [key for key, _ in STEP_PLAN if key != "human_review"]
+    for key in keys:
+        builder.add_node(key, node_for(key))
+
+    async def skip_revision(state):
+        _skip_step(steps["revise_package"], {"reason": "质量评分达到阈值，未触发规则修订"}, AtomicStepSession(db))
+        _skip_step(steps["reevaluate_package"], {"reason": "未触发规则修订"}, AtomicStepSession(db))
         db.commit()
+        return {}
+
+    async def await_review(state):
+        db.rollback()
+        db.refresh(run)
+        if run.status == "cancelled":
+            raise WorkflowCancelled()
+        if req.use_rag:
+            validate_citations(draft().body_text or "", (run.result_json or {}).get("citations") or [])
+        changed = db.query(AgentRun).filter(AgentRun.id == run.id, AgentRun.status == "running").update(
+            {"status": "awaiting_review", "current_step": "human_review"}, synchronize_session=False,
+        )
+        if not changed:
+            db.rollback()
+            raise WorkflowCancelled()
+        topic().status = "generated"
+        draft().status = "awaiting_review"
+        step = steps["human_review"]
+        step.status = "awaiting_review"
+        step.started_at = _utcnow()
+        step.input_json = {"draft_id": run.draft_id, "requires_manual_source_check": True}
+        db.commit()
+        db.refresh(run)
+        return {}
+
+    builder.add_node("skip_revision", skip_revision)
+    builder.add_node("await_review", await_review)
+    builder.add_edge(START, "retrieve_context")
+    for previous, following in zip(keys[:7], keys[1:8]):
+        builder.add_edge(previous, following)
+    builder.add_conditional_edges(
+        "evaluate_package",
+        lambda state: "revise_package" if int(state["evaluation"].get("overall_score") or 0) < REVISION_THRESHOLD else "skip_revision",
+        {"revise_package": "revise_package", "skip_revision": "skip_revision"},
+    )
+    builder.add_edge("revise_package", "reevaluate_package")
+    builder.add_edge("reevaluate_package", "agent_decision")
+    builder.add_edge("skip_revision", "agent_decision")
+    builder.add_edge("agent_decision", "await_review")
+    builder.add_edge("await_review", END)
+    return builder.compile()
+
+
+async def _execute_steps(run: AgentRun, req: AgentRunCreate, db: Session) -> None:
+    try:
+        graph = build_content_graph(run, req, db)
+        await graph.ainvoke({"run_id": run.id})
+    except WorkflowCancelled:
+        db.rollback()
     except Exception as exc:
-        _fail_running_step(run.id, str(exc), db)
-        run.status = "failed"
-        run.error_message = str(exc)
+        db.rollback()
+        db.refresh(run)
+        if run.status == "cancelled":
+            return
+        code, message, error_type = _safe_failure(exc)
+        changed = db.query(AgentRun).filter(AgentRun.id == run.id, AgentRun.status == "running").update(
+            {"status": "failed", "error_message": message}, synchronize_session=False,
+        )
+        if not changed:
+            db.rollback()
+            return
+        _fail_running_step(run.id, message, AtomicStepSession(db))
+        run.result_json = {**(run.result_json or {}), "failure": {
+            "code": code, "message": message, "error_type": error_type,
+            "step": run.current_step, "recoverable": True,
+            "at": _utcnow().isoformat(),
+        }}
+        if isinstance(exc, EvidenceError) and hasattr(exc, "retrieval"):
+            run.result_json = {**run.result_json, "rag_context": exc.retrieval}
         db.commit()
 
 
 async def _step_retrieve_context(run: AgentRun, req: AgentRunCreate, step: AgentStep, db: Session) -> dict:
     existing = _result(run, "rag_context")
-    if step.status in {"completed", "skipped"} and existing:
+    # Explicit requirements must be rechecked against live evidence on retry;
+    # a completed retrieval checkpoint cannot preserve a revoked/expired fact.
+    if step.status in {"completed", "skipped"} and existing and not req.required_facts:
         return existing
     if not req.use_rag:
-        payload = {"enabled": False, "evidence_status": "disabled", "hits": [], "reason": "本次 Agent Run 未启用知识库检索。"}
+        payload = {"enabled": False, "evidence_status": "disabled", "hits": [], "reason": "本次 Agent Run 未启用知识库检索。",
+                   **assess_required_facts([], [])}
         _set_result(run, "rag_context", payload, db)
         _skip_step(step, payload, db)
         return payload
@@ -185,6 +521,7 @@ async def _step_retrieve_context(run: AgentRun, req: AgentRunCreate, step: Agent
         "knowledge_base_id": req.knowledge_base_id,
         "top_k": req.rag_top_k,
         "min_score": req.rag_min_score,
+        "required_facts": [item.model_dump() for item in req.required_facts],
     }, db)
     context = workspace_context(db, req.workspace_id)
     knowledge_base = get_knowledge_base_or_default(db, context, req.knowledge_base_id)
@@ -202,7 +539,11 @@ async def _step_retrieve_context(run: AgentRun, req: AgentRunCreate, step: Agent
         top_k=req.rag_top_k,
         min_score=req.rag_min_score,
     )
+    candidates = hits
+    hits = [hit for hit in select_evidence(candidates) if hit.content]
+    facts = assess_required_facts(hits, req.required_facts)
     payload = {
+        **facts,
         "enabled": True,
         "workspace_id": context.workspace_id,
         "workspace_slug": context.workspace_slug,
@@ -210,10 +551,23 @@ async def _step_retrieve_context(run: AgentRun, req: AgentRunCreate, step: Agent
         "knowledge_base_name": knowledge_base.name,
         "query": query,
         "coverage": _rag_coverage(hits),
+        "candidate_count": len(candidates),
+        "discarded_below_threshold": len(candidates) - len(hits),
+        "retrieval_candidates": [hit.to_dict() for hit in candidates],
         "evidence_status": "sufficient" if _rag_has_sufficient_evidence(hits) else "weak_or_empty",
         "hits": [hit.to_dict() for hit in hits],
-        "boundary": "RAG 检索仅限当前 workspace_id + knowledge_base_id。",
+        "boundary": "本地单用户资料分组；检索按 workspace_id + knowledge_base_id 筛选，不提供身份认证或多租户安全隔离。",
     }
+    if facts["missing_facts"]:
+        payload["evidence_status"] = "missing_structured_facts"
+        payload["refusal_reason"] = "missing_structured_facts"
+        error = EvidenceError(f"缺少必需产品参数的已核验证据：{missing_fact_labels(facts['missing_facts'])}。任务已停止生成，请补充带版本及原文定位的资料后重试。")
+        error.retrieval = payload
+        raise error
+    if payload["evidence_status"] != "sufficient":
+        error = EvidenceError("检索证据不足，任务已停止生成。请导入相关资料或调整任务后重试。")
+        error.retrieval = payload
+        raise error
     _set_result(run, "rag_context", payload, db)
     _finish_step(step, "completed", payload, db)
     return payload
@@ -224,13 +578,15 @@ async def _step_topic_ideas(run: AgentRun, req: AgentRunCreate, step: AgentStep,
     if step.status == "completed" and existing:
         return _idea_from_payload(_selected_idea_payload(existing))
     rag_note = _rag_note_for_prompt(run)
+    brief = _result(run, "brief")
+    brief_note = ("任务要求（只约束写法，不是事实来源）：" + json.dumps(brief, ensure_ascii=False)) if brief else ""
     _start_step(run, step, {"goal": req.goal, "mode": run.mode, "provider": req.provider or "local", "rag_enabled": bool(rag_note)}, db)
     ideas_result = await generate_custom_topic_ideas(
         mode=run.mode,
         research_depth=req.research_depth,
         theme=req.goal,
         target_audience=req.target_audience,
-        viewpoint=req.viewpoint,
+        viewpoint=_join_text(req.viewpoint, brief_note),
         personal_case=_join_text(req.personal_case, rag_note),
         content_type=req.content_type,
         source_urls=req.source_urls,
@@ -253,9 +609,11 @@ async def _step_topic_ideas(run: AgentRun, req: AgentRunCreate, step: AgentStep,
 
 
 async def _step_create_topic(run: AgentRun, selected_idea: CustomTopicIdea, step: AgentStep, db: Session) -> Topic:
-    if step.status == "completed" and run.selected_topic_id:
+    if run.selected_topic_id:
         topic = db.query(Topic).filter(Topic.id == run.selected_topic_id).first()
         if topic:
+            if step.status != "completed":
+                _finish_step(step, "completed", {"topic_id": topic.id, "reused_checkpoint": True}, db)
             return topic
     _start_step(run, step, {"recommended_title": selected_idea.title}, db)
     topic = _create_topic_from_idea(selected_idea, db)
@@ -294,12 +652,19 @@ async def _step_score_topic(run: AgentRun, req: AgentRunCreate, topic: Topic, st
 
 
 async def _step_generate_draft(run: AgentRun, req: AgentRunCreate, topic: Topic, step: AgentStep, db: Session) -> Draft:
-    if step.status == "completed" and run.draft_id:
+    if run.draft_id:
         draft = db.query(Draft).filter(Draft.id == run.draft_id).first()
         if draft:
+            if step.status != "completed":
+                _finish_step(step, "completed", {"draft_id": draft.id, "reused_checkpoint": True}, db)
             return draft
     _start_step(run, step, {"topic_id": topic.id}, db)
-    draft = await generate_draft(topic, db, provider=req.provider or "local", model=req.model or None)
+    if req.use_rag:
+        hits = (_result(run, "rag_context") or {}).get("hits") or []
+        draft, citations = await generate_evidence_draft(topic, req, hits, db, business_brief=_result(run, "brief"))
+        _set_result(run, "citations", citations, db)
+    else:
+        draft = await generate_draft(topic, db, provider=req.provider or "local", model=req.model or None)
     run.draft_id = draft.id
     payload = {
         "draft_id": draft.id,
@@ -320,7 +685,18 @@ async def _step_generate_cards(run: AgentRun, req: AgentRunCreate, draft: Draft,
         for card in existing_cards:
             db.delete(card)
         db.commit()
-    cards = await generate_cards(draft, db, provider=req.provider or "local", model=req.model or None)
+    if req.use_rag:
+        # Source cards remain extractive, so quoted evidence cannot silently turn
+        # into unsourced claims through the generic card-generation prompt.
+        citations = _result(run, "citations") or []
+        cover_title = str((draft.title_options or [run.goal])[0])
+        cards = [Card(draft_id=draft.id, **spec)
+                 for spec in build_evidence_cards(cover_title, citations)]
+        db.add_all(cards)
+        db.flush()
+    else:
+        cards = await generate_cards(draft, db, provider=req.provider or "local", model=req.model or None)
+    draft.max_card_count = len(cards)
     payload = {
         "draft_id": draft.id,
         "card_count": len(cards),
@@ -489,9 +865,8 @@ def _rag_coverage(hits: list) -> dict:
 
 
 def _rag_has_sufficient_evidence(hits: list) -> bool:
-    if not hits:
-        return False
-    return float(hits[0].score) >= 0.18 or (len(hits) >= 2 and float(hits[0].score) >= 0.12)
+    # RRF ranks candidates; evidence eligibility is a separate, mode-aware gate.
+    return bool(select_evidence(hits))
 
 
 def _rag_note_for_prompt(run: AgentRun) -> str:
@@ -683,18 +1058,19 @@ def _manual_review_focus(draft: Draft, issues: list, verification_status: str) -
 def _revise_draft_and_cards(draft: Draft, cards: list[Card], evaluation: dict, db: Session) -> dict:
     changes: list[str] = []
     title_options = list(draft.title_options or [])
-    if title_options:
+    evidence_based = "[chunk:" in (draft.body_text or "")
+    if title_options and not evidence_based:
         original = str(title_options[0])
         if not any(word in original for word in ["别", "先", "步骤", "清单"]):
             title_options[0] = f"先别急着全自动：{original[:22]}"
             changes.append("强化第一个标题的行动钩子")
     cover_options = list(draft.cover_text_options or [])
-    if cover_options:
+    if cover_options and not evidence_based:
         cover_options[0] = str(cover_options[0])[:18] or "先跑通这套流程"
         if "流程" not in cover_options[0]:
             cover_options[0] = f"{cover_options[0]}流程"
         changes.append("收紧封面文案")
-    if draft.body_text and len(draft.body_text) > 900:
+    if draft.body_text and len(draft.body_text) > 900 and "[chunk:" not in draft.body_text:
         draft.body_text = draft.body_text[:880] + "\n\n最后发布前我会人工核验事实和边界。"
         changes.append("压缩正文长度并补充人工核验提醒")
     draft.title_options = title_options
@@ -708,8 +1084,10 @@ def _revise_draft_and_cards(draft: Draft, cards: list[Card], evaluation: dict, d
 
     for card in cards:
         if card.body and len(card.body) > 150:
-            card.body = card.body[:138].rstrip("，。；;,. ") + "。"
-            changes.append(f"精简第 {card.page_index} 页正文")
+            shortened = complete_sentence_excerpt(card.body, 138)
+            if shortened != card.body:
+                card.body = shortened
+                changes.append(f"按完整句精简第 {card.page_index} 页正文")
         if card.page_index == 1 and title_options:
             card.title = str(title_options[0])[:255]
             changes.append("同步封面卡标题")
@@ -741,13 +1119,17 @@ def _steps_by_key(run_id: int, db: Session) -> dict[str, AgentStep]:
     existing = db.query(AgentStep).filter(AgentStep.run_id == run_id).order_by(AgentStep.step_index).all()
     if not existing:
         return _create_steps(run_id, db)
-    existing_keys = {step.key for step in existing}
-    missing = [(key, label) for key, label in STEP_PLAN if key not in existing_keys]
-    if missing:
-        next_index = max(step.step_index for step in existing)
-        for key, label in missing:
-            next_index += 1
-            db.add(AgentStep(run_id=run_id, step_index=next_index, key=key, label=label, status="pending"))
+    by_key = {step.key: step for step in existing}
+    changed = False
+    for index, (key, label) in enumerate(STEP_PLAN, start=1):
+        if key not in by_key:
+            db.add(AgentStep(run_id=run_id, step_index=index, key=key, label=label, status="pending"))
+            changed = True
+        elif by_key[key].step_index != index:
+            by_key[key].step_index = index
+            changed = True
+    if changed:
+        db.flush()
         db.commit()
         existing = db.query(AgentStep).filter(AgentStep.run_id == run_id).order_by(AgentStep.step_index).all()
     return {step.key: step for step in existing}
@@ -756,7 +1138,7 @@ def _steps_by_key(run_id: int, db: Session) -> dict[str, AgentStep]:
 def _start_step(run: AgentRun, step: AgentStep, input_json: dict[str, Any], db: Session) -> None:
     run.current_step = step.key
     step.status = "running"
-    step.started_at = datetime.utcnow()
+    step.started_at = _utcnow()
     step.completed_at = None
     step.error_message = None
     step.input_json = _compact(input_json)
@@ -766,7 +1148,7 @@ def _start_step(run: AgentRun, step: AgentStep, input_json: dict[str, Any], db: 
 def _finish_step(step: AgentStep, status: str, output_json: dict[str, Any], db: Session) -> None:
     step.status = status
     step.output_json = _compact(output_json)
-    step.completed_at = datetime.utcnow()
+    step.completed_at = _utcnow()
     db.commit()
 
 
@@ -775,7 +1157,7 @@ def _skip_step(step: AgentStep, output_json: dict[str, Any], db: Session) -> Non
         return
     step.status = "skipped"
     step.output_json = _compact(output_json)
-    step.completed_at = datetime.utcnow()
+    step.completed_at = _utcnow()
     db.commit()
 
 
@@ -789,7 +1171,7 @@ def _fail_running_step(run_id: int, message: str, db: Session) -> None:
     if step:
         step.status = "failed"
         step.error_message = message[:1000]
-        step.completed_at = datetime.utcnow()
+        step.completed_at = _utcnow()
         db.commit()
 
 
@@ -940,7 +1322,7 @@ def _set_result(run: AgentRun, key: str, value: Any, db: Session) -> None:
 
 
 def _prune_results_for_retry(result_json: dict[str, Any], failed_key: str) -> dict[str, Any]:
-    keep = {"_request"}
+    keep = {"_request", "workflow"}
     order = [key for key, _ in STEP_PLAN]
     result_key_by_step = {
         "retrieve_context": "rag_context",
@@ -961,6 +1343,8 @@ def _prune_results_for_retry(result_json: dict[str, Any], failed_key: str) -> di
         result_key = result_key_by_step.get(key)
         if result_key:
             keep.add(result_key)
+        if key == "generate_draft":
+            keep.add("citations")
     return {key: value for key, value in result_json.items() if key in keep}
 
 

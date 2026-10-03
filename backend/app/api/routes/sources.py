@@ -1,6 +1,6 @@
 """素材库 API"""
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import StrictBool, BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -60,7 +60,7 @@ class SourceTopicIdeasResponse(BaseModel):
 
 
 class SourceTopicIdeaConfirmRequest(SourceTopicIdeaOut):
-    auto_score: bool = False
+    auto_score: StrictBool = False
     provider: str = ""
     model: str = ""
 
@@ -137,8 +137,8 @@ async def generate_source_topic_ideas_endpoint(
         )
     except ValueError as exc:
         raise HTTPException(422, str(exc))
-    except Exception as exc:
-        raise HTTPException(500, f"素材选题生成失败: {str(exc)}")
+    except Exception:
+        raise HTTPException(500, "素材选题生成失败，请检查配置或稍后重试。") from None
 
     return SourceTopicIdeasResponse(
         source_id=source.id,

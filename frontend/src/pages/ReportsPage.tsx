@@ -1,3 +1,4 @@
+import { useWorkspace } from '../components/WorkspaceContext';
 import { useEffect, useState } from 'react';
 import { api, WeeklyReport } from '../api/client';
 
@@ -13,19 +14,43 @@ function defaultStartDate() {
 
 function metricValue(item: Record<string, unknown>, key: string) {
   const value = item[key];
-  return typeof value === 'number' ? value : 0;
+  return typeof value === 'number'&&Number.isFinite(value) ? value : null;
+}
+function metricLabel(item:Record<string,unknown>,key:string){return metricValue(item,key)??'未采集';}
+function metricRate(item:Record<string,unknown>,key:string){const value=metricValue(item,key),base=metricValue(item,'views');return value!==null&&base!==null&&base>0?value/base:null;}
+
+function formatPercent(value: number|null,empty='暂无有效数据') {
+  return value===null?empty:`${(value * 100).toFixed(1)}%`;
 }
 
-function formatPercent(value: number) {
-  return `${(value * 100).toFixed(1)}%`;
+function formatSignedNumber(value: number|null) {
+  if(value===null)return '未采集';
+  if (value > 0) return `+${value}`;
+  return String(value);
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function biasLabel(value: unknown) {
+  const labels: Record<string, string> = {
+    underestimated: '整体低估实际表现',
+    overestimated: '整体高估实际表现',
+    balanced: '高低估基本均衡',
+    none: '暂无可校准数据',
+  };
+  return labels[String(value || 'none')] || '暂无可校准数据';
 }
 
 export default function ReportsPage() {
+  const {canWrite,canReview}=useWorkspace();
   const [reports, setReports] = useState<WeeklyReport[]>([]);
   const [selectedReport, setSelectedReport] = useState<WeeklyReport | null>(null);
   const [startDate, setStartDate] = useState(defaultStartDate());
   const [endDate, setEndDate] = useState(toDateInput(new Date()));
   const [loading, setLoading] = useState(false);
+  const [error,setError]=useState('');
 
   const load = async () => {
     const data = await api.listWeeklyReports();
@@ -33,30 +58,37 @@ export default function ReportsPage() {
     setSelectedReport(prev => prev || data[0] || null);
   };
 
-  useEffect(() => { load().catch(() => {}); }, []);
+  useEffect(() => { load().catch(e => setError(`复盘列表读取失败：${e.message}`)); }, []);
 
   const handleCreateReport = async () => {
-    setLoading(true);
+    setLoading(true);setError('');
     try {
       const report = await api.createWeeklyReport({ start_date: startDate, end_date: endDate });
       setSelectedReport(report);
       setReports([report, ...reports]);
     } catch (e: any) {
-      alert('生成复盘失败: ' + e.message);
+      setError('生成复盘失败: ' + e.message);
     }
     setLoading(false);
   };
 
-  const bestItems = selectedReport?.best_topics?.items || [];
-  const worstItems = selectedReport?.worst_topics?.items || [];
+  const coverage=selectedReport?.performance_summary?.data_coverage;
+  const measured=Boolean(coverage&&coverage.measured_posts>0);
+  const bestItems = measured?selectedReport?.best_topics?.items || []:[];
+  const worstItems = measured?selectedReport?.worst_topics?.items || []:[];
   const recommendations = selectedReport?.recommendations?.items || [];
   const performanceSummary = selectedReport?.performance_summary || null;
-  const anglePerformance = selectedReport?.angle_performance?.items || [];
-  const contentTypePerformance = selectedReport?.content_type_performance?.items || [];
-  const templatePerformance = selectedReport?.template_performance?.items || [];
+  const anglePerformance = measured?selectedReport?.angle_performance?.items || []:[];
+  const contentTypePerformance = measured?selectedReport?.content_type_performance?.items || []:[];
+  const templatePerformance = measured?selectedReport?.template_performance?.items || []:[];
 
-  const summaryRates = performanceSummary?.rates || null;
+  const summaryRates = measured?performanceSummary?.rates || null:null;
   const summaryTotals = performanceSummary?.totals || null;
+  const predictionCalibration = measured?selectedReport?.prediction_calibration || performanceSummary?.prediction_calibration || null:null;
+  const calibrationCount = metricValue(predictionCalibration || {}, 'prediction_count')??0;
+  const topPredictionMisses = Array.isArray(predictionCalibration?.top_misses)
+    ? predictionCalibration.top_misses as Array<Record<string, unknown>>
+    : [];
 
   return (
     <div>
@@ -64,6 +96,7 @@ export default function ReportsPage() {
         <h1>7天复盘</h1>
         <p>根据手动录入数据复盘选题、标题、卡片和下周方向</p>
       </div>
+      {error&&<div className="feedback error" role="alert">{error}</div>}
 
       <div className="grid-two">
         <section className="panel">
@@ -78,7 +111,7 @@ export default function ReportsPage() {
               <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
             </div>
           </div>
-          <button className="btn btn-primary" onClick={handleCreateReport} disabled={loading}>
+          <button className="btn btn-primary" onClick={handleCreateReport} disabled={!canWrite || (loading)}>
             {loading ? '生成中...' : '生成本周期复盘'}
           </button>
         </section>
@@ -106,6 +139,7 @@ export default function ReportsPage() {
 
       {selectedReport ? (
         <div style={{ marginTop: 20 }}>
+          {coverage?<div className="notice-strip"><strong>本周期发布 {coverage.published_posts} 条 · 已采集 {coverage.measured_posts} 条 · 缺失指标 {coverage.missing_metric_posts} 条</strong><span>每条发布记录只采用最新的累计快照；缺失指标不按零表现参与排名或预测误差。明确录入的零值仍属于已采集数据。</span>{coverage.missing_metric_log_ids.length>0&&<span>待补数据的发布记录：{coverage.missing_metric_log_ids.map(id=>`#${id}`).join('、')}</span>}</div>:<div className="notice-strip">这份历史报告没有数据覆盖记录，请重新生成本周期复盘。<span>旧报告的正文保留供查阅，排名、关键率和校准需按新口径重新计算。</span></div>}
           <section className="panel">
             <h3>复盘报告</h3>
             <div className="report-text">{selectedReport.report_text}</div>
@@ -135,10 +169,60 @@ export default function ReportsPage() {
                 </div>
                 <div className="topic-rank" style={{ marginTop: 12 }}>
                   <strong>周期汇总曝光</strong>
-                  <span>发布 {metricValue(summaryTotals || {}, 'posts')} 条，浏览 {metricValue(summaryTotals || {}, 'views')}，收藏 {metricValue(summaryTotals || {}, 'favorites')}，新增粉丝 {metricValue(summaryTotals || {}, 'new_followers')}</span>
+                  <span>发布 {metricLabel(summaryTotals || {}, 'posts')} 条；以下累计总数仅含已采集内容：浏览 {metricLabel(summaryTotals || {}, 'views')}，收藏 {metricLabel(summaryTotals || {}, 'favorites')}，新增粉丝 {metricLabel(summaryTotals || {}, 'new_followers')}</span>
                 </div>
               </>
-            ) : <div className="empty">暂无关键率</div>}
+            ) : <div className="empty">{coverage?'尚无已采集指标，暂不能计算关键率。':'请重新生成报告，取得已采集和缺失数据口径。'}</div>}
+          </section>
+
+          <section className="panel calibration-panel" style={{ marginTop: 20 }}>
+            <div className="panel-heading-row">
+              <div>
+                <h3>预测校准</h3>
+                <p>对比发布前预测与真实数据，判断选题和封面判断是否需要校准。</p>
+              </div>
+            </div>
+            {predictionCalibration && calibrationCount > 0 ? (
+              <>
+                <div className="calibration-grid">
+                  <div className="calibration-card">
+                    <span>可校准内容</span>
+                    <strong>{calibrationCount}</strong>
+                  </div>
+                  <div className="calibration-card">
+                    <span>平均浏览误差</span>
+                    <strong>{formatPercent(metricValue(predictionCalibration, 'avg_abs_view_error_rate'),'暂无有效误差样本')}</strong>
+                  </div>
+                  <div className="calibration-card">
+                    <span>偏差方向</span>
+                    <strong>{biasLabel(predictionCalibration.view_bias)}</strong>
+                  </div>
+                  <div className="calibration-card">
+                    <span>低估 / 高估</span>
+                    <strong>{metricLabel(predictionCalibration, 'underestimated_count')} / {metricLabel(predictionCalibration, 'overestimated_count')}</strong>
+                  </div>
+                </div>
+                <p className="subtle">相对误差有效样本 {metricLabel(predictionCalibration,'relative_error_sample_count')} 条；预测为零、不能计算相对误差 {metricLabel(predictionCalibration,'undefined_relative_error_count')} 条。绝对误差仍保留。</p>
+                <p className="subtle">已采集但没有有效事前预测的内容：{metricLabel(predictionCalibration,'measured_without_baseline_count')} 条。仅使用发布前保存并关联的单一预测基准。</p>
+                {topPredictionMisses.length > 0 && (
+                  <div className="stack-list" style={{ marginTop: 12 }}>
+                    {topPredictionMisses.map((item, index) => {
+                      const error = asRecord(item.prediction_error);
+                      return (
+                        <div className="topic-rank" key={index}>
+                          <strong>{String(item.title || '未命名选题')}</strong>
+                          <span>
+                            真实浏览 {metricLabel(item, 'views')} · 浏览偏差 {formatSignedNumber(metricValue(error, 'views_error'))} · 相对误差 {metricValue(error,'views_error_rate')===null?'不可计算（预测为零）':formatPercent(Math.abs(metricValue(error,'views_error_rate')!))}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="empty compact-empty">{coverage?'暂无同时具备有效事前预测和已采集指标的内容。请先保存预测，再创建发布记录，最后采集实际指标。':'请重新生成报告后查看预测校准。'}</div>
+            )}
           </section>
 
           <div className="grid-two" style={{ marginTop: 20 }}>
@@ -149,7 +233,7 @@ export default function ReportsPage() {
                   {bestItems.map((item, index) => (
                     <div className="topic-rank" key={index}>
                       <strong>{String(item.title || '未命名选题')}</strong>
-                      <span>收藏 {metricValue(item, 'favorites')} · 评论 {metricValue(item, 'comments')} · 收藏率 {formatPercent(metricValue(item, 'favorites') / Math.max(metricValue(item, 'views'), 1))}</span>
+                      <span>收藏 {metricLabel(item, 'favorites')} · 评论 {metricLabel(item, 'comments')} · 收藏率 {formatPercent(metricRate(item, 'favorites'))}</span>
                     </div>
                   ))}
                 </div>
@@ -163,7 +247,7 @@ export default function ReportsPage() {
                   {worstItems.map((item, index) => (
                     <div className="topic-rank" key={index}>
                       <strong>{String(item.title || '未命名选题')}</strong>
-                      <span>收藏 {metricValue(item, 'favorites')} · 评论 {metricValue(item, 'comments')} · 收藏率 {formatPercent(metricValue(item, 'favorites') / Math.max(metricValue(item, 'views'), 1))}</span>
+                      <span>收藏 {metricLabel(item, 'favorites')} · 评论 {metricLabel(item, 'comments')} · 收藏率 {formatPercent(metricRate(item, 'favorites'))}</span>
                     </div>
                   ))}
                 </div>
@@ -179,7 +263,7 @@ export default function ReportsPage() {
                   {anglePerformance.map((item, index) => (
                     <div className="topic-rank" key={index}>
                       <strong>{String(item.label || '未标注角度')}</strong>
-                      <span>发布 {metricValue(item, 'posts')} · 收藏率 {formatPercent(metricValue(item, 'favorites') / Math.max(metricValue(item, 'views'), 1))} · 评论率 {formatPercent(metricValue(item, 'comments') / Math.max(metricValue(item, 'views'), 1))}</span>
+                      <span>发布 {metricLabel(item, 'posts')} · 收藏率 {formatPercent(metricRate(item, 'favorites'))} · 评论率 {formatPercent(metricRate(item, 'comments'))}</span>
                     </div>
                   ))}
                 </div>
@@ -193,7 +277,7 @@ export default function ReportsPage() {
                   {templatePerformance.map((item, index) => (
                     <div className="topic-rank" key={index}>
                       <strong>{String(item.label || '未标注模板')}</strong>
-                      <span>发布 {metricValue(item, 'posts')} · 收藏 {metricValue(item, 'favorites')} · 互动 {metricValue(item, 'engagement')} · 收藏率 {formatPercent(metricValue(item, 'favorites') / Math.max(metricValue(item, 'views'), 1))}</span>
+                      <span>发布 {metricLabel(item, 'posts')} · 收藏 {metricLabel(item, 'favorites')} · 互动 {metricLabel(item, 'engagement')} · 收藏率 {formatPercent(metricRate(item, 'favorites'))}</span>
                     </div>
                   ))}
                 </div>
@@ -208,7 +292,7 @@ export default function ReportsPage() {
                 {contentTypePerformance.map((item, index) => (
                   <div className="topic-rank" key={index}>
                     <strong>{String(item.label || '未标注类型')}</strong>
-                    <span>发布 {metricValue(item, 'posts')} · 评论率 {formatPercent(metricValue(item, 'comments') / Math.max(metricValue(item, 'views'), 1))} · 关注转化 {formatPercent(metricValue(item, 'follow_conversion_rate'))}</span>
+                    <span>发布 {metricLabel(item, 'posts')} · 评论率 {formatPercent(metricRate(item, 'comments'))} · 关注转化 {formatPercent(metricValue(item, 'follow_conversion_rate'))}</span>
                   </div>
                 ))}
               </div>

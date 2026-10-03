@@ -1,340 +1,181 @@
-# AI 内容增长 Agent v0.4
+# 知源 · AI 内容与交付 Agent
 
-**普通人的AI提效实验室内容工作台**
+`zhiyuan-content-agent` · **v0.10 本地验证版** · RAG / LangGraph / 人工审核
 
-半自动内容生产 Agent —— 帮普通人把 AI 工作流、Agent 开发、开源项目和提效案例，转化成适合小红书/抖音图文发布的内容资产。
+将品牌资料整理成有依据、可修改、可审核的图文内容，完成 **品牌与资料 → 内容任务 → 人工审核 → 下载交付 → 效果复盘**。
 
-当前已推进到 v0.4-D：除 URL/GitHub 导入外，已支持 Agent 工作台、自定义选题创作、入库前编辑、重复提示、素材库一源多题、发布方案生成、组合诊断、卡片实时预览与样式参数化、质量评分、人工审核清单、ZIP 发布包导出、异步 Agent Run、失败重试、自动轻量改稿、Agent 决策摘要、RAG 知识库检索和受控工具调用白名单。
+面向专业内容团队和小型内容工作室，当前试点限于**一个品牌的工业产品 FAQ／售前答疑内容包**。保留原有三种模板；先把授权资料、事实、审核和交付这一条流程验证完整。求职练习放在项目文档中，产品前台继续服务内容工作。
 
-## 项目交接文档
+默认本机免登录；团队模式提供账号、角色、组织隔离和用量控制。当前定位为**单机小团队试点**，软件功能不等于客户付费、生产合规或全平台自动发布已经验证。
 
-给后续 Claude Code、Codex 或同事接手开发时，请先阅读：
+## 当前版本与分支
 
-```text
-README.md
-docs/v0.4-agent-architecture.md
+| 项目 | 当前情况（2026-10-03） |
+| --- | --- |
+| 默认首页 / 最新整合代码 | [`main`](https://github.com/lin-yi-yi/zhiyuan-content-agent/tree/main)；直接打开仓库即可看到当前版本 |
+| 后续开发分支 | [`codex/content-agent`](https://github.com/lin-yi-yi/zhiyuan-content-agent/tree/codex/content-agent)；由原 `codex/job-ready-agent-v06` 更名，避免把分支名中的 v06 误当当前版本 |
+| 本轮完成 | 工业 FAQ 必需事实检查、修改后重新审核、资料版本与交付追溯、模型调用 / 重试 / 用量 / 费用估算记录 |
+| 本地验证 | 业务代码提交 `42b499e`：**811 个后端测试、29 个前端测试及构建通过**；[验收记录](docs/validation/p1-model-tracing-2026-10-03.md) |
+| GitHub 自动检查 | 尚未启用；当前发布凭证缺少 `workflow` 权限，工作流文件未上传。上面的结果是本地测试 |
+| 真实业务验证 | 本轮使用合成资料与模拟模型响应；真实供应商账单、客户验收、付费和公网生产环境尚未验证 |
+
+**[项目状态与下一步](docs/project-status.md) · [安装与运行](SETUP.md) · [工业 FAQ 练习](docs/industrial-faq-practice.md) · [最新提交](https://github.com/lin-yi-yi/zhiyuan-content-agent/commits/main/)**
+
+## 启动与轻量运行
+
+需要 **Python 3.12+、Node.js 22**。首次安装和下载中文向量模型需要网络，无需先安装 MySQL、Docker 或本地大语言模型。
+
+```bash
+./scripts/setup.sh
+./scripts/start.sh
 ```
 
-## 第一版功能范围
+打开 **[本地工作台](http://127.0.0.1:8765)**。脚本构建前端，绑定本机地址，运行单个服务进程；按 Ctrl+C 停止。业务库、向量索引和模型缓存位于 `.data/`。
 
-- Agent 工作台：一句话目标自动串起选题、发布包、卡片、质量评分和下一步建议
-- Agent 执行记录：记录每次 Agent Run 的目标、步骤、状态、结果和失败重试
-- 选题池：创建、评分、筛选选题
-- 自定义选题创作：AI 自动调研 / 主题灵感创作，支持候选入库前编辑和重复提示
-- 素材库：查看 source 列表、类型筛选、详情、已生成选题数、质量提示，并可从同一素材生成多个选题角度
-- 图文发布包生成：AI 生成标题、正文、卡片
-- 发布方案生成器：选择标题、封面、正文版本后生成新方案，并用组合诊断提示是否需要重新生成卡片
-- 卡片编辑器：预览和修改每页卡片，支持单卡实时预览、字号/密度/强调块/页脚参数化、PNG / ZIP 导出
-- 人工审核：合规检查、事实核验、发布前 checklist
-- 质量评分：评估发布包钩子、收藏价值、文字密度和合规风险
-- 发布数据录入：手动记录平台数据
-- 7天复盘：数据驱动的方向调整
+第一次使用：
 
-## 第一版不做什么
+1. 进入「品牌与资料 → 知识资料」，导入自己有权使用的资料，核对预览后确认入库。
+2. 在「品牌档案」设置受众、语气、禁用表述和行动引导，绑定知识库。
+3. 在「内容任务」选择品牌和三种模板之一，填写目标，生成草稿。
+4. 编辑关联稿件与卡片，回到任务完成审核。通过后下载审核交付清单；图片在编辑器另行导出。
+5. 在官方平台人工发布，按实际结果登记链接、时间和效果。
 
-- 不自动发布到任何平台
-- 不做多账号管理
-- 不做全平台适配
-- 不做视频剪辑
-- 不做完全自动选题发布闭环
+若暂时无法下载语义模型，可显式使用词项检索：
+
+```bash
+RAG_RETRIEVAL_MODE=lexical ./scripts/start.sh
+```
+
+语义检索失败不会静默降级。词项模式切回语义模式需要重建语义索引；已有同模型语义索引可用于 semantic/hybrid 两种模式。M1/8 GB 等轻量设备建议使用单服务进程、中文向量模型和按需在线生成，避免同时运行大型本地模型或第二套编排平台。
+
+## 五个业务入口
+
+| 入口 | 主要任务 |
+| --- | --- |
+| 工作台 | 开始任务，查看最近内容与待处理事项 |
+| 品牌与资料 | 品牌档案、知识资料、发现信源；核验笔记和原始素材放在「更多」 |
+| 内容任务 | 固定模板创作，查看进度、依据和审核结果；也可进行资料问答 |
+| 审核交付 | 编辑正文、卡片，检查并导出素材 |
+| 效果复盘 | 人工登记发布与累计指标，查看报告 |
+
+模型与信源、运行诊断进入「设置与连接」；团队模式还提供成员、用量和账号。模型评分和编辑器检查清单不能代替人工批准。
+
+## v0.10 当前能力
+
+| 能力 | 实现与边界 |
+| --- | --- |
+| 品牌档案 | 受众、语气、禁用表述、行动引导、知识库和生成策略；版本号与并发修改检查，可归档 |
+| 三种图文模板 | 专业知识图文、产品与服务答疑、真实案例整理；封装资料要求和生成步骤，必须使用知识库依据 |
+| 品牌快照 | 创建任务时保存品牌与模板；后续改档案不影响旧任务；品牌表达不作为事实证据 |
+| 禁用表述检查 | 批准和正式交付时，按每行配置做不区分大小写的字面包含检查；不是语义风险识别或广告合规审查 |
+| 资料导入 | MD/TXT、文本 PDF、DOCX 预览后入库；支持编辑、去重、重建和删除索引 |
+| 信源核验 | AIHOT REST、GitHub 信息、安全网页读取；核验笔记保留来源、引用、权利依据、版本和有效期 |
+| 产品事实 | 核验引用可记录产品型号、参数、值及原文定位；任务可指定最多 10 项必需参数，缺依据则停止生成；同知识库相同产品参数的不同值须先处理冲突。仅做显式字段检查，不替代技术人员核对 |
+| 资料问答 | 中文向量检索、知识库范围过滤、引用回答、证据不足拒答；可选 BM25＋向量＋RRF |
+| 内容流程 | LangGraph 条件流程：检索、选题、正文、卡片、质量检查和有限修订；步骤记录、重试和取消 |
+| 调用追溯 | 模型调用关联任务、步骤及工作流尝试；区分格式回退和 JSON 修复，记录指令版本 hash、用量及配置价格下的估算。缺失留空，估算不等于供应商账单 |
+| 审核版本 | 退回原稿修改并重新送审；编辑已批准的正文/卡片会使旧批准失效，保留审核及编辑前内容快照 |
+| 正式交付清单 | 服务端检查批准状态、正文/卡片 hash、当前引用有效性；通过后生成含正文、出处、品牌快照、审核版本及人工发布检查的 Markdown |
+| 素材与复盘 | Canvas 卡片预览、PNG/ZIP 下载；手工发布记录、累计效果数据和报告 |
+| 试点验收记录 | 每任务一条可更新的人工记录，绑定有效交付版本；未采集工时留空，旧版本验收失效。不是完整事件历史、付款记录或 ROI |
+
+**交付清单与图片素材分别下载。** 编辑器素材下载不代表已批准或已发布；正式清单需通过服务端核验。清单不导出审核人账号、内部审核备注、原始引用摘录或模型配置。已审核正文仍原样交付，不提供通用个人信息自动脱敏。
+
+“品牌任务仅本地生成”只约束该品牌创作任务的模型选择。本地生成是规则整理和原文摘录，**不是本地大语言模型**；该设置也不是整个知识库、问答接口或网络访问的统一防外发策略。
+
+文档单文件上限 **1 MiB**、PDF 最多 **50 页**、提取正文 **40～120,000 字符**；解析有独立进程、超时及并发限制。扫描 PDF 的 OCR 未支持；混合 PDF 提示未提取页。DOCX 不提取图片文字、批注、页眉页脚，不保证复杂表格顺序。预览不等于已入库。
+
+混合检索使用应用层 BM25 和 RRF，不是交叉编码器重排。默认语义模式；问答页选择不会修改其他任务配置。不同策略各有坏例，不能把融合等同于整体准确率提升，详见 [检索实验与限制](docs/research/v08-hybrid-retrieval.md)。
 
 ## 技术栈
 
-| 层 | 技术 |
-|----|------|
-| 前端 | React 18 + TypeScript + Vite |
-| 后端 | Python FastAPI |
-| 数据库 | MySQL + SQLAlchemy 2.x |
-| 模型 | local 规则模型 + DeepSeek / 千问 / 豆包 / Kimi (OpenAI-compatible adapter) |
+| 层级 | 当前采用 |
+| --- | --- |
+| 页面 | React 18、TypeScript、Vite、CSS；请求取消与上下文隔离 |
+| 接口与数据 | Python、FastAPI、Pydantic、SQLAlchemy 2、SQLite WAL |
+| 检索 | LangChain 文档与递归切块、FastEmbed、`BAAI/bge-small-zh-v1.5`、Qdrant Local、BM25、RRF |
+| 编排与审核 | LangGraph StateGraph、SQL 步骤持久化、人工审核、内容快照 hash |
+| 模型与信源 | 兼容 OpenAI 接口的模型路由、HTTPX、REST 适配 |
+| 文档与导出 | pypdf、DOCX ZIP/XML、Canvas、JSZip、FileSaver |
+| 团队与验证 | Cookie 会话、CSRF、角色权限、组织独立数据库/向量目录；pytest、前端行为测试、构建检查 |
 
-## 本地启动
-
-### 1. 前置条件
-
-- Python 3.11+
-- Node.js 18+
-- MySQL 8.0+
-
-### 2. 创建数据库
-
-```sql
-CREATE DATABASE ai_content_agent CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-### 3. 配置环境变量
-
-复制 `.env` 文件，填入你的配置：
-
-```bash
-DATABASE_URL=mysql+pymysql://root:password@127.0.0.1:3306/ai_content_agent?charset=utf8mb4
-
-# 默认可用，无需 API Key
-DEFAULT_LLM_PROVIDER=local
-
-# 如需调用真实模型，再配置对应 Key
-DEEPSEEK_API_KEY=sk-xxx
-
-# 可选：为不同 Agent 任务配置不同模型
-TOPIC_SCORE_PROVIDER=deepseek
-DRAFT_GENERATION_PROVIDER=qwen
-CARD_GENERATION_PROVIDER=doubao
-COMPLIANCE_CHECK_PROVIDER=deepseek
-```
-
-### 4. 启动后端
-
-```bash
-cd backend
-pip install -r requirements.txt
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-```
-
-### 5. 启动前端
-
-```bash
-cd frontend
-npm install
-npx vite --host 127.0.0.1 --port 5173
-```
-
-如果后端不是 8000 端口，可以指定代理目标：
-
-```bash
-VITE_API_TARGET=http://127.0.0.1:8001 npm run dev -- --host 127.0.0.1 --port 5176
-```
-
-### 6. 打开浏览器
-
-http://localhost:5173
-
-## 如何新增选题
-
-1. 打开工作台 → 选题池
-2. 点击「+ 新增选题」
-3. 填写标题、来源类型、来源网址、原始摘要
-4. 点击「创建选题」
-5. 点击「评分」获取选题评分
-6. 点击「生成」生成小红书图文发布包
-
-## 开发阶段
-
-| 阶段 | 内容 | 状态 |
-|------|------|:--:|
-| Phase 1 | 项目骨架 + MySQL + 选题池 CRUD | ✅ 完成 |
-| Phase 2 | MySQL 全表 + Drafts/Cards CRUD | ✅ 完成 |
-| Phase 3 | LLM Router + 多模型切换 | ✅ 完成 |
-| Phase 4 | 选题评分 Agent | ✅ 本地规则版完成，可接真实 LLM |
-| Phase 5 | 发布包和卡片生成 | ✅ 本地规则版完成，可编辑、可导出 PNG |
-| Phase 6 | 数据录入和7天复盘 | ✅ 规则聚合版完成 |
-| v0.2-A | 真实模型 JSON 稳定链路 | ✅ 已加入 JSON 抽取、修复重试、response_format 回退 |
-| v0.2-B | 草稿版本管理 | ✅ 可查看同一选题多个发布包，可删除草稿 |
-| v0.2-C | 生成结果 schema 兜底 | ✅ 已补齐缺字段、卡片不足、分数越界等情况 |
-| v0.2-D | PNG 卡片视觉升级 | ✅ 已优化模板感、长文本适配和导出排版 |
-| v0.2-E | URL / GitHub 信源导入 | ✅ 可粘贴 URL 自动生成选题，GitHub 优先读取 README |
-| v0.2-F | 导入预览与编辑确认 | ✅ 先预览标题/摘要/来源类型，确认后再入库 |
-| v0.2-G | 导入后选题建议 | ✅ 预览时生成多个内容角度，可点选后入库 |
-| v0.2-H | 选中建议后自动评分 | ✅ 确认导入时可勾选自动评分，评分写入选题 |
-| v0.2-I | 小红书卡片风格升级 | ✅ 新增卡面结构、主题/版式选项、响应式预览，并同步 PNG 导出样式 |
-| v0.2-J | 发布方案生成器 | ✅ 可选标题/封面/正文版本生成新方案，支持指定页数、组件化卡片、旧版本保留 |
-| v0.2-K | 发布包质量评分 | ✅ 可对 draft + cards 做 9 维评分，local 规则模型可兜底 |
-| v0.2-L | 人工审核清单 | ✅ 每个发布包版本可勾选发布前审核项、填写备注并保存状态 |
-| v0.2-M | 卡片 ZIP 导出包 | ✅ 一次导出多张 PNG + 标题/正文/标签/评论引导文案 |
-| v0.2-N | 自定义选题创作 | ✅ 支持 AI 自动调研 / 主题灵感创作、快速/深度模式、local/豆包/DeepSeek provider |
-| v0.2-O | 选题素材库基础版 | ✅ 可查看 source 列表、来源类型统计和每个素材已生成选题数 |
-| v0.3-A | 内容增长 Agent 执行系统 | ✅ Agent 工作台 + agent_runs/agent_steps + 一句话生成完整发布包 |
-| v0.3-B | Agent 异步执行与自动改稿 | ✅ 创建后立即返回、后台执行、前端轮询、失败重试、低分自动轻量修订一次 |
-| v0.3-C | Agent 决策摘要 | ✅ 新增 agent_decision 步骤，输出选题理由、质量门槛、改稿状态、人工复查重点和下一步动作 |
-| v0.3-D | 素材库一源多题 | ✅ 素材详情页可生成 5 个不同选题角度、入库前编辑、去重提示、确认后关联原 source |
-| v0.3-E | 自定义选题入库前编辑 + 去重增强 | ✅ 自定义创作候选可编辑后入库，返回 duplicate_hint，素材列表/详情显示质量与重复提示 |
-| v0.3-F | 发布包组合诊断 | ✅ 发布包编辑页根据标题/封面/正文/标签/页数/模板实时评分，提示问题和是否应生成匹配卡片 |
-| v0.3-G | 卡片编辑器样式参数化与实时预览 | ✅ 单卡编辑 Modal 支持右侧实时预览，字号/密度/强调块/页脚参数写入 style_json，并同步 PNG/ZIP 导出 |
-| v0.3-H | 数据闭环增强基础版 | ✅ 复盘加入收藏率/点赞率/评论率/关注转化率，支持按角度/内容类型/模板聚合 |
-| v0.4-A | Agent 架构边界与 RAG 基础层 | ✅ 新增 workspace / knowledge_base 数据隔离、能力白名单、LangChain 可选切分器、RAG 索引/检索/拒答 API、架构边界页面 |
-| v0.4-B | RAG 接入 Agent 工作台 | ✅ 素材库显示索引状态，Agent Run 新增可选 retrieve_context 步骤，工作台可选择知识库并展示检索证据 |
-| v0.4-C | 本地混合检索与 RAG 实验台 | ✅ knowledge_chunks 写入本地 128 维哈希 embedding，检索改为词面+向量混合评分，新增 RAG 实验页和 smoke 脚本 |
-| v0.4-D | 受控 Function Calling 工具层 | ✅ 新增 `rag.search` / `rag.answer` / `source.index` 工具白名单、工具执行 API 和架构页工具边界展示 |
-
-## v0.4 Agent 架构边界
-
-详细设计见：
+默认中文模型在 CPU 上生成 512 维向量。在线生成适配 DeepSeek、千问、豆包和 Kimi，需配置并验证服务。步骤记录采用 SQL，未实现 LangGraph 原生 checkpointer 或分布式任务；外部 MCP 配置不等于自建 MCP 服务。
 
 ```text
-docs/v0.4-agent-architecture.md
+frontend/                     业务界面、请求与卡片导出
+backend/app/api/routes/       品牌、内容、交付等接口
+backend/app/services/         简报解析、内容流程、审核与交付
+backend/app/agent_core/       切块、向量、混合检索与证据策略
+backend/app/saas/             身份、组织、权限、额度与审计
+scripts/                      安装、启动、检查、评测与备份
+tests/                        临时数据上的行为与隔离测试
+docs/                         操作、研究、历史与验收记录
 ```
 
-核心约束：
+## 在线模型配置
 
-- RAG 数据单独进入 `workspaces` / `knowledge_bases` / `knowledge_documents` / `knowledge_chunks`
-- 检索和回答必须限制在当前 `workspace_id` + `knowledge_base_id`
-- 只索引已入库素材，不读取本机任意文件、浏览器状态、账号密码或外部密钥
-- 证据不足时 RAG 必须拒答
-- 当前仍保留 v0.3 线性 Agent 流程，LangGraph 作为后续分支工作流入口
-- Agent 工作台启用知识库检索后，会先执行 `retrieve_context`，再进入选题/发布包生成
-- v0.4-C 当前是本地哈希 embedding + 混合检索，适合离线开发验证；外部 embedding/vector DB 是后续升级项
-- v0.4-D 工具调用只能执行后端白名单里的 `rag.search`、`rag.answer`、`source.index`，不接受任意函数名、SQL、文件路径或外部账号能力
+本地模式读取 `.env`。没有文件时参考 `.env.example` 创建；已有文件仅修改需要的字段，保留凭证。例如：
 
-## 本地验证
+```text
+DEEPSEEK_API_KEY=你的凭证
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-chat
+```
 
-发布包生成链路的冒烟测试：
+重启后在「设置与连接 → 模型与信源」测试，再在任务或问答中选择。地址和模型名以账户实际配置为准。任务和检索片段会发送给所选服务；国内 API 不等于资料不出企业或完全离线。
+
+可用 `PORT=8770 ./scripts/start.sh` 调整端口。日志记录调用哈希、耗时、token 和错误类型；接口不返回历史提示词和回答原文，旧库原文记录不会自动清除。调用配额不是精确人民币账单，费用需与供应商对账。
+
+## 可选：SaaS 小团队试点
+
+没有 `.env.saas` 时根据 `.env.saas.example` 创建，不要覆盖已有凭证。
 
 ```bash
-python3 scripts/smoke_publish_generation.py
+(cd frontend && npm run build)
+./scripts/start_saas.sh
 ```
 
-脚本会打开本地前端，选择一个已生成选题，点击「生成匹配卡片」，检查页面不白屏、卡片正常渲染、控制台无错误，并删除临时生成的发布包。
+打开 **[团队试点入口](http://127.0.0.1:8766)**。示例配置允许创建账号与组织。团队数据位于 `.data/saas`，不覆盖或自动导入本地 `.data/demo.db`。
 
-v0.4 RAG Agent 链路冒烟测试：
+组织所有者、编辑、审核人员和只读成员的权限在服务器校验；组织拥有独立业务库与向量目录。同组织品牌绑定知识库，但**没有品牌级成员访问权限**，品牌档案不能替代独立客户租户。
+
+模型凭证由运营环境保管，组织所有者选择启用连接。AIHOT 的 SaaS 使用需要来源方商业授权，默认关闭。外部来源、图片、字体和模型服务按实际授权使用。
+
+脚本仅监听 `127.0.0.1`。公开访问需要 HTTPS、运维、备份恢复与生产验收；Docker/Compose 文件只是部署准备，GitHub CI 当前尚未启用。详见 [SaaS 运维指南](docs/saas-operations.md)。
+
+## 商业化尚未完成的部分
+
+- 渠道专属适配、规则自动更新、多平台自动发布和效果自动采集。
+- 任务交期、指定负责人、内容日历、免账号外部客户审批。
+- 品牌级访问权限、分布式队列、生产扩容和服务等级承诺。
+- 真实支付结算、发票、邮件验证、密码找回及 MFA。
+- OCR、完整视频生产、飞书/企业微信接入、Obsidian 双向同步。
+- 公网生产验收、完整 AI 标识符合性检测及其他适用上线义务核验。
+- 真实客户付费、复购和业务效果验证。
+
+AI 辅助说明和交付清单不构成完整生产合规证明。服务中断后的任务标记失败，显式重试继续；已发送的模型请求不能撤回，重试可能再次计费。同一 Qdrant Local 数据目录目前仅允许单进程使用。
+
+## 检查与产品依据
 
 ```bash
-python3 scripts/smoke_v04_rag_agent.py
+./scripts/check.sh
+
+# 独立临时数据中比较检索策略，不调用在线生成模型
+.venv/bin/python scripts/evaluate_hybrid_retrieval.py
 ```
 
-脚本会创建临时素材、索引知识库、启动启用 RAG 的 Agent Run、检查 `retrieve_context`、验证证据不足拒答，并清理临时数据。
-同时会检查 v0.4 工具白名单和 `rag.search` 工具执行入口。
+检查脚本覆盖后端行为、Python 编译、前端行为与生产构建。自动检查、浏览器验收和真实客户效果分别记录，不能互相替代。
 
-自定义选题创作建议用 local provider 验证，避免产生真实模型费用：
+- [v0.9 商业化计划与价格实验](docs/v09-commercialization-plan.md)
+- [v0.10 工业 FAQ 审计、实现与本地验收](docs/validation/p0-industrial-faq-2026-10-03.md)
+- [模型调用、重试与费用追溯](docs/model-call-tracing.md)
+- [本人可运行的工业 FAQ 练习](docs/industrial-faq-practice.md)
+- [v0.10 有边界的客户试点计划](docs/v010-pilot-plan.md)
+- [中国场景、平台边界与两周试点](docs/research/v09-china-content-market.md)
+- [主流产品与开源工作流参照](docs/research/v09-content-workflow-benchmarks.md)
+- [信源核验与知识入库](docs/source-evidence-workflow.md)
+- [AIHOT、官方 MCP 与商业使用边界](docs/aihot-source-integration.md)
+- [v0.9 实际开发与验收记录](docs/validation/v09-commercial-workflow-acceptance.md)
+- [历史：v0.8 验收记录](docs/validation/v08-workbench-acceptance.md)
 
-```bash
-curl -s -X POST -H 'Content-Type: application/json' \
-  -d '{"mode":"inspiration","research_depth":"quick","theme":"普通人怎么用 AI 自动化副业内容","target_audience":"AI 新手 / 自媒体人","viewpoint":"先跑通半自动流程，再谈全自动","content_type":"tutorial","source_urls":[],"provider":"local"}' \
-  http://127.0.0.1:8001/api/topics/custom-ideas
-```
-
-Agent 工作台链路建议用 local provider 验证：
-
-```bash
-curl -s -X POST -H 'Content-Type: application/json' \
-  -d '{"goal":"普通人怎么用 AI 自动化副业内容","mode":"inspiration","research_depth":"quick","target_audience":"AI 新手 / 自媒体人","viewpoint":"先跑通半自动流程，再谈全自动","provider":"local","model":"local-rule-based-v0","auto_score":true}' \
-  http://127.0.0.1:8001/api/agent-runs
-```
-
-接口会先返回 `pending` 状态，后台继续执行；轮询 `GET /api/agent-runs/{id}` 可看到 10 个步骤和 `result_json.agent_decision`。
-
-发布包组合诊断验证：
-
-```bash
-python3 -m compileall backend/app
-
-cd frontend
-npm run build
-```
-
-浏览器打开 `http://127.0.0.1:5178/`，进入「发布包编辑」，选择已有选题后应看到「组合诊断」面板；切换模板后，面板应提示组合已修改并建议点击「生成匹配卡片」。点击任意卡片进入编辑 Modal，应看到右侧实时预览；修改标题、字号、密度、强调块或页脚开关后，预览应即时变化，保存后卡片列表同步更新。
-
-## API 端点
-
-### 健康检查
-```
-GET /health
-GET /api/health
-```
-
-### Agent 工作台
-```
-POST   /api/agent-runs                 启动一次内容增长 Agent 任务
-GET    /api/agent-runs                 Agent 执行记录列表
-GET    /api/agent-runs/{id}            Agent 执行详情、步骤和产物
-POST   /api/agent-runs/{id}/retry      从失败步骤继续重试
-```
-
-`POST /api/agent-runs` 可选 RAG 参数：
-
-```json
-{
-  "use_rag": true,
-  "knowledge_base_id": 1,
-  "rag_top_k": 5
-}
-```
-
-启用后会把检索结果写入 `result_json.rag_context`，工作台会展示证据状态和命中的 chunk。
-
-### v0.4 RAG / Tool Calling
-```
-GET    /api/v04/architecture            架构边界、能力白名单、工具白名单
-GET    /api/v04/workspaces              工作区列表
-GET    /api/v04/knowledge-bases         知识库列表
-POST   /api/v04/knowledge-bases         新增知识库
-POST   /api/v04/rag/index-source        把已有 source 索引进知识库
-POST   /api/v04/rag/search              在知识库内检索 evidence chunks
-POST   /api/v04/rag/answer              基于 evidence 回答或拒答
-GET    /api/v04/tools                   工具白名单
-POST   /api/v04/tools/execute           执行白名单工具
-```
-
-`POST /api/v04/tools/execute` 示例：
-
-```json
-{
-  "tool_name": "rag.search",
-  "knowledge_base_id": 1,
-  "arguments": {
-    "query": "LangChain、RAG 和 LangGraph 的边界是什么？",
-    "top_k": 5
-  }
-}
-```
-
-### 选题池
-```
-GET    /api/topics                      列表（支持 ?status= & ?page= & ?limit=）
-POST   /api/topics                      新增
-GET    /api/topics/{id}                 详情
-PUT    /api/topics/{id}                 更新
-DELETE /api/topics/{id}                 删除
-POST   /api/topics/import-url           从 URL / GitHub 导入选题
-POST   /api/topics/import-url/preview   预览 URL / GitHub 导入结果
-POST   /api/topics/import-url/confirm   确认预览内容并创建选题
-POST   /api/topics/custom-ideas         自定义选题创作，生成 5 个选题建议
-POST   /api/topics/custom-ideas/confirm 确认自定义选题建议并入库
-POST   /api/topics/{id}/score           评分（Phase 4）
-POST   /api/topics/{id}/generate-draft  生成发布包（Phase 5）
-```
-
-### 素材库
-```
-GET    /api/sources                     素材列表
-GET    /api/sources/stats               素材统计
-GET    /api/sources/{id}                素材详情及关联选题
-POST   /api/sources/{id}/topic-ideas    从一个素材生成 3-5 个选题建议
-POST   /api/sources/{id}/topic-ideas/confirm 确认素材候选并入库
-```
-
-### 发布包和卡片
-```
-GET    /api/drafts/{id}                 草稿详情
-GET    /api/drafts?topic_id=            草稿列表
-GET    /api/drafts/topic/{topic_id}/latest 选题最新草稿
-PUT    /api/drafts/{id}                 更新草稿
-DELETE /api/drafts/{id}                 删除草稿
-POST   /api/drafts/{id}/generate-variant 根据标题/封面/正文版本生成新发布方案
-POST   /api/drafts/{id}/evaluate        发布包质量评分
-GET    /api/drafts/{id}/review-checklist 获取发布前审核清单
-PUT    /api/drafts/{id}/review-checklist 保存发布前审核清单
-GET    /api/cards/draft/{draft_id}      获取卡片列表
-PUT    /api/cards/{id}                  更新卡片
-```
-
-### 发布和数据
-```
-POST   /api/publish-logs                创建发布记录
-GET    /api/publish-logs                发布记录列表
-POST   /api/publish-logs/{id}/metrics   录入数据指标
-GET    /api/publish-logs/{id}/metrics   查看数据指标
-```
-
-### 7天复盘
-```
-POST   /api/reports/weekly              生成复盘
-GET    /api/reports/weekly              复盘列表
-GET    /api/reports/weekly/{id}         复盘详情
-```
-
-### 模型管理
-```
-GET    /api/models/providers            可用模型列表
-GET    /api/models/task-defaults        Agent 任务默认模型
-POST   /api/models/test/{provider}      测试连接
-POST   /api/models/chat                 调用模型对话
-GET    /api/models/runs                 调用记录
-```
+产品路线以实际交付任务和续费证据调整，不承诺爆款、涨粉或获客数量。

@@ -1,7 +1,7 @@
-"""Optional LangChain/LangGraph adapters.
+"""Document splitting and framework availability reporting.
 
-The app can boot without these packages. When installed, v0.4 RAG indexing uses
-LangChain's document and splitter primitives while keeping the same data boundary.
+Splitting has an explicit fallback. The content workflow separately requires and
+executes LangGraph; availability here is an import check, not a runtime test.
 """
 from dataclasses import dataclass
 from typing import Any
@@ -32,8 +32,8 @@ def framework_status() -> dict:
     return {
         "langchain_available": Document is not None and RecursiveCharacterTextSplitter is not None,
         "langgraph_available": StateGraph is not None,
-        "langchain_usage": "RAG document splitting and future tool wrappers",
-        "langgraph_usage": "Optional workflow engine for branching Agent flows",
+        "langchain_usage": "使用 Document 和 RecursiveCharacterTextSplitter 切分资料；不可用时采用明确的固定长度切分。",
+        "langgraph_usage": "content_growth_agent 使用 StateGraph 执行内容工作流和质量分支；节点结果持久化到 SQL，人工审核使用数据库状态。可导入不等于任务已运行成功。",
     }
 
 

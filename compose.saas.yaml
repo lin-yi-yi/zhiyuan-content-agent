@@ -1,0 +1,46 @@
+# Deployment template. Docker execution and public HTTPS acceptance are separate checks.
+services:
+  saas:
+    build: .
+    init: true
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8766:8766"
+    env_file:
+      - .env.saas
+    environment:
+      SAAS_MODE: "true"
+      SAAS_DATA_DIR: /app/.data/saas
+      DATABASE_URL: sqlite:////app/.data/saas/legacy-disabled.db
+      PYTHON_DOTENV_DISABLED: "1"
+      RAG_EMBEDDING_CACHE_DIR: /app/.data/models
+    volumes:
+      - saas-data:/app/.data
+    # Hold the same advisory lock as the local launcher. One worker is required
+    # by the SQLite, local-vector and in-memory task/limit implementation.
+    command:
+      - python
+      - -c
+      - |
+        import fcntl, os
+        from pathlib import Path
+        from urllib.parse import urlsplit
+        origin = urlsplit(os.environ.get('SAAS_PUBLIC_ORIGIN', ''))
+        local = origin.scheme == 'http' and origin.hostname in {'localhost', '127.0.0.1'}
+        if not origin.hostname or origin.username or origin.password or origin.path or origin.query or origin.fragment:
+            raise SystemExit('Set a valid SAAS_PUBLIC_ORIGIN in .env.saas')
+        if not local and (origin.scheme != 'https' or os.getenv('SAAS_SECURE_COOKIE', 'true').lower() not in {'true','1','yes','on'}):
+            raise SystemExit('Public deployments require HTTPS and secure cookies')
+        data = Path(os.environ['SAAS_DATA_DIR'])
+        data.mkdir(parents=True, exist_ok=True)
+        lock = os.open(data / '.service.lock', os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        os.set_inheritable(lock, True)
+        os.execvp('python', ['python','-m','uvicorn','app.main:app','--host','0.0.0.0','--port','8766','--workers','1'])
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os, urllib.request; from urllib.parse import urlsplit; request=urllib.request.Request('http://127.0.0.1:8766/api/health', headers={'Host': urlsplit(os.environ['SAAS_PUBLIC_ORIGIN']).netloc}); urllib.request.urlopen(request, timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+volumes:
+  saas-data:

@@ -18,7 +18,7 @@ export default function ArchitecturePage() {
   }, []);
 
   if (loading) {
-    return <div className="empty">正在读取 v0.4 架构边界...</div>;
+    return <div className="empty">正在读取当前架构与检索配置...</div>;
   }
 
   if (error || !architecture) {
@@ -49,12 +49,21 @@ export default function ArchitecturePage() {
           </div>
           <div>
             <span>LangChain</span>
-            <strong>{architecture.framework_status.langchain_available ? '已安装' : '未安装'}</strong>
+            <strong>{architecture.framework_status.langchain_available ? '可导入' : '使用备用切分'}</strong>
           </div>
           <div>
             <span>LangGraph</span>
-            <strong>{architecture.framework_status.langgraph_available ? '已安装' : '未安装'}</strong>
+            <strong>{architecture.framework_status.langgraph_available ? '可导入' : '依赖不可用'}</strong>
           </div>
+        </div>
+      </section>
+
+      <section className="panel">
+        <h3>框架使用与验证范围</h3>
+        <div className="architecture-fact-list">
+          <p>{architecture.framework_status.langchain_usage}</p>
+          <p>{architecture.framework_status.langgraph_usage}</p>
+          <p>这里展示代码使用方式、当前配置与已保存的索引信息。实际检索质量请查看评测结果，实际任务执行请查看运行记录。</p>
         </div>
       </section>
 
@@ -118,10 +127,10 @@ export default function ArchitecturePage() {
 
       <div className="architecture-grid">
         <section className="panel">
-          <h3>数据隔离</h3>
+          <h3>本地数据范围</h3>
           <div className="architecture-fact-list">
-            <p><strong>新表：</strong>{architecture.data_isolation.tables.join(' / ')}</p>
-            <p><strong>旧表接入：</strong>{architecture.data_isolation.legacy_tables}</p>
+            <p><strong>知识库与执行记录：</strong>{architecture.data_isolation.tables.join(' / ')}</p>
+            <p><strong>素材与内容：</strong>{architecture.data_isolation.legacy_tables}</p>
           </div>
         </section>
 
@@ -140,11 +149,10 @@ export default function ArchitecturePage() {
           <h3>检索策略</h3>
           <div className="architecture-fact-list">
             <p><strong>{architecture.retrieval_strategy.name}</strong> · {architecture.retrieval_strategy.scoring}</p>
-            <p>
-              {architecture.retrieval_strategy.embedding_provider} /
-              {architecture.retrieval_strategy.embedding_model} /
-              {architecture.retrieval_strategy.embedding_dim} 维
-            </p>
+            <p><strong>Embedding：</strong>{architecture.retrieval_strategy.embedding_provider} / {architecture.retrieval_strategy.embedding_model}</p>
+            <p><strong>当前知识库已存向量维度：</strong>{architecture.retrieval_strategy.embedding_dim > 0
+              ? `${architecture.retrieval_strategy.embedding_dim} 维`
+              : '未记录或当前模式不使用向量'}</p>
             <p>{architecture.retrieval_strategy.limitation}</p>
           </div>
         </section>

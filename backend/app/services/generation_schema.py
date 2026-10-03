@@ -67,6 +67,38 @@ def normalize_draft_result(result: dict[str, Any], topic: Any) -> dict[str, Any]
     }
 
 
+def normalize_evidence_draft_result(result: dict[str, Any], topic: Any) -> dict[str, Any]:
+    """Keep evidence drafts neutral and fail closed when the body is missing.
+
+    Unlike legacy account templates, this path never pads optional choices with
+    an unrelated voice or invents prose to make a malformed model result pass.
+    Human approval is a later workflow action, never a model-declared fact.
+    """
+    data = result if isinstance(result, dict) else {}
+
+    def text(key: str) -> str:
+        value = data.get(key)
+        return value.strip() if isinstance(value, str) else ""
+
+    def choices(key: str, limit: int, max_chars: int) -> list[str]:
+        value = data.get(key)
+        values = value if isinstance(value, list) else [value] if isinstance(value, str) else []
+        clean = [item.strip()[:max_chars] for item in values if isinstance(item, str) and item.strip()]
+        return list(dict.fromkeys(clean))[:limit]
+
+    title = str(getattr(topic, "title", "") or "资料整理").strip()[:120] or "资料整理"
+    return {
+        "title_options": choices("title_options", 5, 120) or [title],
+        "cover_text_options": choices("cover_text_options", 3, 120),
+        "body_text": text("body_text"),
+        "hashtags": choices("hashtags", 8, 80),
+        "comment_guide": text("comment_guide"),
+        "fact_checks": choices("fact_checks", 8, 1000) or ["请核对事实、引用和资料的适用范围。"],
+        "risk_tips": choices("risk_tips", 8, 1000) or ["内容需要人工核验后才能用于公开发布。"],
+        "aigc_notice": "内容由 AI 辅助生成，尚待人工审核。",
+    }
+
+
 def normalize_cards_result(result: dict[str, Any], draft: Any) -> list[dict[str, Any]]:
     raw_cards = result.get("cards")
     cards = raw_cards if isinstance(raw_cards, list) else []

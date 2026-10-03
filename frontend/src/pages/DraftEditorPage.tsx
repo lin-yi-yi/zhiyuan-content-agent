@@ -1,6 +1,11 @@
-import { ReactNode, useEffect, useState } from 'react';
-import { api, Card, Draft, ReviewChecklistItem, Topic } from '../api/client';
+import { useWorkspace } from '../components/WorkspaceContext';
+import { ReactNode, useEffect, useRef, useState } from 'react';
+import { api, request, Card, Draft, ReviewChecklistItem, Topic } from '../api/client';
 import { exportCardsToPng, exportCardToPng, exportCardsZip } from '../utils/cardExport';
+import { DraftNavigationTarget, readTargetDraft } from '../utils/draftNavigation';
+import '../styles/editor-workspace.css';
+
+const DRAFT_STATUS_LABELS:Record<string,string>={draft:'草稿 · 未经任务批准',pending:'待处理',awaiting_review:'待正式审核',approved:'正式审核通过',rejected:'正式审核退回',cancelled:'任务已取消',published:'已记录发布'};
 
 const CARD_TYPE_LABELS: Record<string, string> = {
   cover: '封面', pain_point: '痛点', concept: '概念',
@@ -734,7 +739,10 @@ function renderCardContent(card: Card, styleOptions?: CardStyleOptions): ReactNo
   );
 }
 
-export default function DraftEditorPage() {
+export default function DraftEditorPage({target,onReturnToAgent,onNavigate}:{target?:DraftNavigationTarget|null;onReturnToAgent?:(runId:number)=>void;onNavigate?:(page:string)=>void}) {
+  const {canWrite,canReview}=useWorkspace();
+  const [editorTab, setEditorTab] = useState<'body'|'cards'|'review'>('body');
+  const [libraryOpen, setLibraryOpen] = useState(!target);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<number | null>(null);
   const [draftVersions, setDraftVersions] = useState<Draft[]>([]);
@@ -754,21 +762,48 @@ export default function DraftEditorPage() {
   const [maxCardCount, setMaxCardCount] = useState(7);
   const [variantLoading, setVariantLoading] = useState(false);
   const [variantMessage, setVariantMessage] = useState('');
+  const [variantError,setVariantError]=useState('');
   const [reviewItems, setReviewItems] = useState<ReviewChecklistItem[]>([]);
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewSaving, setReviewSaving] = useState(false);
   const [reviewMessage, setReviewMessage] = useState('');
   const [editingCardStyle, setEditingCardStyle] = useState<CardStyleOptions>(parseCardStyle({ id: 0, draft_id: 0, page_index: 0, card_type: '', title: '', subtitle: null, body: null, highlight: null, footer: null, layout_key: 'clean_knowledge', theme_key: 'lab_clean', style_json: {} } as Card));
   const [cardMutationKey, setCardMutationKey] = useState('');
+  const [selectionError,setSelectionError]=useState('');
+  const [exporting,setExporting]=useState(false);const [exportError,setExportError]=useState('');const [exportMessage,setExportMessage]=useState('');
+  const [selectionMessage,setSelectionMessage]=useState('');
+  const selectionGeneration=useRef(0);
+
+  const loadExactDraft=async(draftId:number,topicId:number|null)=>{
+    const generation=++selectionGeneration.current;
+    setLoading(true);setSelectionError('');setSelectionMessage('');setSelectedTopic(topicId);
+    setDraft(null);setCards([]);setDraftVersions([]);setEditingCard(null);
+    try{
+      const result=await readTargetDraft({draftId,topicId},{
+        getDraft:id=>request<Draft>(`/api/drafts/${id}`),
+        listCards:id=>api.listCardsByDraft(id),
+        listVersions:id=>api.listDrafts({topic_id:id,limit:20}),
+      });
+      if(generation!==selectionGeneration.current)return;
+      setDraft(result.draft);setSelectedTopic(result.draft.topic_id);setCards(result.cards);setDraftVersions(result.versions);
+    }catch(e){if(generation===selectionGeneration.current)setSelectionError(`无法打开指定稿件 #${draftId}：${e instanceof Error?e.message:'读取失败'}。没有改为打开其它版本。`);}
+    finally{if(generation===selectionGeneration.current)setLoading(false);}
+  };
+
+  useEffect(()=>{
+    if(target)void loadExactDraft(target.draftId,target.topicId);
+    return()=>{selectionGeneration.current+=1;};
+  },[target?.draftId,target?.topicId,target?.runId]);
 
   const loadTopics = () => {
-    api.listTopics({ limit: 50 }).then(d => setTopics(d.items)).catch(() => {});
+    api.listTopics({ limit: 50 }).then(d => setTopics(d.items)).catch(e => setSelectionError(`选题列表读取失败：${e instanceof Error?e.message:'请稍后重试'}`));
   };
 
   useEffect(() => { loadTopics(); }, []);
 
   useEffect(() => {
     if (!draft) return;
+    setEditorTab('body');setLibraryOpen(false);
     setVariantTitle(draft.selected_title || firstOption(textArray(draft.title_options)) || '');
     setVariantCover(draft.selected_cover_text || firstOption(textArray(draft.cover_text_options)) || '');
     setBodyVariantKey(draft.body_variant_key === 'tutorial_steps' ? 'tutorial_steps' : 'first_person');
@@ -778,6 +813,7 @@ export default function DraftEditorPage() {
     setThemeKey(draft.theme_key || '');
     setMaxCardCount(draft.max_card_count || 7);
     setVariantMessage(draft.generated_reason || '');
+    setVariantError('');
     setEvalResult(null);
     setReviewMessage('');
   }, [draft?.id]);
@@ -791,15 +827,37 @@ export default function DraftEditorPage() {
   }, [editingCard?.id]);
 
   useEffect(() => {
+    if (!editingCard) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const dialog = document.getElementById('card-edit-title')?.closest<HTMLElement>('[role="dialog"]');
+    if (!dialog) return;
+    const focusable = () => Array.from(dialog.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), summary'))
+      .filter(element => element.offsetParent !== null);
+    focusable()[0]?.focus();
+    const handleDialogKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); setEditingCard(null); return; }
+      if (event.key !== 'Tab') return;
+      const controls = focusable();
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    dialog.addEventListener('keydown', handleDialogKey);
+    return () => { dialog.removeEventListener('keydown', handleDialogKey); previousFocus?.focus(); };
+  }, [editingCard?.id]);
+
+  useEffect(() => {
+    let active=true;
     if (!draft) {
       setReviewItems([]);
       return;
     }
     setReviewLoading(true);
     api.getReviewChecklist(draft.id)
-      .then(items => setReviewItems(items))
-      .catch(() => setReviewItems([]))
-      .finally(() => setReviewLoading(false));
+      .then(items => {if(active)setReviewItems(items);})
+      .catch(() => {if(active){setReviewItems([]);setReviewMessage('检查清单读取失败，请重新打开稿件后重试。');}})
+      .finally(() => {if(active)setReviewLoading(false);});
+    return()=>{active=false;};
   }, [draft?.id]);
 
   const handleGenerate = async (topicId: number) => {
@@ -815,20 +873,16 @@ export default function DraftEditorPage() {
   };
 
   const handleSelectDraft = async (topicId: number) => {
-    setSelectedTopic(topicId);
+    const generation=++selectionGeneration.current;
+    setSelectedTopic(topicId);setLoading(true);setSelectionError('');setSelectionMessage('');
+    setDraft(null);setCards([]);setDraftVersions([]);setEditingCard(null);
     try {
       const versions = await api.listDrafts({ topic_id: topicId, limit: 20 });
-      setDraftVersions(versions);
       const latestDraft = versions[0] || await api.getLatestDraftByTopic(topicId);
-      const latestCards = await api.listCardsByDraft(latestDraft.id);
-      setDraft(latestDraft);
-      setCards(latestCards);
-      setEditingCard(null);
-    } catch {
-      setDraftVersions([]);
-      setDraft(null);
-      setCards([]);
-      setEditingCard(null);
+      if(generation!==selectionGeneration.current)return;
+      await loadExactDraft(latestDraft.id,topicId);
+    } catch(e) {
+      if(generation===selectionGeneration.current){setLoading(false);setSelectionError(`无法读取该选题的稿件：${e instanceof Error?e.message:'读取失败'}`);}
     }
   };
 
@@ -836,22 +890,21 @@ export default function DraftEditorPage() {
     if (!draft) return;
     setEvalLoading(true); setEvalResult(null);
     try {
-      const r = await fetch(`/api/drafts/${draft.id}/evaluate`, { method: 'POST' });
-      if (!r.ok) throw new Error(await r.text());
-      setEvalResult(await r.json());
+      setEvalResult(await request(`/api/drafts/${draft.id}/evaluate`, { method: 'POST' }));
     } catch(e: any) { alert('评分失败: ' + e.message); }
     setEvalLoading(false);
   };
 
   const handleGenerateVariant = async () => {
     if (!draft) return;
+    if(target?.draftId===draft.id){setVariantError('此稿件属于原内容任务，请直接编辑保存，再返回原任务重新提交；不能另建变体代替任务稿件。');return;}
     const selectedTitle = variantTitle || firstOption(textArray(draft.title_options));
     const selectedCover = variantCover || firstOption(textArray(draft.cover_text_options));
     if (!selectedTitle || !selectedCover) {
       alert('请先选择或填写标题和封面文案');
       return;
     }
-    setVariantLoading(true);
+    setVariantLoading(true);setVariantError('');
     try {
       const result = await api.generateDraftVariant(draft.id, {
         selected_title: selectedTitle,
@@ -861,8 +914,8 @@ export default function DraftEditorPage() {
         template_key: templateKey,
         theme_key: themeKey,
         max_card_count: maxCardCount,
-        provider: 'local',
-        model: 'local-rule-based-v0',
+        provider: draft.model_provider || 'local',
+        model: draft.model_name || undefined,
         body_variants: bodyVariantMap(bodyVariants),
       });
       setDraft(result.draft);
@@ -872,15 +925,13 @@ export default function DraftEditorPage() {
       setVariantMessage(result.variant.generated_reason);
       loadTopics();
     } catch(e: any) {
-      alert('生成匹配卡片失败: ' + e.message);
+      setVariantError('未生成新版本：' + e.message);
     }
     setVariantLoading(false);
   };
 
   const handleSelectDraftVersion = async (selectedDraft: Draft) => {
-    setDraft(selectedDraft);
-    setCards(await api.listCardsByDraft(selectedDraft.id));
-    setEditingCard(null);
+    await loadExactDraft(selectedDraft.id,selectedDraft.topic_id);
   };
 
   const handleToggleReviewItem = (key: string, checked: boolean) => {
@@ -902,15 +953,26 @@ export default function DraftEditorPage() {
         reviewItems.map(item => ({ key: item.key, checked: item.checked, note: item.note || '' })),
       );
       setReviewItems(saved);
-      setReviewMessage('审核状态已保存');
+      setReviewMessage('检查清单已保存；正式审核状态未因此改变。');
     } catch (e: any) {
       alert('保存审核清单失败: ' + e.message);
     }
     setReviewSaving(false);
   };
 
+  const refreshReviewState=async(draftId:number)=>{
+    const generation=selectionGeneration.current;
+    try{
+      const [latest,checklist]=await Promise.all([request<Draft>(`/api/drafts/${draftId}`),api.getReviewChecklist(draftId)]);
+      if(generation!==selectionGeneration.current)return;
+      setDraft(current=>current?.id===draftId?{...current,status:latest.status}:current);
+      setReviewItems(checklist);setReviewMessage('');
+    }catch(e){if(generation===selectionGeneration.current)setSelectionError(`内容操作后未能刷新审核信息，请重新打开稿件核对：${e instanceof Error?e.message:'读取失败'}`);}
+  };
+
   const syncCardsAfterMutation = (nextCards: Card[], nextEditingCardId?: number | null) => {
     setCards(nextCards);
+    if(draft)void refreshReviewState(draft.id);
     if (nextEditingCardId === null) {
       setEditingCard(null);
       return;
@@ -948,6 +1010,7 @@ export default function DraftEditorPage() {
     setCards(prev => prev.map(item => item.id === saved.id ? saved : item));
     setEditingCard(current => current?.id === saved.id ? saved : current);
     setEditingCardStyle(parseCardStyle(saved));
+    await refreshReviewState(saved.draft_id);
     return saved;
   };
 
@@ -967,6 +1030,9 @@ export default function DraftEditorPage() {
 
   const handleSaveDraft = async () => {
     if (!draft) return;
+    const generation=selectionGeneration.current;
+    setLoading(true);setSelectionError('');setSelectionMessage('');
+    try{
     const saved = await api.updateDraft(draft.id, {
       title_options: draft.title_options,
       cover_text_options: draft.cover_text_options,
@@ -986,8 +1052,12 @@ export default function DraftEditorPage() {
       max_card_count: maxCardCount,
       generated_reason: variantMessage,
     });
+    if(generation!==selectionGeneration.current)return;
     setDraft(saved);
-    alert('发布包已保存');
+    await refreshReviewState(saved.id);
+    if(generation===selectionGeneration.current)setSelectionMessage(`稿件 #${saved.id} 已保存。${saved.status==='rejected'?'请返回原任务重新提交审核。':saved.status==='awaiting_review'?'当前稿件等待正式审核。':'请继续检查正式审核状态。'}`);
+    }catch(e){if(generation===selectionGeneration.current)setSelectionError(`保存未完成：${e instanceof Error?e.message:'请稍后重试'}`);}
+    finally{if(generation===selectionGeneration.current)setLoading(false);}
   };
 
   const reviewProgress = getReviewProgress(reviewItems);
@@ -1006,19 +1076,23 @@ export default function DraftEditorPage() {
   }) : null;
 
   const handleExportZip = async () => {
-    if (!draft) return;
-    await exportCardsZip({
+    if (!draft || exporting) return;
+    setExporting(true);setExportError('');setExportMessage('');
+    try { await exportCardsZip({
       cards,
-      titleOptions: textArray(draft.title_options),
+      titleOptions: Array.from(new Set([variantTitle,...textArray(draft.title_options)].filter(Boolean))),
       bodyText: draft.body_text || undefined,
       hashtags: textArray(draft.hashtags),
       commentGuide: draft.comment_guide || undefined,
     }, draft.id);
+    setExportMessage('内容包已交给浏览器下载，请查看下载列表。');
+    } catch {setExportError('内容包未能生成。请先保存修改，再刷新页面重试；仍失败请检查浏览器是否允许下载。');}
+    finally {setExporting(false);}
   };
 
   const handleBatchStyle = async (layoutKey: string, themeKey: string) => {
     if (!draft) return;
-    await fetch(`/api/cards/draft/${draft.id}/batch-style`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ layout_key: layoutKey, theme_key: themeKey }) });
+    await request(`/api/cards/draft/${draft.id}/batch-style`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ layout_key: layoutKey, theme_key: themeKey }) });
     syncCardsAfterMutation(await api.listCardsByDraft(draft.id));
   };
 
@@ -1244,40 +1318,46 @@ export default function DraftEditorPage() {
   const isMutatingCards = Boolean(cardMutationKey);
 
   return (
-    <div>
-      <div className="page-header">
-        <h1>✍️ 发布包编辑</h1>
-        <p>选择选题 → 一键生成 → 预览和编辑卡片</p>
-      </div>
-
-      <div className="draft-editor-layout">
-        {/* 左侧：选题列表 */}
-        <div className="draft-topic-sidebar">
+    <div className="editor-workspace">
+      <header className="page-header editor-heading">
+        <div><h1>稿件编辑</h1><p>先写清正文，再调整卡片，最后检查并导出。</p></div>
+        <div className="editor-heading-actions">
+          {target&&onReturnToAgent&&<button className="btn" disabled={loading||isMutatingCards} onClick={()=>onReturnToAgent(target.runId)}>返回审核任务 #{target.runId}</button>}
+          {draft&&<button className="btn btn-primary" disabled={!canWrite||loading||isMutatingCards} onClick={handleSaveDraft}>{loading?'保存中…':'保存稿件'}</button>}
+        </div>
+      </header>
+      {selectionError&&<div className="feedback error" role="alert">{selectionError}</div>}
+      {selectionMessage&&<div className="feedback success" role="status">{selectionMessage}</div>}
+      {loading&&!draft&&<div className="notice-strip" role="status">正在读取指定稿件与对应卡片…</div>}
+      {target&&<div className="editor-task-context"><span>任务 #{target.runId} · 指定稿件 #{target.draftId}</span><span>{draft&&draft.id!==target.draftId?`当前查看 #${draft.id}，原任务仍关联 #${target.draftId}。`:'修改后先保存，再返回原任务提交审核。'}</span>{draft?.id!==target.draftId&&<button className="btn btn-sm" disabled={loading} onClick={()=>void loadExactDraft(target.draftId,target.topicId)}>打开指定稿件</button>}</div>}
+      <details className="editor-disclosure editor-library" open={libraryOpen} onToggle={event=>setLibraryOpen(event.currentTarget.open)}>
+        <summary><span>{draft?`切换稿件与版本 · 当前 #${draft.id}`:'选择已有稿件'}</span><span>{topics.length} 个选题</span></summary>
+        <div className="editor-library-content">
           <h3 style={{ marginBottom: 12 }}>选题列表</h3>
           {topics.map(t => (
             <div key={t.id} style={{
               padding: '10px 12px', marginBottom: 6, borderRadius: 6, cursor: 'pointer',
               background: selectedTopic === t.id ? '#f0fdfa' : 'var(--bg)',
               border: selectedTopic === t.id ? '1px solid var(--accent)' : '1px solid transparent',
-            }} onClick={() => handleSelectDraft(t.id)}>
-              <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{t.title}</div>
+            }}>
+              <button type="button" className="editor-topic-select" disabled={loading} onClick={() => handleSelectDraft(t.id)}>{t.title}</button>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                 <span className={`score ${t.score >= 80 ? 'score-high' : 'score-mid'}`}>{t.score}分</span>
                 <span className={`badge badge-${t.status}`}>{t.status}</span>
                 <button className="btn btn-sm btn-primary" style={{ marginLeft: 'auto' }}
                         onClick={(e) => { e.stopPropagation(); handleGenerate(t.id); }}
-                        disabled={loading}>
+                        disabled={!canWrite || (loading)}>
                   {loading && selectedTopic === t.id ? '生成中...' : '生成'}
                 </button>
               </div>
             </div>
           ))}
           {topics.length === 0 && (
-            <div className="empty">暂无选题，先去选题池创建</div>
+            <div className="empty">暂无选题，先创建内容任务。{onNavigate&&<button className="btn btn-sm" onClick={()=>onNavigate('agent')}>创建任务</button>}</div>
           )}
           {draftVersions.length > 0 && (
             <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
-              <h3 style={{ marginBottom: 10 }}>发布包版本</h3>
+              <h3 style={{ marginBottom: 10 }}>稿件版本</h3>
               <div className="stack-list">
                 {draftVersions.map(item => (
                   <button
@@ -1296,29 +1376,62 @@ export default function DraftEditorPage() {
             </div>
           )}
         </div>
+      </details>
+      {draft ? <>
+        <div className="editor-document-state"><span>稿件 #{draft.id}</span><strong>{DRAFT_STATUS_LABELS[draft.status]||'审核状态待确认'}</strong><span>{cards.length} 张卡片</span></div>
+        <div className="editor-tabs" role="tablist" aria-label="稿件编辑步骤" onKeyDown={event=>{
+          if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+          event.preventDefault();
+          const tabs=Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+          const current=tabs.indexOf(document.activeElement as HTMLButtonElement);
+          const next=event.key==='Home'?0:event.key==='End'?tabs.length-1:(current+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
+          tabs[next]?.click();tabs[next]?.focus();
+        }}>
+          {([{key:'body',label:'正文'},{key:'cards',label:`卡片 · ${cards.length}`},{key:'review',label:'检查与导出'}] as const).map((tab,index)=><button key={tab.key} id={`editor-tab-${tab.key}`} role="tab" aria-selected={editorTab===tab.key} aria-controls={`editor-panel-${tab.key}`} tabIndex={editorTab===tab.key?0:-1} className={editorTab===tab.key?'active':''} onClick={()=>setEditorTab(tab.key)}><span>{index+1}</span>{tab.label}</button>)}
+        </div>
+        <section id="editor-panel-body" role="tabpanel" aria-labelledby="editor-tab-body" hidden={editorTab!=='body'} className="editor-tab-panel">
+          <div className="editor-writing-sheet">
+            <label className="editor-field">最终标题<input disabled={!canWrite} value={variantTitle} onChange={e=>setVariantTitle(e.target.value)} placeholder="写一个清楚、具体的标题" /></label>
+            <label className="editor-field">封面短句<input disabled={!canWrite} value={variantCover} onChange={e=>setVariantCover(e.target.value)} placeholder="卡片封面的简短说明" /></label>
+            <label className="editor-field editor-body-field"><span>正文 <small>{selectedBodyText.length} 字</small></span><textarea disabled={!canWrite} value={selectedBodyText} rows={16} onChange={e=>{const next={...bodyVariants,[bodyVariantKey]:e.target.value};setBodyVariants(next);setDraft({...draft,body_text:e.target.value,body_variant_key:bodyVariantKey,body_variants:next});}} placeholder="在这里完善正文，关键结论保留来源或引用。" /></label>
+            <div className="editor-next-action"><span>正文与卡片分别保存，修改正文后请检查卡片是否同步。</span><button className="btn" onClick={()=>setEditorTab('cards')}>下一步：检查卡片 →</button></div>
+          </div>
+          <details className="editor-disclosure"><summary>标签与评论引导</summary><div className="editor-disclosure-content"><div style={{ marginBottom: 12 }}>
+                  <strong style={{ fontSize: 12, color: 'var(--text-secondary)' }}>标签：</strong>
+                  <input disabled={!canWrite}
+                    value={textArray(draft.hashtags).join(' ')}
+                    onChange={e => setDraft({ ...draft, hashtags: e.target.value.split(/\s+/).filter(Boolean) })}
+                    style={{ marginTop: 6 }}
+                  />
+                </div>
 
-        {/* 右侧：预览区 */}
-        <div>
-          {draft ? (
-            <div>
-              {/* 生成新发布方案 */}
-              <div className="variant-panel">
+                <div style={{ marginBottom: 12 }}>
+                  <strong style={{ fontSize: 12, color: 'var(--text-secondary)' }}>评论引导：</strong>
+                  <input disabled={!canWrite}
+                    value={draft.comment_guide || ''}
+                    onChange={e => setDraft({ ...draft, comment_guide: e.target.value })}
+                    style={{ marginTop: 6 }}
+                  />
+                </div></div></details>
+          <details className="editor-disclosure"><summary>标题候选、正文版本与生成新方案</summary><div className="editor-disclosure-content"><div className="variant-panel">
                 <div className="variant-panel__header">
                   <div>
                     <h3>生成新发布方案</h3>
                     <p>{variantMessage || '选择标题、封面、正文版本和模板后生成新版本，不会覆盖当前方案。'}</p>
+                    <p>{target?.draftId===draft.id?'当前是任务关联稿件，请直接保存修改并返回原任务处理审核，不另建变体。':`生成模型：${draft.model_provider||'本地规则（此稿未登记原模型）'}${draft.model_name?` · ${draft.model_name}`:''}。任务关联稿件不能另建变体，请回原任务编辑与重提。`}</p>
                   </div>
-                  <button className="btn btn-primary" onClick={handleGenerateVariant} disabled={variantLoading}>
+                  <button className="btn btn-primary" onClick={handleGenerateVariant} disabled={!canWrite || variantLoading || target?.draftId===draft.id}>
                     {variantLoading ? '生成中...' : '生成匹配卡片'}
                   </button>
                 </div>
+                {variantError&&<div className="feedback error" role="alert">{variantError}</div>}
 
                 <div className="variant-grid">
                   <div className="variant-section">
                     <label>选择标题组合</label>
                     <div className="variant-choice-list">
                       {textArray(draft.title_options).map((title, index) => (
-                        <button
+                        <button disabled={!canWrite}
                           key={`${title}-${index}`}
                           className={`variant-chip ${variantTitle === title ? 'active' : ''}`}
                           onClick={() => setVariantTitle(title)}
@@ -1327,7 +1440,7 @@ export default function DraftEditorPage() {
                         </button>
                       ))}
                     </div>
-                    <input
+                    <input disabled={!canWrite}
                       value={variantTitle}
                       onChange={e => setVariantTitle(e.target.value)}
                       placeholder="也可以手动输入一个最终标题"
@@ -1338,7 +1451,7 @@ export default function DraftEditorPage() {
                     <label>选择封面组合</label>
                     <div className="variant-choice-list">
                       {textArray(draft.cover_text_options).map((cover, index) => (
-                        <button
+                        <button disabled={!canWrite}
                           key={`${cover}-${index}`}
                           className={`variant-chip ${variantCover === cover ? 'active' : ''}`}
                           onClick={() => setVariantCover(cover)}
@@ -1347,7 +1460,7 @@ export default function DraftEditorPage() {
                         </button>
                       ))}
                     </div>
-                    <input
+                    <input disabled={!canWrite}
                       value={variantCover}
                       onChange={e => setVariantCover(e.target.value)}
                       placeholder="也可以手动输入封面短句"
@@ -1358,7 +1471,7 @@ export default function DraftEditorPage() {
                     <label>正文版本</label>
                     <div className="segmented-control">
                       {BODY_VARIANT_OPTIONS.map(option => (
-                        <button
+                        <button disabled={!canWrite}
                           key={option.value}
                           className={bodyVariantKey === option.value ? 'active' : ''}
                           onClick={() => {
@@ -1371,7 +1484,7 @@ export default function DraftEditorPage() {
                         </button>
                       ))}
                     </div>
-                    <textarea
+                    <textarea disabled={!canWrite}
                       value={bodyVariants[bodyVariantKey] || draft.body_text || ''}
                       onChange={e => {
                         const next = { ...bodyVariants, [bodyVariantKey]: e.target.value };
@@ -1386,21 +1499,21 @@ export default function DraftEditorPage() {
                   <div className="variant-section">
                     <label>卡片风格</label>
                     <div className="form-row">
-                      <select value={contentType} onChange={e => setContentType(e.target.value)}>
+                      <select disabled={!canWrite} value={contentType} onChange={e => setContentType(e.target.value)}>
                         {CONTENT_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                       </select>
-                      <select value={templateKey} onChange={e => setTemplateKey(e.target.value)}>
+                      <select disabled={!canWrite} value={templateKey} onChange={e => setTemplateKey(e.target.value)}>
                         {TEMPLATE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                       </select>
                     </div>
                     <div className="form-row">
-                      <select value={themeKey} onChange={e => setThemeKey(e.target.value)}>
+                      <select disabled={!canWrite} value={themeKey} onChange={e => setThemeKey(e.target.value)}>
                         <option value="">模板默认主题</option>
                         {THEME_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                       </select>
                       <label className="variant-number-field">
                         <span>需要页数</span>
-                        <input
+                        <input disabled={!canWrite}
                           type="number"
                           min={2}
                           max={7}
@@ -1411,9 +1524,169 @@ export default function DraftEditorPage() {
                     </div>
                   </div>
                 </div>
+              </div> <details className="draft-candidate-details">
+                  <summary>候选库管理</summary>
+                  <div className="draft-candidate-grid">
+                    <div>
+                      <strong>标题候选</strong>
+                      {textArray(draft.title_options).map((t: string, i: number) => (
+                        <input disabled={!canWrite}
+                          key={i}
+                          value={t}
+                          onChange={e => {
+                            const next = [...textArray(draft.title_options)];
+                            const previous = next[i];
+                            next[i] = e.target.value;
+                            setDraft({ ...draft, title_options: next });
+                            if (variantTitle === previous) setVariantTitle(e.target.value);
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <div>
+                      <strong>封面文案</strong>
+                      {textArray(draft.cover_text_options).map((t: string, i: number) => (
+                        <input disabled={!canWrite}
+                          key={i}
+                          value={t}
+                          onChange={e => {
+                            const next = [...textArray(draft.cover_text_options)];
+                            const previous = next[i];
+                            next[i] = e.target.value;
+                            setDraft({ ...draft, cover_text_options: next });
+                            if (variantCover === previous) setVariantCover(e.target.value);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </details></div></details>
+        </section>
+        <section id="editor-panel-cards" role="tabpanel" aria-labelledby="editor-tab-cards" hidden={editorTab!=='cards'} className="editor-tab-panel">
+          <div className="editor-card-intro"><p>点开卡片修改文字与样式。复制、拆分、移动等操作在每张卡片的“更多”中。</p><button className="btn" disabled={!canWrite||isMutatingCards} onClick={()=>handleCreateCard()}>新增卡片</button></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <h3 style={{ margin: 0 }}>卡片预览（{cards.length} 页）</h3>
+                {cards.length > 0 && (
+                  <details className="editor-batch-options"><summary>批量版式与主题</summary><div className="batch-style-controls">
+                    <span>批量应用:</span>
+                    <select disabled={!canWrite} onChange={e => { if (e.target.value) handleBatchStyle(e.target.value, ''); e.target.value = ''; }}
+                            style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12 }}>
+                      <option value="">版式...</option>
+                      {LAYOUT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
+                    <select disabled={!canWrite} onChange={e => { if (e.target.value) handleBatchStyle('', e.target.value); e.target.value = ''; }}
+                            style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12 }}>
+                      <option value="">主题...</option>
+                      {THEME_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
+                  </div></details>
+                )}
               </div>
-
-              {comboAnalysis && (
+              <div className="card-preview-grid">
+                {cards.map(card => (
+                  <div key={card.id} className="card-preview-item">
+                    <div className="card-preview-item__toolbar">
+                      <span>第 {card.page_index} 页</span>
+                      <div>
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            setEditingCard(card);
+                          }}
+                        >
+                          {canWrite?'编辑':'查看'}
+                        </button>
+                        <details className="editor-card-more"><summary>更多</summary><div className="editor-card-more__menu">
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleCreateCard(card);
+                          }}
+                          disabled={!canWrite || (isMutatingCards)}
+                          title="在当前卡片后插入空白卡片"
+                        >
+                          +后插
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleDuplicateCard(card);
+                          }}
+                          disabled={!canWrite || (isMutatingCards)}
+                          title="复制当前卡片"
+                        >
+                          复制
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleSplitCard(card);
+                          }}
+                          disabled={!canWrite || (isMutatingCards)}
+                          title="将正文拆成两张卡"
+                        >
+                          拆分
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleMoveCard(card, 'up');
+                          }}
+                          disabled={!canWrite || (isMutatingCards)}
+                          title="向上移动"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleMoveCard(card, 'down');
+                          }}
+                          disabled={!canWrite || (isMutatingCards)}
+                          title="向下移动"
+                        >
+                          ↓
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-danger"
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleDeleteCard(card);
+                          }}
+                          disabled={!canWrite || (isMutatingCards)}
+                          title="删除当前卡片"
+                        >
+                          删除
+                        </button>
+                        </div></details>
+                      </div>
+                    </div>
+                    {renderSafeCardFrame(card, {
+                      style: parseCardStyle(card),
+                      onClick: () => setEditingCard(card),
+                    })}
+                  </div>
+                ))}
+              </div>
+          {cards.length===0&&<div className="editor-empty"><strong>还没有卡片</strong><p>可以新增空白卡片，也可以返回内容任务生成带卡片的稿件。</p></div>}
+          <div className="editor-next-action"><button className="btn" onClick={()=>setEditorTab('body')}>← 返回正文</button><button className="btn btn-primary" onClick={()=>setEditorTab('review')}>下一步：检查与导出 →</button></div>
+        </section>
+        <section id="editor-panel-review" role="tabpanel" aria-labelledby="editor-tab-review" hidden={editorTab!=='review'} className="editor-tab-panel">
+          <div className="editor-review-intro"><div><h3>检查内容，准备交付</h3><p>清单勾选和质量评分不会批准任务。正式通过或退回，以内容任务审核结果为准。</p></div><button className="btn" onClick={handleEvaluate} disabled={!canWrite||evalLoading}>{evalLoading?'检查中…':'运行质量检查'}</button></div>
+          <details className="editor-disclosure"><summary>查看组合诊断与版式建议</summary>{comboAnalysis && (
                 <div className="draft-combo-panel">
                   <div className="draft-combo-panel__header">
                     <div>
@@ -1454,100 +1727,8 @@ export default function DraftEditorPage() {
                     </div>
                   </div>
                 </div>
-              )}
-
-              {/* 当前方案成品 */}
-              <div style={{ background: 'var(--surface)', borderRadius: 8, padding: 16, border: '1px solid var(--border)', marginBottom: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <h3>当前方案成品：{draft.variant_name || `发布包 #${draft.id}`}</h3>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button className="btn btn-sm" onClick={() => exportCardsToPng(cards)} disabled={cards.length === 0}>
-                      导出全部 PNG
-                    </button>
-                    <button className="btn btn-sm btn-primary" onClick={handleExportZip} disabled={cards.length === 0}>
-                      📦 导出 ZIP
-                    </button>
-                    <button className="btn btn-sm btn-danger" onClick={handleDeleteDraft}>删除草稿</button>
-                    <button className="btn btn-sm btn-primary" onClick={handleSaveDraft}>保存发布包</button>
-                    <button className="btn btn-sm" onClick={handleEvaluate} disabled={evalLoading}
-                            style={{ background: '#fef3c7', border: '1px solid #f59e0b', color: '#92400e' }}>
-                      {evalLoading ? '评分中...' : '📊 质量评分'}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="draft-selected-summary">
-                  <div>
-                    <span>已选标题</span>
-                    <strong>{variantTitle || firstOption(textArray(draft.title_options)) || '未选择'}</strong>
-                  </div>
-                  <div>
-                    <span>已选封面</span>
-                    <strong>{variantCover || firstOption(textArray(draft.cover_text_options)) || '未选择'}</strong>
-                  </div>
-                  <div>
-                    <span>正文版本</span>
-                    <strong>{getBodyVariantLabel(bodyVariantKey)}</strong>
-                  </div>
-                </div>
-
-                <details className="draft-candidate-details">
-                  <summary>候选库管理</summary>
-                  <div className="draft-candidate-grid">
-                    <div>
-                      <strong>标题候选</strong>
-                      {textArray(draft.title_options).map((t: string, i: number) => (
-                        <input
-                          key={i}
-                          value={t}
-                          onChange={e => {
-                            const next = [...textArray(draft.title_options)];
-                            const previous = next[i];
-                            next[i] = e.target.value;
-                            setDraft({ ...draft, title_options: next });
-                            if (variantTitle === previous) setVariantTitle(e.target.value);
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <div>
-                      <strong>封面文案</strong>
-                      {textArray(draft.cover_text_options).map((t: string, i: number) => (
-                        <input
-                          key={i}
-                          value={t}
-                          onChange={e => {
-                            const next = [...textArray(draft.cover_text_options)];
-                            const previous = next[i];
-                            next[i] = e.target.value;
-                            setDraft({ ...draft, cover_text_options: next });
-                            if (variantCover === previous) setVariantCover(e.target.value);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </details>
-
-                <div style={{ marginBottom: 12 }}>
-                  <strong style={{ fontSize: 12, color: 'var(--text-secondary)' }}>标签：</strong>
-                  <input
-                    value={textArray(draft.hashtags).join(' ')}
-                    onChange={e => setDraft({ ...draft, hashtags: e.target.value.split(/\s+/).filter(Boolean) })}
-                    style={{ marginTop: 6 }}
-                  />
-                </div>
-
-                <div style={{ marginBottom: 12 }}>
-                  <strong style={{ fontSize: 12, color: 'var(--text-secondary)' }}>评论引导：</strong>
-                  <input
-                    value={draft.comment_guide || ''}
-                    onChange={e => setDraft({ ...draft, comment_guide: e.target.value })}
-                    style={{ marginTop: 6 }}
-                  />
-                </div>
-
-                {textArray(draft.fact_checks).length > 0 && (
+              )}</details>
+          <div className="editor-review-content">{textArray(draft.fact_checks).length > 0 && (
                   <div style={{ marginBottom: 12 }}>
                     <strong style={{ fontSize: 12, color: 'var(--text-secondary)' }}>事实核验点：</strong>
                     <ul style={{ paddingLeft: 18, marginTop: 4, fontSize: 12, color: 'var(--text-secondary)' }}>
@@ -1558,7 +1739,7 @@ export default function DraftEditorPage() {
 
                 {textArray(draft.risk_tips).length > 0 && (
                   <div style={{ marginBottom: 12 }}>
-                    <strong style={{ fontSize: 12, color: 'var(--text-secondary)' }}>风险提示：</strong>
+                    <strong style={{ fontSize: 12, color: 'var(--text-secondary)' }}>模型检查建议（需人工核对）：</strong>
                     <ul style={{ paddingLeft: 18, marginTop: 4, fontSize: 12, color: 'var(--text-secondary)' }}>
                       {textArray(draft.risk_tips).map((item, i) => <li key={i}>{item}</li>)}
                     </ul>
@@ -1574,7 +1755,7 @@ export default function DraftEditorPage() {
                 <div className="review-checklist-panel">
                   <div className="review-checklist-panel__header">
                     <div>
-                      <h4>发布前审核</h4>
+                      <h4>发布前检查清单</h4>
                       <p>
                         {reviewLoading
                           ? '正在读取审核清单...'
@@ -1584,21 +1765,21 @@ export default function DraftEditorPage() {
                       </p>
                     </div>
                     <span className={`review-status ${reviewProgress.ready ? 'ready' : reviewProgress.checked > 0 ? 'progress' : ''}`}>
-                      {reviewProgress.ready ? '已通过' : reviewProgress.checked > 0 ? '审核中' : '未审核'}
+                      {reviewProgress.ready ? '清单已完成' : reviewProgress.checked > 0 ? '清单进行中' : '清单未完成'}
                     </span>
                   </div>
                   {reviewItems.length > 0 && (
                     <div className="review-checklist">
                       {reviewItems.map(item => (
                         <label key={item.key} className={`review-checklist__item ${item.checked ? 'checked' : ''}`}>
-                          <input
+                          <input disabled={!canReview}
                             type="checkbox"
                             checked={item.checked}
                             onChange={e => handleToggleReviewItem(item.key, e.target.checked)}
                           />
                           <div>
                             <strong>{item.label}</strong>
-                            <input
+                            <input disabled={!canReview}
                               value={item.note || ''}
                               onChange={e => handleReviewNoteChange(item.key, e.target.value)}
                               placeholder="可选备注"
@@ -1609,8 +1790,8 @@ export default function DraftEditorPage() {
                     </div>
                   )}
                   <div className="review-checklist-panel__footer">
-                    <button className="btn btn-sm btn-primary" onClick={handleSaveReviewChecklist} disabled={reviewSaving || reviewLoading || reviewItems.length === 0}>
-                      {reviewSaving ? '保存中...' : '保存审核状态'}
+                    <button className="btn btn-sm btn-primary" onClick={handleSaveReviewChecklist} disabled={!canReview || (reviewSaving || reviewLoading || reviewItems.length === 0)}>
+                      {reviewSaving ? '保存中...' : '保存检查清单'}
                     </button>
                     {reviewMessage && <span>{reviewMessage}</span>}
                   </div>
@@ -1632,7 +1813,7 @@ export default function DraftEditorPage() {
                       background: evalResult.publish_readiness === 'ready' ? '#d1fae5' : evalResult.publish_readiness === 'needs_review' ? '#fef3c7' : '#fee2e2',
                       color: evalResult.publish_readiness === 'ready' ? '#065f46' : evalResult.publish_readiness === 'needs_review' ? '#92400e' : '#991b1b',
                     }}>
-                      {evalResult.publish_readiness === 'ready' ? '✅ 可发布' : evalResult.publish_readiness === 'needs_review' ? '📝 需修改' : '🚫 不建议发布'}
+                      {evalResult.publish_readiness === 'ready' ? '结构评分建议：可进入人工审核' : evalResult.publish_readiness === 'needs_review' ? '结构评分建议：需修改' : '结构评分建议：暂不采用'}
                     </div>
 
                     {/* 维度分数 */}
@@ -1698,154 +1879,31 @@ export default function DraftEditorPage() {
                       </div>
                     )}
                   </div>
-                )}
-
-              </div>
-
-              {/* 卡片预览 */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <h3 style={{ margin: 0 }}>卡片预览（{cards.length} 页）</h3>
-                {cards.length > 0 && (
-                  <div className="batch-style-controls">
-                    <span>批量应用:</span>
-                    <select onChange={e => { if (e.target.value) handleBatchStyle(e.target.value, ''); e.target.value = ''; }}
-                            style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12 }}>
-                      <option value="">版式...</option>
-                      {LAYOUT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
-                    <select onChange={e => { if (e.target.value) handleBatchStyle('', e.target.value); e.target.value = ''; }}
-                            style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12 }}>
-                      <option value="">主题...</option>
-                      {THEME_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
-                  </div>
-                )}
-              </div>
-              <div className="card-preview-grid">
-                {cards.map(card => (
-                  <div key={card.id} className="card-preview-item">
-                    <div className="card-preview-item__toolbar">
-                      <span>第 {card.page_index} 页</span>
-                      <div>
-                        <button
-                          type="button"
-                          className="btn btn-sm"
-                          onClick={e => {
-                            e.stopPropagation();
-                            setEditingCard(card);
-                          }}
-                        >
-                          编辑
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-sm"
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleCreateCard(card);
-                          }}
-                          disabled={isMutatingCards}
-                          title="在当前卡片后插入空白卡片"
-                        >
-                          +后插
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-sm"
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleDuplicateCard(card);
-                          }}
-                          disabled={isMutatingCards}
-                          title="复制当前卡片"
-                        >
-                          复制
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-sm"
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleSplitCard(card);
-                          }}
-                          disabled={isMutatingCards}
-                          title="将正文拆成两张卡"
-                        >
-                          拆分
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-sm"
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleMoveCard(card, 'up');
-                          }}
-                          disabled={isMutatingCards}
-                          title="向上移动"
-                        >
-                          ↑
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-sm"
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleMoveCard(card, 'down');
-                          }}
-                          disabled={isMutatingCards}
-                          title="向下移动"
-                        >
-                          ↓
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-danger"
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleDeleteCard(card);
-                          }}
-                          disabled={isMutatingCards}
-                          title="删除当前卡片"
-                        >
-                          删除
-                        </button>
-                      </div>
-                    </div>
-                    {renderSafeCardFrame(card, {
-                      style: parseCardStyle(card),
-                      onClick: () => setEditingCard(card),
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="empty">
-              <div style={{ fontSize: 40, marginBottom: 12 }}>📝</div>
-              选择一个高分选题，点击「生成」创建发布包
-            </div>
-          )}
-        </div>
-      </div>
+                )}</div>
+          <div className="editor-export-panel"><div><h3>导出内容包</h3><p>下载到本机，用于预览或人工交付；不会向外部平台发布。</p></div><div className="editor-export-actions"><button className="btn" onClick={()=>exportCardsToPng(cards)} disabled={cards.length===0}>导出全部 PNG</button><button className="btn btn-primary" onClick={handleExportZip} disabled={cards.length===0||exporting}>{exporting?'正在生成内容包…':'下载 ZIP 内容包'}</button></div></div>{exportError&&<div className="feedback error" role="alert">{exportError}</div>}{exportMessage&&<div className="feedback success" role="status">{exportMessage}</div>}
+          {onNavigate&&<button className="btn editor-evidence-link" onClick={()=>onNavigate('evidence')}>打开核验资料，检查事实来源</button>}
+          <details className="editor-disclosure editor-danger"><summary>稿件管理</summary><div className="editor-disclosure-content"><p>删除会一并移除对应卡片，请确认当前稿件编号。</p><button disabled={!canWrite} className="btn btn-sm btn-danger" onClick={handleDeleteDraft}>删除稿件 #{draft.id}</button></div></details>
+        </section>
+      </> : !loading&&<div className="editor-empty"><strong>{target?'指定稿件尚未打开':'从一个稿件开始'}</strong><p>{target?'请检查上方提示后重新打开指定稿件，系统不会替换成其他版本。':'展开上方“选择已有稿件”，或创建一个新的内容任务。'}</p>{!target&&onNavigate&&<button className="btn btn-primary" onClick={()=>onNavigate('agent')}>创建内容任务</button>}</div>}
 
       {/* 卡片编辑 Modal */}
       {editingCard && (
         <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setEditingCard(null); }}>
-          <div className="modal modal-wide">
-            <h2>编辑卡片 #{editingCard.page_index} — {CARD_TYPE_LABELS[editingCard.card_type]}</h2>
+          <div className="modal modal-wide editor-card-dialog" role="dialog" aria-modal="true" aria-labelledby="card-edit-title">
+            <h2 id="card-edit-title">编辑卡片 #{editingCard.page_index} — {CARD_TYPE_LABELS[editingCard.card_type]}</h2>
             <div className="card-editor-layout">
               <div className="card-editor-form">
                 <div className="form-group">
-                  <label>标题</label>
-                  <input value={editingCard.title} onChange={e => setEditingCard({ ...editingCard, title: e.target.value })} />
+                  <label htmlFor="card-field-title">标题</label>
+                  <input id="card-field-title" disabled={!canWrite} value={editingCard.title} onChange={e => setEditingCard({ ...editingCard, title: e.target.value })} />
                 </div>
                 <div className="form-group">
-                  <label>副标题</label>
-                  <input value={editingCard.subtitle || ''} onChange={e => setEditingCard({ ...editingCard, subtitle: e.target.value })} />
+                  <label htmlFor="card-field-subtitle">副标题</label>
+                  <input id="card-field-subtitle" disabled={!canWrite} value={editingCard.subtitle || ''} onChange={e => setEditingCard({ ...editingCard, subtitle: e.target.value })} />
                 </div>
                 <div className="form-group">
-                  <label>正文</label>
-                  <textarea value={editingCard.body || ''} onChange={e => setEditingCard({ ...editingCard, body: e.target.value })} rows={8} />
+                  <label htmlFor="card-field-body">正文</label>
+                  <textarea id="card-field-body" disabled={!canWrite} value={editingCard.body || ''} onChange={e => setEditingCard({ ...editingCard, body: e.target.value })} rows={8} />
                   {editingContentStats && (
                     <div className={`body-editor-meter ${editingContentStats.hiddenBlocks > 0 ? 'warning' : ''}`}>
                       <span>
@@ -1854,22 +1912,23 @@ export default function DraftEditorPage() {
                       {editingContentStats.hiddenBlocks > 0 && (
                         <div className="body-editor-meter__actions">
                           <strong>还有 {editingContentStats.hiddenBlocks} 段/行未进入卡面</strong>
-                          <button type="button" onClick={fitEditingCardContent}>显示全部</button>
+                          <button disabled={!canWrite} type="button" onClick={fitEditingCardContent}>显示全部</button>
                         </div>
                       )}
                     </div>
                   )}
+                  <details className="editor-disclosure"><summary>正文整理与替换建议</summary>
                   <div className="body-editor-tools">
-                    <button type="button" className="btn btn-sm" onClick={() => applyBodyTool('split')}>按句拆行</button>
-                    <button type="button" className="btn btn-sm" onClick={() => applyBodyTool('paragraphs')}>转段落正文</button>
-                    <button type="button" className="btn btn-sm" onClick={() => applyBodyTool('fill')}>补满当前卡</button>
+                    <button disabled={!canWrite} type="button" className="btn btn-sm" onClick={() => applyBodyTool('split')}>按句拆行</button>
+                    <button disabled={!canWrite} type="button" className="btn btn-sm" onClick={() => applyBodyTool('paragraphs')}>转段落正文</button>
+                    <button disabled={!canWrite} type="button" className="btn btn-sm" onClick={() => applyBodyTool('fill')}>补满当前卡</button>
                   </div>
                   {replacementSuggestions.length > 0 && (
                     <div className="replacement-panel">
                       <strong>替换建议</strong>
                       <div>
                         {replacementSuggestions.map((item, index) => (
-                          <button
+                          <button disabled={!canWrite}
                             key={`${item.label}-${index}`}
                             type="button"
                             onClick={() => setEditingCardBodyWithStyle(item.body, item.style, item.style)}
@@ -1880,30 +1939,32 @@ export default function DraftEditorPage() {
                       </div>
                     </div>
                   )}
+                  </details>
                 </div>
                 <div className="form-group">
-                  <label>强调句</label>
-                  <input value={editingCard.highlight || ''} onChange={e => setEditingCard({ ...editingCard, highlight: e.target.value })} />
+                  <label htmlFor="card-field-highlight">强调句</label>
+                  <input id="card-field-highlight" disabled={!canWrite} value={editingCard.highlight || ''} onChange={e => setEditingCard({ ...editingCard, highlight: e.target.value })} />
                 </div>
                 <div className="form-group">
-                  <label>页脚</label>
-                  <input value={editingCard.footer || ''} onChange={e => setEditingCard({ ...editingCard, footer: e.target.value })} />
+                  <label htmlFor="card-field-footer">页脚</label>
+                  <input id="card-field-footer" disabled={!canWrite} value={editingCard.footer || ''} onChange={e => setEditingCard({ ...editingCard, footer: e.target.value })} />
                 </div>
+                <details className="editor-disclosure editor-card-style"><summary>模板、字体与高级排版</summary><div>
                 <div className="form-group">
-                  <label>卡片模板</label>
-                  <select value={editingCard.layout_key} onChange={e => setEditingCard({ ...editingCard, layout_key: e.target.value })}>
+                  <label htmlFor="card-field-layout">卡片模板</label>
+                  <select id="card-field-layout" disabled={!canWrite} value={editingCard.layout_key} onChange={e => setEditingCard({ ...editingCard, layout_key: e.target.value })}>
                     {LAYOUT_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>主题风格</label>
-                  <select value={editingCard.theme_key} onChange={e => setEditingCard({ ...editingCard, theme_key: e.target.value })}>
+                  <label htmlFor="card-field-theme">主题风格</label>
+                  <select id="card-field-theme" disabled={!canWrite} value={editingCard.theme_key} onChange={e => setEditingCard({ ...editingCard, theme_key: e.target.value })}>
                     {THEME_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>卡片组件</label>
-                  <select
+                  <label htmlFor="card-field-component">卡片组件</label>
+                  <select id="card-field-component" disabled={!canWrite}
                     value={getComponentKey(editingCard)}
                     onChange={e => setEditingCard({
                       ...editingCard,
@@ -1914,15 +1975,15 @@ export default function DraftEditorPage() {
                   </select>
                   <div className="card-type-presets">
                     {CARD_TYPE_PRESETS.map(preset => (
-                      <button key={preset.label} type="button" onClick={() => applyCardTypePreset(preset)}>
+                      <button disabled={!canWrite} key={preset.label} type="button" onClick={() => applyCardTypePreset(preset)}>
                         {preset.label}
                       </button>
                     ))}
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>字号级别</label>
-                  <select
+                  <label htmlFor="card-field-font-size">字号级别</label>
+                  <select id="card-field-font-size" disabled={!canWrite}
                     value={editingCardStyle.font_size}
                     onChange={e => {
                       const value = e.target.value as CardFontSize;
@@ -1933,9 +1994,9 @@ export default function DraftEditorPage() {
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>字体颜色</label>
+                  <label htmlFor="card-field-font-color">字体颜色</label>
                   <div className="color-control">
-                    <select
+                    <select id="card-field-font-color" disabled={!canWrite}
                       value={editingCardStyle.font_color}
                       onChange={e => {
                         const value = e.target.value;
@@ -1944,8 +2005,9 @@ export default function DraftEditorPage() {
                     >
                       {CARD_FONT_COLOR_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                     </select>
-                    <input
+                    <input disabled={!canWrite}
                       type="color"
+                      aria-label="自定义字体颜色"
                       value={editingCardStyle.font_color || getThemeTextColor(editingCard.theme_key)}
                       onChange={e => {
                         const value = e.target.value;
@@ -1955,8 +2017,8 @@ export default function DraftEditorPage() {
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>内容密度</label>
-                  <select
+                  <label htmlFor="card-field-density">内容密度</label>
+                  <select id="card-field-density" disabled={!canWrite}
                     value={editingCardStyle.density}
                     onChange={e => {
                       const value = e.target.value as CardDensity;
@@ -1967,8 +2029,8 @@ export default function DraftEditorPage() {
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>正文分段</label>
-                  <select
+                  <label htmlFor="card-field-body-flow">正文分段</label>
+                  <select id="card-field-body-flow" disabled={!canWrite}
                     value={editingCardStyle.body_flow}
                     onChange={e => {
                       const value = e.target.value as CardBodyFlow;
@@ -1983,7 +2045,7 @@ export default function DraftEditorPage() {
                   <div className="advanced-style-grid">
                     <label>
                       <span>标题字号</span>
-                      <input
+                      <input disabled={!canWrite}
                         type="range"
                         min="70"
                         max="140"
@@ -1997,7 +2059,7 @@ export default function DraftEditorPage() {
                     </label>
                     <label>
                       <span>正文字号</span>
-                      <input
+                      <input disabled={!canWrite}
                         type="range"
                         min="60"
                         max="140"
@@ -2011,7 +2073,7 @@ export default function DraftEditorPage() {
                     </label>
                     <label>
                       <span>正文行高</span>
-                      <input
+                      <input disabled={!canWrite}
                         type="range"
                         min="105"
                         max="180"
@@ -2025,7 +2087,7 @@ export default function DraftEditorPage() {
                     </label>
                     <label>
                       <span>显示段/行</span>
-                      <input
+                      <input disabled={!canWrite}
                         type="number"
                         min="1"
                         max="24"
@@ -2038,7 +2100,7 @@ export default function DraftEditorPage() {
                     </label>
                     <label>
                       <span>单项行数</span>
-                      <input
+                      <input disabled={!canWrite}
                         type="number"
                         min="1"
                         max="8"
@@ -2052,7 +2114,7 @@ export default function DraftEditorPage() {
                   </div>
                 </div>
                 <label className="checkbox-row">
-                  <input
+                  <input disabled={!canWrite}
                     type="checkbox"
                     checked={editingCardStyle.show_highlight}
                     onChange={e => {
@@ -2063,7 +2125,7 @@ export default function DraftEditorPage() {
                   <span>显示强调块</span>
                 </label>
                 <label className="checkbox-row">
-                  <input
+                  <input disabled={!canWrite}
                     type="checkbox"
                     checked={editingCardStyle.show_footer}
                     onChange={e => {
@@ -2073,6 +2135,7 @@ export default function DraftEditorPage() {
                   />
                   <span>显示页脚</span>
                 </label>
+                </div></details>
               </div>
             <div className="card-editor-preview">
               <h3>实时预览</h3>
@@ -2082,12 +2145,12 @@ export default function DraftEditorPage() {
             </div>
           </div>
           <div className="form-actions">
-            <div className="card-edit-toolbar">
+            <details className="editor-card-actions"><summary>复制、拆分与调整顺序</summary><div className="card-edit-toolbar">
               <button
                 type="button"
                 className="btn btn-sm"
                 onClick={() => editingCard && handleDuplicateCard(editingCard)}
-                disabled={!editingCard || isMutatingCards}
+                disabled={!canWrite || (!editingCard || isMutatingCards)}
               >
                 复制当前卡
               </button>
@@ -2095,7 +2158,7 @@ export default function DraftEditorPage() {
                 type="button"
                 className="btn btn-sm"
                 onClick={() => editingCard && handleSplitCard(editingCard)}
-                disabled={!editingCard || isMutatingCards}
+                disabled={!canWrite || (!editingCard || isMutatingCards)}
               >
                 拆分当前卡
               </button>
@@ -2103,7 +2166,7 @@ export default function DraftEditorPage() {
                 type="button"
                 className="btn btn-sm"
                 onClick={() => editingCard && handleMoveCard(editingCard, 'up')}
-                disabled={!editingCard || isMutatingCards}
+                disabled={!canWrite || (!editingCard || isMutatingCards)}
               >
                 上移
               </button>
@@ -2111,7 +2174,7 @@ export default function DraftEditorPage() {
                 type="button"
                 className="btn btn-sm"
                 onClick={() => editingCard && handleMoveCard(editingCard, 'down')}
-                disabled={!editingCard || isMutatingCards}
+                disabled={!canWrite || (!editingCard || isMutatingCards)}
               >
                 下移
               </button>
@@ -2119,7 +2182,7 @@ export default function DraftEditorPage() {
                 type="button"
                 className="btn btn-sm"
                 onClick={() => editingCard && handleCreateCard(editingCard)}
-                disabled={!editingCard || isMutatingCards}
+                disabled={!canWrite || (!editingCard || isMutatingCards)}
               >
                 在后插入新卡
               </button>
@@ -2127,14 +2190,14 @@ export default function DraftEditorPage() {
                 type="button"
                 className="btn btn-sm btn-danger"
                 onClick={() => editingCard && handleDeleteCard(editingCard)}
-                disabled={!editingCard || isMutatingCards}
+                disabled={!canWrite || (!editingCard || isMutatingCards)}
               >
                 删除当前卡
               </button>
-            </div>
+            </div></details>
             <button className="btn" onClick={() => setEditingCard(null)}>取消</button>
             <button className="btn" onClick={() => exportCardToPng(editingCard, cards.length)}>导出 PNG</button>
-            <button className="btn btn-primary" onClick={() => handleSaveCard()} disabled={isMutatingCards}>保存</button>
+            <button className="btn btn-primary" onClick={() => handleSaveCard()} disabled={!canWrite || (isMutatingCards)}>保存</button>
           </div>
         </div>
         </div>

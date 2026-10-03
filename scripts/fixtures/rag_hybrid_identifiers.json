@@ -1,0 +1,20 @@
+{
+  "dataset_id": "hybrid-identifiers-synthetic-v1",
+  "label": "人工编写的中文术语与编号补充集，非生产效果，未用于拟合阈值",
+  "documents": [
+    {"key": "certificate-error", "title": "合成星桥设备：E-401 证书失效", "format": "markdown", "source_uri": "demo://hybrid/e-401", "content": "# 合成星桥设备编号手册\n\nE-401 表示设备证书失效。处理顺序是核对设备时钟、检查证书有效期，再通过管理台重新签发证书。禁止通过删除审计日志绕过校验。此文档描述用于检索实验的虚构设备，不代表真实产品说明。"},
+    {"key": "permission-error", "title": "合成星桥设备：E-403 访问权限不足", "format": "markdown", "source_uri": "demo://hybrid/e-403", "content": "# 合成星桥设备编号手册\n\nE-403 表示调用账号没有访问资源的权限。需要检查账号的组织成员资格及角色，联系组织管理员申请所需权限。重新签发设备证书不能解决角色权限不足。本说明是人为编写的实验资料。"},
+    {"key": "idempotent-orders", "title": "合成订单系统：Idempotency-Key 防止重复订单", "format": "markdown", "source_uri": "demo://hybrid/orders", "content": "# 合成订单服务接口\n\n客户端创建订单时发送 Idempotency-Key 请求头。同一个请求键和相同请求内容在二十四小时内重复提交，服务返回原订单，不再创建第二笔订单。相同请求键配不同内容应报冲突。随机更换请求键不能避免业务上的重复下单。本接口只用于检索实验。"}
+  ],
+  "cases": [
+    {"question": "E-401", "expected_document_keys": ["certificate-error"], "should_refuse": false},
+    {"question": "E-403", "expected_document_keys": ["permission-error"], "should_refuse": false},
+    {"question": "E-401 应该怎么处理？", "expected_document_keys": ["certificate-error"], "should_refuse": false},
+    {"question": "换了证书仍然没有访问资源权限，应该检查什么？", "expected_document_keys": ["permission-error"], "should_refuse": false},
+    {"question": "Idempotency-Key", "expected_document_keys": ["idempotent-orders"], "should_refuse": false},
+    {"question": "用户网络卡顿重复点了购买按钮，怎么防止产生两笔订单？", "expected_document_keys": ["idempotent-orders"], "should_refuse": false},
+    {"question": "同一个请求键换了请求内容会发生什么？", "expected_document_keys": ["idempotent-orders"], "should_refuse": false},
+    {"question": "E-499 的准确处理流程是什么？", "expected_document_keys": [], "should_refuse": true},
+    {"question": "订单自动退款接口的签名算法是什么？", "expected_document_keys": [], "should_refuse": true}
+  ]
+}

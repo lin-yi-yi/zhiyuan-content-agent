@@ -1,0 +1,10 @@
+{
+  "run_id": 2,
+  "status": "awaiting_review",
+  "elapsed_seconds": 21.4,
+  "health_checks": 22,
+  "health_max_ms": 8.72,
+  "draft_id": 2,
+  "steps": 12,
+  "error_message": null
+}
