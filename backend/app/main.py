@@ -10,40 +10,46 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from app import __version__
 from app.core.config import settings
 from app.db.init_db import init_database
 from app.api.routes import health, topics, drafts, cards, publish_logs, reports, models, sources, agent_runs, predictions, v04
 from app.api.routes import knowledge, source_hub, evidence, github_sources, brands, delivery
 from app.api.routes import pilot
 from app.db.session import SessionLocal
+from app.db.runtime_lock import local_database_runtime_lock
 
 @asynccontextmanager
 async def lifespan(app):
     from app.saas.context import is_saas_mode
-    if is_saas_mode():
-        from app.saas.middleware import public_origin
-        from app.saas.store import init_control_db
-        public_origin()
-        from app.saas.routes import organization_limits
-        organization_limits()
-        init_control_db()
-    else:
-        init_database()
-        from app.services.content_growth_agent import recover_interrupted_agent_runs
-        with SessionLocal() as db:
-            recover_interrupted_agent_runs(db)
-    try:
-        yield
-    finally:
-        from app.agent_core.vector_store import close_vector_stores
-        close_vector_stores()
-        from app.saas.store import close_control_db
-        from app.db.session import close_tenant_stores
-        close_tenant_stores()
-        close_control_db()
+    saas = is_saas_mode()
+    # Port binding happens after lifespan startup. Lock before schema/recovery
+    # so another process cannot mark the live owner's tasks as interrupted.
+    with local_database_runtime_lock(settings.DATABASE_URL, enabled=not saas):
+        if saas:
+            from app.saas.middleware import public_origin
+            from app.saas.store import init_control_db
+            public_origin()
+            from app.saas.routes import organization_limits
+            organization_limits()
+            init_control_db()
+        else:
+            init_database()
+            from app.services.content_growth_agent import recover_interrupted_agent_runs
+            with SessionLocal() as db:
+                recover_interrupted_agent_runs(db)
+        try:
+            yield
+        finally:
+            from app.agent_core.vector_store import close_vector_stores
+            close_vector_stores()
+            from app.saas.store import close_control_db
+            from app.db.session import close_tenant_stores
+            close_tenant_stores()
+            close_control_db()
 
 
-app = FastAPI(title=settings.APP_NAME, version="0.10.0", lifespan=lifespan)
+app = FastAPI(title=settings.APP_NAME, version=__version__, lifespan=lifespan)
 
 
 @app.middleware("http")

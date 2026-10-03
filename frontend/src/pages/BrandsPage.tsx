@@ -2,6 +2,7 @@ import {useEffect,useState} from 'react';
 import {api,KnowledgeBase} from '../api/client';
 import {BrandInput,BrandProfile,brandsApi} from '../api/brands';
 import {useWorkspace} from '../components/WorkspaceContext';
+import {brandKnowledgeRoute} from '../utils/navigation';
 import '../styles/brands.css';
 
 const blank:BrandInput={name:'',audience:'',tone:'专业、清楚，避免夸张承诺',prohibited_claims:'',call_to_action:'',knowledge_base_id:0,data_policy:'cloud_allowed',is_active:true};
@@ -32,7 +33,7 @@ export default function BrandsPage({onNavigate,initialBrandId}:{onNavigate:(page
         <div className="form-group"><label htmlFor="brand-name">品牌 / 客户名称</label><input id="brand-name" required maxLength={120} value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="例如：星舟工业设备"/></div>
         <div className="form-group"><label htmlFor="brand-audience">内容主要写给谁</label><textarea id="brand-audience" maxLength={1000} rows={2} value={form.audience} onChange={e=>setForm({...form,audience:e.target.value})} placeholder="例如：需要了解设备选型和维护的采购、工程师"/></div>
         <div className="form-group"><label htmlFor="brand-tone">希望怎么表达</label><textarea id="brand-tone" maxLength={1000} rows={2} value={form.tone} onChange={e=>setForm({...form,tone:e.target.value})}/></div>
-        <div className="form-group"><label htmlFor="brand-kb">这个品牌使用的资料库</label><select id="brand-kb" required value={form.knowledge_base_id||''} onChange={e=>setForm({...form,knowledge_base_id:Number(e.target.value)})}><option value="" disabled>选择资料库</option>{libraries.map(k=><option key={k.id} value={k.id}>{k.name}</option>)}</select><button className="text-action" type="button" onClick={()=>onNavigate('knowledge')}>管理资料库和导入资料 ↗</button></div>
+        <div className="form-group"><label htmlFor="brand-kb">这个品牌使用的资料库</label><select id="brand-kb" required value={form.knowledge_base_id||''} onChange={e=>setForm({...form,knowledge_base_id:Number(e.target.value)})}><option value="" disabled>选择资料库</option>{libraries.map(k=><option key={k.id} value={k.id}>{k.name}</option>)}</select><button className="text-action" type="button" onClick={()=>onNavigate(brandKnowledgeRoute(selected,form.knowledge_base_id))}>管理资料库和导入资料 ↗</button></div>
         <details className="calm-details" open={Boolean(selected)}><summary>内容边界与行动引导</summary>
           <div className="form-group"><label htmlFor="brand-prohibited">禁止出现在交付内容中的表述 · 每行一项</label><textarea id="brand-prohibited" maxLength={2000} rows={3} value={form.prohibited_claims} onChange={e=>setForm({...form,prohibited_claims:e.target.value})} placeholder={'例如：\n百分百有效\n行业第一'}/><p className="subtle">系统在审核时检查原文是否包含这些表述；含义相近的说法仍需人工检查。</p></div>
           <div className="form-group"><label htmlFor="brand-cta">希望读者下一步做什么</label><input id="brand-cta" maxLength={1000} value={form.call_to_action} onChange={e=>setForm({...form,call_to_action:e.target.value})} placeholder="例如：查看产品使用手册，不要求添加私人联系方式"/></div>

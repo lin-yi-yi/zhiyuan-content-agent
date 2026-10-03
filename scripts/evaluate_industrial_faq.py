@@ -34,6 +34,11 @@ def configure_offline(folder):
     })
     for provider in ("DEEPSEEK", "QWEN", "DOUBAO", "KIMI", "OPENAI"):
         os.environ[f"{provider}_API_KEY"] = ""
+    for namespace in ("LANGSMITH", "LANGCHAIN"):
+        os.environ[f"{namespace}_TRACING"] = "false"
+        os.environ[f"{namespace}_TRACING_V2"] = "false"
+        os.environ[f"{namespace}_API_KEY"] = ""
+    os.environ.pop("LANGCHAIN_HANDLER", None)
     for task in ("DEFAULT_LLM", "TOPIC_SCORE", "DRAFT_GENERATION", "CARD_GENERATION", "COMPLIANCE_CHECK"):
         os.environ[f"{task}_PROVIDER"] = "local"
         os.environ[f"{task}_MODEL"] = "local-rule-based-v0"
@@ -276,7 +281,9 @@ def run_evaluation(client, dataset, output):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, default=ROOT / "docs/validation/industrial-faq-evaluation.json")
+    parser.add_argument("--output", type=Path,
+                        default=ROOT / ".data/evaluations/industrial-faq-evaluation.json",
+                        help="报告路径；默认写入 .data/evaluations，不覆盖仓库中的历史验收")
     parser.add_argument("--serve", action="store_true", help="保留临时合成环境供浏览器查看；退出清除数据库")
     parser.add_argument("--port", type=int, default=8772)
     args = parser.parse_args()

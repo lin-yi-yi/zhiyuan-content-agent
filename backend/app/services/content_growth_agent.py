@@ -1322,7 +1322,9 @@ def _set_result(run: AgentRun, key: str, value: Any, db: Session) -> None:
 
 
 def _prune_results_for_retry(result_json: dict[str, Any], failed_key: str) -> dict[str, Any]:
-    keep = {"_request", "workflow"}
+    # The frozen brand/template brief is task input, not a failed-step output.
+    # Keep the original snapshot instead of rereading a later brand revision.
+    keep = {"_request", "workflow", "brief"}
     order = [key for key, _ in STEP_PLAN]
     result_key_by_step = {
         "retrieve_context": "rag_context",

@@ -1,0 +1,37 @@
+# 知源文档导航
+
+当前使用与交接路线面向 **v0.10.1 本地验证版**。版本、分支、最近检查及剩余限制以 [项目状态](project-status.md) 为入口；历史材料保留各自日期与验证范围。
+
+## 第一次使用
+
+1. [项目首页](../README.md)：项目解决什么问题、有哪些边界。
+2. [安装与运行](../SETUP.md)：macOS/Linux、WSL2、本地 SQLite 与可选团队环境。
+3. [当前演示流程](demo-walkthrough.md)：用临时合成工业 FAQ 走通资料、任务、重审和下载。
+4. [工业 FAQ 练习](industrial-faq-practice.md)：亲自运行、解释请求、复现坏例。
+
+## 接管和开发
+
+| 文档 | 何时阅读 |
+| --- | --- |
+| [开发交接指南](../CONTRIBUTING.md) | 改代码前：环境保护、模块入口、检查和交付记录 |
+| [学习指南](learning-guide.md) | 从一次请求学习 RAG、状态机、事务、评测和排错 |
+| [模型调用、重试与费用](model-call-tracing.md) | 核对调用关联、未知用量和费用估算口径 |
+| [SaaS 运维](saas-operations.md) | 单机团队试点、备份恢复与运维约束 |
+| [v0.10 试点计划](v010-pilot-plan.md) | 准备真实授权材料、人员责任和验收口径 |
+
+当前产品入口为「工作台、品牌与资料、内容任务、审核交付、效果复盘」，设置位于侧栏底部。旧文档中的「信源台」对应「品牌与资料 → 发现信源」，「检索与评测」对应「内容任务 → 资料问答」。学习中心不再是当前产品入口；相关材料用于源码学习。
+
+## 实现依据与历史证据
+
+| 类别 | 入口与使用方式 |
+| --- | --- |
+| 当前阶段的验收证据 | 从 [项目状态](project-status.md) 进入对应记录；[P0 工业 FAQ](validation/p0-industrial-faq-2026-10-03.md)、[P1 模型追溯](validation/p1-model-tracing-2026-10-03.md) 保留当时提交、结果和限制 |
+| 资料机制 | [信源核验与入库](source-evidence-workflow.md)、[AIHOT 接入](aihot-source-integration.md)：了解机制和授权边界；旧页面名称按上方映射阅读 |
+| 检索研究 | [v0.8 混合检索实验](research/v08-hybrid-retrieval.md)：保留样本、策略取舍和坏例，不能作为当前整体准确率 |
+| 历史验收 | [v0.8 工作台](validation/v08-workbench-acceptance.md)、[v0.9 商业流程](validation/v09-commercial-workflow-acceptance.md)、[团队试点](validation/saas-pilot-acceptance.md)：按记录中的时间、版本和环境理解 |
+| 产品与市场研究 | [v0.9 商业化计划](v09-commercialization-plan.md)、[中国场景研究](research/v09-china-content-market.md)、[工作流参照](research/v09-content-workflow-benchmarks.md)：决策背景，不等于已实现或已获客 |
+| 早期设计与学习 | `v0.4-agent-architecture.md`、`v0.5-data-loop.md`、`learning-center.md`、`history/`：保留演进语境，不作为当前操作指南 |
+
+`validation/` 存验收记录和报告，`research/` 存带日期的研究，`history/` 存已归档资料。根目录中带旧版本号的设计文档暂留原位置，避免断开旧链接；无需批量搬迁或改写旧结论。
+
+新增证据请写清日期、提交、输入、命令、实际结果与限制；用独立输出文件保留本轮结果。自动测试、浏览器验收、真实模型、客户接受和生产运行是不同证据层次。

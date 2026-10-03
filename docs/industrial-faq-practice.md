@@ -15,7 +15,7 @@ cd /path/to/ai-content-agent
 
 脚本从新建的临时数据库开始执行导入、核验、入库、检索、生成、修改和重审，打印检查结果后保留本机页面。页面地址和任务编号以脚本输出为准；Ctrl+C 结束并清理临时数据。不要用现有 `.data` 中的个人或客户记录做坏例实验。
 
-默认输出位于 `docs/validation/industrial-faq-evaluation.json` 与同名 `.delivery.md`，每次运行会更新；需要保留本轮记录时追加 `--output /tmp/my-industrial-faq.json`。
+默认输出位于 `.data/evaluations/industrial-faq-evaluation.json` 与同名 `.delivery.md`，每次运行会更新本地报告，不覆盖仓库中的历史验收。需要保留多轮记录时追加不同的 `--output /tmp/my-industrial-faq.json`。
 
 本地规则生成用于复现状态和引用行为，不是本地大语言模型。合成脚本结果只能支持对应样本及检查项；语义模型、在线供应商表现和客户内容质量需要分别验证。
 

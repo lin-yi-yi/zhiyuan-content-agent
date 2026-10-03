@@ -18,6 +18,7 @@ venv/
 .pytest_cache/
 *.db-wal
 *.db-shm
+*.runtime.lock
 backend/.coverage
 backend/htmlcov/
 
