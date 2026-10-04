@@ -21,6 +21,7 @@ from test_structured_facts import create_fact, index_fact
 
 VOLTAGE = {"product_model": "合成星桥 XP-24", "parameter": "额定电压 / 直流输入"}
 PRICE = {"product_model": "合成星桥 XP-24", "parameter": "售价"}
+RESPONSE_TIME = {"product_model": "合成星桥 XP-24", "parameter": "售后响应时间"}
 
 
 @pytest.fixture
@@ -70,15 +71,20 @@ def test_required_facts_success_returns_complete_located_structured_excerpt(clie
     assert "synthetic-v1" in result["answer"] and "24 V" in result["answer"]
 
 
-@pytest.mark.parametrize("requirements,missing", [
-    ([PRICE], [PRICE]), ([VOLTAGE, PRICE], [PRICE]),
-    ([{"product_model": "另一品牌 XP-24", "parameter": VOLTAGE["parameter"]}],
+@pytest.mark.parametrize("question,requirements,missing", [
+    ("合成星桥 XP-24 售价是多少？", [PRICE], [PRICE]),
+    ("合成星桥 XP-24 的售后响应时间是几小时？", [RESPONSE_TIME], [RESPONSE_TIME]),
+    ("合成星桥 XP-24 的额定电压和售价是多少？", [VOLTAGE, PRICE], [PRICE]),
+    ("合成星桥 XP-24 的额定电压和售后响应时间是多少？", [VOLTAGE, RESPONSE_TIME], [RESPONSE_TIME]),
+    ("合成星桥 XP-24 的电压、售价和售后响应时间是多少？", [VOLTAGE, PRICE, RESPONSE_TIME], [PRICE, RESPONSE_TIME]),
+    ("另一品牌 XP-24 的额定电压是多少？",
+     [{"product_model": "另一品牌 XP-24", "parameter": VOLTAGE["parameter"]}],
      [{"product_model": "另一品牌 XP-24", "parameter": VOLTAGE["parameter"]}]),
 ])
-def test_related_product_hit_does_not_satisfy_missing_parameter_or_brand(client, monkeypatch, requirements, missing):
+def test_related_product_hit_does_not_satisfy_missing_parameter_or_brand(client, monkeypatch, question, requirements, missing):
     index_fact(client, create_fact(client))
     monkeypatch.setattr(rag_service.llm_router, "get_task_client", lambda *a, **kw: pytest.fail("missing facts must stop before model"))
-    result = query(client, requirements, provider="test-cloud")
+    result = query(client, requirements, query=question, provider="test-cloud")
     assert result["refused"] and result["refusal_reason"] == "missing_structured_facts"
     assert result["answerability"] == "missing_required_facts" and result["missing_facts"] == missing
     assert result["eligible_evidence_count"] > 0

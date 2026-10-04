@@ -1,14 +1,16 @@
 {
   "name": "ai-content-agent-frontend",
   "private": true,
-  "version": "0.10.1",
+  "version": "0.11.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test:request": "node --test tests/request-context.test.mjs",
-    "test:workflow": "node --test tests/draft-navigation.test.mjs tests/metric-snapshot.test.mjs tests/learning-progress.test.mjs tests/workbench-navigation.test.mjs tests/pilot-form.test.mjs"
+    "test:workflow": "node --test tests/draft-navigation.test.mjs tests/metric-snapshot.test.mjs tests/learning-progress.test.mjs tests/workbench-navigation.test.mjs tests/pilot-form.test.mjs tests/rag-facts.test.mjs",
+    "build:e2e": "tsc -b && node e2e/build.mjs",
+    "test:e2e": "npm run build:e2e && playwright test --config=e2e/playwright.config.ts"
   },
   "dependencies": {
     "file-saver": "^2.0.5",
@@ -17,6 +19,7 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@types/file-saver": "^2.0.7",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",

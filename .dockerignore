@@ -13,6 +13,7 @@ frontend/dist
 docs/validation/p0-2026-10-03
 docs/validation/p1-2026-10-03
 docs/validation/*.log
+output/playwright
 
 .env.*
 !.env.example

@@ -5,10 +5,13 @@ import EvidenceProvenance from '../components/EvidenceProvenance';
 import { EvidenceScope, safeEvidenceUrl } from '../api/evidence';
 import { useWorkspace } from '../components/WorkspaceContext';
 import { useAvailableModels } from '../components/useAvailableModels';
+import { parseRagRequiredFacts, ragFactCoverage, RagQuestionScope, selectRagKnowledgeBase } from '../utils/ragFacts';
+import '../styles/ragFacts.css';
 
-type AnswerWithHealth=RagAnswerResponse&{answer_mode?:string;answerability?:string;evidence_health?:{excluded_count:number;expired_count:number;unverified_count:number;untracked_count:number;warnings:string[]}};
-const REFUSAL_LABELS:Record<string,string>={missing_structured_facts:'缺少指定产品参数的核验依据',insufficient_evidence:'可用证据不足',evidence_changed:'证据已变更，请重新检索',invalid_or_insufficient_citations:'引用不足或未通过检查'};
-const COVERAGE_LABELS:Record<string,string>={sufficient:'证据充足',insufficient:'证据不足'};
+type AnswerWithHealth=RagAnswerResponse&{answer_mode?:string;evidence_health?:{excluded_count:number;expired_count:number;unverified_count:number;untracked_count:number;warnings:string[]}};
+const REFUSAL_LABELS:Record<string,string>={missing_structured_facts:'缺少指定产品参数的核验依据',insufficient_evidence:'可用证据不足',evidence_changed:'证据已变更，请重新检索',invalid_or_insufficient_citations:'引用不足或未通过检查',invalid_fact_answer:'回答中的参数声明未通过证据核对'};
+const VALIDATION_LABELS:Record<string,string>={not_assessed:'未评估',matched:'通过',failed:'未通过'};
+const COVERAGE_LABELS:Record<string,string>={sufficient:'达到引用采用门槛',insufficient:'未达到引用采用门槛'};
 const STRATEGY_LABELS:Record<string,string>={semantic_cosine:'语义检索 · 余弦相似度',lexical_overlap:'词项检索 · 词项覆盖',hybrid_bm25_rrf:'双路融合 · BM25 + 向量 + RRF',semantic:'语义检索',lexical:'词项检索',hybrid:'双路融合'};
 const asRecord=(value:unknown):Record<string,unknown>=>value&&typeof value==='object'&&!Array.isArray(value)?value as Record<string,unknown>:{};
 const formatSignal=(value:unknown)=>typeof value==='number'&&Number.isFinite(value)?value.toFixed(4):'未命中';
@@ -36,13 +39,16 @@ export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledge
   const {canWrite}=useWorkspace();
   const {models,modelsError}=useAvailableModels();
   const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([]);
-  const [knowledgeBaseId, setKnowledgeBaseId] = useState<number | null>(null);
+  const [questionScope, setQuestionScope] = useState<RagQuestionScope>({knowledgeBaseId:null,productModel:'',parameters:''});
+  const {knowledgeBaseId,productModel,parameters}=questionScope;
+  const setKnowledgeBaseId=(id:number|null)=>setQuestionScope(previous=>selectRagKnowledgeBase(previous,id));
   const [query, setQuery] = useState('');
   const [topK, setTopK] = useState(5);
   const [retrievalMode,setRetrievalMode]=useState<''|'semantic'|'lexical'|'hybrid'>('');
   const [provider, setProvider] = useState('local');
   const [hits, setHits] = useState<RagSearchHit[]>([]);
   const [answer, setAnswer] = useState<AnswerWithHealth | null>(null);
+  const factCoverage=answer?ragFactCoverage(answer):null;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [resultContext,setResultContext]=useState<{query:string;knowledgeBase:string;strategy:string}|null>(null);
@@ -66,7 +72,7 @@ export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledge
   }, []);
 
   useEffect(()=>{if(models.length)setProvider((models.find(item=>item.is_default)||models.find(item=>item.provider==='local')||models[0]).provider);},[models]);
-  useEffect(()=>{retrievalGeneration.current+=1;setHits([]);setAnswer(null);setResultContext(null);setError('');},[query,retrievalMode,knowledgeBaseId,topK,provider]);
+  useEffect(()=>{retrievalGeneration.current+=1;setHits([]);setAnswer(null);setResultContext(null);setError('');},[query,retrievalMode,knowledgeBaseId,topK,provider,productModel,parameters]);
   const handleSearch = async () => {
     if (!query.trim()) return;
     const generation=++retrievalGeneration.current;
@@ -94,6 +100,9 @@ export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledge
 
   const handleAnswer = async () => {
     if (!query.trim()) return;
+    let requiredFacts;
+    try {requiredFacts=parseRagRequiredFacts(productModel,parameters);}
+    catch(err) {setError(err instanceof Error?err.message:String(err));return;}
     const generation=++retrievalGeneration.current;
     const searchedQuery=query.trim(),searchedKnowledgeBase=knowledgeBases.find(item=>item.id===knowledgeBaseId)?.name||'当前知识库';
     setLoading(true);
@@ -109,6 +118,7 @@ export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledge
         provider,
         top_k: topK,
         retrieval_mode:retrievalMode||undefined,
+        required_facts:requiredFacts,
       });
       if(generation!==retrievalGeneration.current)return;
       setAnswer(result);
@@ -121,7 +131,7 @@ export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledge
 
   return (
     <div>
-      <div className="page-header compact-page-heading"><div><h1>问你的知识库。</h1><p>回答带着出处，资料不足时会明确告诉你。</p></div></div>
+      <div className="page-header compact-page-heading"><div><h1>问你的知识库。</h1><p>回答带着出处；指定必需参数，可逐项检查是否有依据。</p></div></div>
       <p className="subtle" style={{marginBottom:20}}>{status?`当前默认：${status.mode==='hybrid'?'双路融合检索':status.mode==='semantic'?'中文语义检索':'词项检索'}`:statusLoading?'正在读取检索配置…':'尚未取得检索配置'} · 模型生成的回答仍需要核对。</p>
 
       {modelsError&&<div className="feedback error">{modelsError}</div>}
@@ -141,13 +151,26 @@ export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledge
             <label htmlFor="rag-question">你想了解什么？</label>
             <textarea id="rag-question" disabled={loading} placeholder="例如：资料中规定的审核步骤是什么？" rows={4} value={query} onChange={e => setQuery(e.target.value)} />
           </div>
+          <fieldset className="rag-fact-requirements" disabled={loading}>
+            <legend>本次必需参数（可选）</legend>
+            <p id="rag-facts-help" className="subtle">填写型号与所问参数，缺少任意一项已核验依据时拒答。两项留空则不评估参数覆盖；系统不会自动从问题中推断参数。</p>
+            <div className="form-group">
+              <label htmlFor="rag-product-model">产品型号（含品牌）</label>
+              <input id="rag-product-model" value={productModel} maxLength={200} aria-describedby="rag-facts-help" placeholder="例如：合成星桥 XP-24" onChange={e=>setQuestionScope(previous=>({...previous,productModel:e.target.value}))}/>
+            </div>
+            <div className="form-group">
+              <label htmlFor="rag-required-parameters">本次所问参数 · 每行一个，最多 10 项</label>
+              <textarea id="rag-required-parameters" rows={3} value={parameters} aria-describedby="rag-parameters-help" placeholder={'额定电压 / 直流输入\n售价'} onChange={e=>setQuestionScope(previous=>({...previous,parameters:e.target.value}))}/>
+              <p id="rag-parameters-help" className="subtle">可填写资料中尚未登记的参数。名称按资料登记值核对，不自动识别同义词；每项最多 200 字。切换知识库会清空型号和参数。</p>
+            </div>
+          </fieldset>
           <div className="form-group"><label htmlFor="rag-model">回答方式</label><select id="rag-model" disabled={loading} value={provider} onChange={e=>setProvider(e.target.value)}>{models.map(item=><option key={item.provider} value={item.provider}>{item.provider==='local'?'原文摘录 · 无需密钥':item.model||item.provider}</option>)}</select><p className="task-model-hint">{provider==='local'?'摘录相关原文，保留来源。':'将问题和检索到的片段发送给所选模型。'}</p></div>
           <details className="calm-details"><summary>检索设置与实验</summary><div className="form-group"><label htmlFor="rag-strategy">检索策略</label><select id="rag-strategy" disabled={loading} value={retrievalMode} onChange={e=>setRetrievalMode(e.target.value as typeof retrievalMode)}><option value="">跟随系统默认</option><option value="semantic">语义检索 · 理解相近含义</option><option value="hybrid">双路融合 · BM25 + 向量 + RRF</option><option value="lexical">词项检索 · 无需向量</option></select><p className="subtle">双路融合适合比较术语和语义召回；需要已有语义索引，结果不保证优于单路。排序分不代表答案正确率。</p></div><div className="form-group"><label htmlFor="rag-topk">最多展示的证据</label><select id="rag-topk" disabled={loading} value={topK} onChange={e=>setTopK(Number(e.target.value))}><option value={3}>3 条</option><option value={5}>5 条</option><option value={8}>8 条</option></select></div><button className="btn" onClick={handleSearch} disabled={loading||!query.trim()||!knowledgeBaseId}>只查看检索结果</button></details>
           <div className="form-actions">
 
             <button className="btn btn-primary" onClick={handleAnswer} disabled={loading || !query.trim() || !models.length || !knowledgeBaseId}>{loading?'正在查找依据…':'提问 →'}</button>
           </div>
-          {error && <div className="source-rag-status error">{error}</div>}
+          {error && <div className="source-rag-status error" role="alert">{error}</div>}
         </div>
 
         <div className="panel">
@@ -157,13 +180,22 @@ export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledge
           ) : (
             <div className={`rag-answer-box ${answer.refused ? 'refused' : 'ok'}`}>
               <span>{answer.refused ? '已拒答' : answer.answer_mode==='extractive'?'找到相关摘录':'已生成'}</span>
-              {!answer.refused&&answer.answer_mode==='extractive'&&<p className="subtle">摘录模式只返回相关原文，未判断你的全部问题是否有答案；没有登记的参数仍需补充确认。</p>}
+              {!answer.refused&&answer.answer_mode==='extractive'&&<p className="subtle">摘录模式返回资料原文，不调用生成模型；请核对下方参数覆盖和原文的适用条件。</p>}
               <strong>{answer.refused ? REFUSAL_LABELS[answer.refusal_reason||'']||'暂时无法基于现有证据回答' : answer.answer_mode==='extractive'?'原文摘录':'基于证据生成'}</strong>
+              {factCoverage&&<div className="rag-fact-coverage" role="status">
+                <strong>{factCoverage.label}</strong>
+                <p className="subtle">{factCoverage.explanation}</p>
+                {factCoverage.facts.length>0&&<ul>{factCoverage.facts.map((fact,index)=><li key={index}>{fact.product_model} / {fact.parameter}</li>)}</ul>}
+              </div>}
+              {answer.answer_validation&&<div className="rag-fact-validation" role="status">
+                <strong>参数声明核对：{VALIDATION_LABELS[answer.answer_validation.status]||'未评估'}</strong>
+                <p className="subtle">{answer.answer_validation.limitation}</p>
+              </div>}
               <p>{answer.answer}</p>
               <small>
-                证据状态：{COVERAGE_LABELS[String(answer.coverage?.status||'')]||'未确定'} ·
-                证据 {String(answer.coverage?.evidence_count || 0)} 条 ·
-                已附来源，可在下方核对
+                检索片段：{COVERAGE_LABELS[String(answer.coverage?.status||'')]||'未确定'} ·
+                采用门槛内 {String(answer.coverage?.evidence_count || 0)} 条 ·
+                {answer.citations.length>0?'回答来源见下方':'本次未附回答引用'}
               </small>
               {answer.evidence_health&&<details className="evidence-health" role="status"><summary>知识库资料状态</summary><p>排除 {answer.evidence_health.excluded_count} 份 · 过期 {answer.evidence_health.expired_count} 份 · 未核验或已撤销 {answer.evidence_health.unverified_count} 份 · 未登记核验 {answer.evidence_health.untracked_count} 份</p><p>这是整个知识库的状态统计，不表示这些资料都与本问题相关。</p>{answer.evidence_health.warnings?.map((warning,index)=><p key={index}>{warning}</p>)}</details>}
             </div>

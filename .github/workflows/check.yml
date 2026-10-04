@@ -23,3 +23,17 @@ jobs:
       - name: Audit frontend dependencies
         working-directory: frontend
         run: npm audit --audit-level=moderate --registry=https://registry.npmjs.org
+      - name: Install Chromium for browser regression
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Run isolated browser workflow
+        working-directory: frontend
+        run: npm run test:e2e
+      - name: Save synthetic browser evidence
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: browser-regression
+          path: output/playwright/
+          if-no-files-found: ignore
+          retention-days: 7
