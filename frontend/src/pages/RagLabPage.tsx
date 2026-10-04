@@ -7,6 +7,7 @@ import { useWorkspace } from '../components/WorkspaceContext';
 import { useAvailableModels } from '../components/useAvailableModels';
 import { addRagCatalogFact, ragFactCoverage, validateRagFactRows } from '../utils/ragFacts';
 import RagFactCatalogPicker from '../components/RagFactCatalogPicker';
+import QuestionScopeProposal from '../components/QuestionScopeProposal';
 import RequestFailure from '../components/RequestFailure';
 import '../styles/ragFacts.css';
 
@@ -215,6 +216,12 @@ export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledge
           <fieldset className="rag-fact-requirements" disabled={loading}>
             <legend>核对型号和参数（可选）</legend>
             <p id="rag-facts-help" className="subtle">产品参数问题可先列清要求，最多 10 项，可包含多个型号。缺少任一项已核验依据时拒答。留空仍可进行资料问答，但不评估问题是否已完整回答。</p>
+            {knowledgeBaseId&&<QuestionScopeProposal key={JSON.stringify([organization?.id??null,initialScope?.workspace_id??null,knowledgeBaseId,provider])}
+              query={query} organizationId={organization?.id} workspaceId={initialScope?.workspace_id} knowledgeBaseId={knowledgeBaseId}
+              provider={provider} modelLabel={models.find(item=>item.provider===provider)?.model||provider} disabled={loading} onAdd={fact=>{
+                try{updateFacts(addRagCatalogFact(factRows,fact));setError('');}
+                catch(err){setError(err);}
+              }}/>}
             {knowledgeBaseId&&<RagFactCatalogPicker key={`${initialScope?.workspace_id||0}:${knowledgeBaseId}`} knowledgeBaseId={knowledgeBaseId} workspaceId={initialScope?.workspace_id} disabled={loading} onAdd={fact=>{
               try{updateFacts(addRagCatalogFact(factRows,fact));setError('');}
               catch(err){setError(err);}

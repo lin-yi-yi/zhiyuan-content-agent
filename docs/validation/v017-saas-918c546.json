@@ -1,0 +1,1894 @@
+{
+  "started_at": "2026-10-04T15:50:01.598951+00:00",
+  "status": "passed",
+  "runtime": "docker",
+  "stages": {
+    "live_empty_store_backup_refused": {
+      "passed": true,
+      "active_lock_refused": true
+    },
+    "seeded_two_organizations": {
+      "passed": true,
+      "signature": {
+        "schema_version": 1,
+        "organizations": {
+          "owner_a": {
+            "organization_id": "eb8c54ee33f247c7a7f3186c325f1a4c",
+            "documents": [
+              {
+                "document_id": 1,
+                "workspace_id": 1,
+                "knowledge_base_id": 1,
+                "content_hash": "070c309ae4c9a569b86626e15d6cab3b0bc23f143c9a0ecc015f7b202c12f5f2",
+                "chunk_count": 1,
+                "chunk_id": 1,
+                "chunk_hash": "070c309ae4c9a569b86626e15d6cab3b0bc23f143c9a0ecc015f7b202c12f5f2",
+                "embedding_provider": "synthetic",
+                "embedding_model_sha256": "40f732cf9fedb74d3708d4c93f3aaad54d23cc3739481d3b8b2f517c1b6e4b21",
+                "index_fingerprint": "7dfd55df74d863af",
+                "vector_collection": "knowledge_7dfd55df74d863af_3"
+              }
+            ],
+            "searches": {
+              "semantic": [
+                {
+                  "document_id": 1,
+                  "chunk_id": 1,
+                  "chunk_hash": "070c309ae4c9a569b86626e15d6cab3b0bc23f143c9a0ecc015f7b202c12f5f2"
+                }
+              ],
+              "hybrid": [
+                {
+                  "document_id": 1,
+                  "chunk_id": 1,
+                  "chunk_hash": "070c309ae4c9a569b86626e15d6cab3b0bc23f143c9a0ecc015f7b202c12f5f2"
+                }
+              ]
+            },
+            "roles": [
+              "owner",
+              "viewer"
+            ],
+            "usage": {
+              "plan": "trial",
+              "ai_requests": {
+                "used": 1,
+                "reserved": 0,
+                "settled": 1,
+                "remaining": 99,
+                "attempts": 1,
+                "refunded": 0
+              },
+              "documents": {
+                "used": 1,
+                "limit": 200
+              },
+              "members": {
+                "used": 2,
+                "limit": 3
+              }
+            },
+            "recorded_external_model_runs": 0
+          },
+          "owner_b": {
+            "organization_id": "903c70caf26f479d871bd7ccfe2343bf",
+            "documents": [
+              {
+                "document_id": 1,
+                "workspace_id": 1,
+                "knowledge_base_id": 1,
+                "content_hash": "3d321aeccc6f06f84fd59d45a1d30bcbba52a8f65f0803daa3476b3fea4360d5",
+                "chunk_count": 1,
+                "chunk_id": 1,
+                "chunk_hash": "3d321aeccc6f06f84fd59d45a1d30bcbba52a8f65f0803daa3476b3fea4360d5",
+                "embedding_provider": "synthetic",
+                "embedding_model_sha256": "40f732cf9fedb74d3708d4c93f3aaad54d23cc3739481d3b8b2f517c1b6e4b21",
+                "index_fingerprint": "7dfd55df74d863af",
+                "vector_collection": "knowledge_7dfd55df74d863af_3"
+              }
+            ],
+            "searches": {
+              "semantic": [
+                {
+                  "document_id": 1,
+                  "chunk_id": 1,
+                  "chunk_hash": "3d321aeccc6f06f84fd59d45a1d30bcbba52a8f65f0803daa3476b3fea4360d5"
+                }
+              ],
+              "hybrid": [
+                {
+                  "document_id": 1,
+                  "chunk_id": 1,
+                  "chunk_hash": "3d321aeccc6f06f84fd59d45a1d30bcbba52a8f65f0803daa3476b3fea4360d5"
+                }
+              ]
+            },
+            "roles": [
+              "owner"
+            ],
+            "usage": {
+              "plan": "trial",
+              "ai_requests": {
+                "used": 1,
+                "reserved": 0,
+                "settled": 1,
+                "remaining": 99,
+                "attempts": 1,
+                "refunded": 0
+              },
+              "documents": {
+                "used": 1,
+                "limit": 200
+              },
+              "members": {
+                "used": 1,
+                "limit": 3
+              }
+            },
+            "recorded_external_model_runs": 0
+          }
+        },
+        "checks": {
+          "fresh_login": true,
+          "anonymous_rejected": true,
+          "cross_organization_rejected": true,
+          "csrf_rejected": true,
+          "viewer_mutation_rejected": true,
+          "colliding_ids_isolated": true
+        }
+      }
+    },
+    "source_updated_after_snapshot": {
+      "passed": true,
+      "signature": {
+        "schema_version": 1,
+        "organizations": {
+          "owner_a": {
+            "organization_id": "eb8c54ee33f247c7a7f3186c325f1a4c",
+            "documents": [
+              {
+                "document_id": 1,
+                "workspace_id": 1,
+                "knowledge_base_id": 1,
+                "content_hash": "070c309ae4c9a569b86626e15d6cab3b0bc23f143c9a0ecc015f7b202c12f5f2",
+                "chunk_count": 1,
+                "chunk_id": 1,
+                "chunk_hash": "070c309ae4c9a569b86626e15d6cab3b0bc23f143c9a0ecc015f7b202c12f5f2",
+                "embedding_provider": "synthetic",
+                "embedding_model_sha256": "40f732cf9fedb74d3708d4c93f3aaad54d23cc3739481d3b8b2f517c1b6e4b21",
+                "index_fingerprint": "7dfd55df74d863af",
+                "vector_collection": "knowledge_7dfd55df74d863af_3"
+              },
+              {
+                "document_id": 2,
+                "workspace_id": 1,
+                "knowledge_base_id": 1,
+                "content_hash": "dcb5b65570cb06bf5a348ac070bfd9c7932451a55223d8d4f228864a78c685e9",
+                "chunk_count": 1,
+                "chunk_id": 2,
+                "chunk_hash": "dcb5b65570cb06bf5a348ac070bfd9c7932451a55223d8d4f228864a78c685e9",
+                "embedding_provider": "synthetic",
+                "embedding_model_sha256": "40f732cf9fedb74d3708d4c93f3aaad54d23cc3739481d3b8b2f517c1b6e4b21",
+                "index_fingerprint": "7dfd55df74d863af",
+                "vector_collection": "knowledge_7dfd55df74d863af_3"
+              }
+            ],
+            "searches": {
+              "semantic": [
+                {
+                  "document_id": 1,
+                  "chunk_id": 1,
+                  "chunk_hash": "070c309ae4c9a569b86626e15d6cab3b0bc23f143c9a0ecc015f7b202c12f5f2"
+                },
+                {
+                  "document_id": 2,
+                  "chunk_id": 2,
+                  "chunk_hash": "dcb5b65570cb06bf5a348ac070bfd9c7932451a55223d8d4f228864a78c685e9"
+                }
+              ],
+              "hybrid": [
+                {
+                  "document_id": 1,
+                  "chunk_id": 1,
+                  "chunk_hash": "070c309ae4c9a569b86626e15d6cab3b0bc23f143c9a0ecc015f7b202c12f5f2"
+                },
+                {
+                  "document_id": 2,
+                  "chunk_id": 2,
+                  "chunk_hash": "dcb5b65570cb06bf5a348ac070bfd9c7932451a55223d8d4f228864a78c685e9"
+                }
+              ]
+            },
+            "roles": [
+              "owner",
+              "viewer"
+            ],
+            "usage": {
+              "plan": "trial",
+              "ai_requests": {
+                "used": 1,
+                "reserved": 0,
+                "settled": 1,
+                "remaining": 99,
+                "attempts": 1,
+                "refunded": 0
+              },
+              "documents": {
+                "used": 2,
+                "limit": 200
+              },
+              "members": {
+                "used": 2,
+                "limit": 3
+              }
+            },
+            "recorded_external_model_runs": 0
+          },
+          "owner_b": {
+            "organization_id": "903c70caf26f479d871bd7ccfe2343bf",
+            "documents": [
+              {
+                "document_id": 1,
+                "workspace_id": 1,
+                "knowledge_base_id": 1,
+                "content_hash": "3d321aeccc6f06f84fd59d45a1d30bcbba52a8f65f0803daa3476b3fea4360d5",
+                "chunk_count": 1,
+                "chunk_id": 1,
+                "chunk_hash": "3d321aeccc6f06f84fd59d45a1d30bcbba52a8f65f0803daa3476b3fea4360d5",
+                "embedding_provider": "synthetic",
+                "embedding_model_sha256": "40f732cf9fedb74d3708d4c93f3aaad54d23cc3739481d3b8b2f517c1b6e4b21",
+                "index_fingerprint": "7dfd55df74d863af",
+                "vector_collection": "knowledge_7dfd55df74d863af_3"
+              }
+            ],
+            "searches": {
+              "semantic": [
+                {
+                  "document_id": 1,
+                  "chunk_id": 1,
+                  "chunk_hash": "3d321aeccc6f06f84fd59d45a1d30bcbba52a8f65f0803daa3476b3fea4360d5"
+                }
+              ],
+              "hybrid": [
+                {
+                  "document_id": 1,
+                  "chunk_id": 1,
+                  "chunk_hash": "3d321aeccc6f06f84fd59d45a1d30bcbba52a8f65f0803daa3476b3fea4360d5"
+                }
+              ]
+            },
+            "roles": [
+              "owner"
+            ],
+            "usage": {
+              "plan": "trial",
+              "ai_requests": {
+                "used": 1,
+                "reserved": 0,
+                "settled": 1,
+                "remaining": 99,
+                "attempts": 1,
+                "refunded": 0
+              },
+              "documents": {
+                "used": 1,
+                "limit": 200
+              },
+              "members": {
+                "used": 1,
+                "limit": 3
+              }
+            },
+            "recorded_external_model_runs": 0
+          }
+        },
+        "checks": {
+          "fresh_login": true,
+          "anonymous_rejected": true,
+          "cross_organization_rejected": true,
+          "csrf_rejected": true,
+          "viewer_mutation_rejected": true,
+          "colliding_ids_isolated": true
+        }
+      }
+    },
+    "corrupt_archive_refused": {
+      "passed": true,
+      "rejected": true,
+      "reason": "hash_mismatch"
+    },
+    "restored_files_match_manifest": {
+      "passed": true,
+      "matching_files": 7,
+      "vector_files": 4
+    },
+    "existing_destination_refused": {
+      "passed": true,
+      "rejected": true,
+      "reason": "existing_destination"
+    },
+    "original_files_unchanged": {
+      "passed": true,
+      "files": 10,
+      "sha256": "04dbc2eb8f8b4b399a2e1e5174696f2a761350d500489c8845b71f8a8aaa8d47"
+    },
+    "restored_login_queries_roles_usage": {
+      "passed": true,
+      "signature": {
+        "schema_version": 1,
+        "organizations": {
+          "owner_a": {
+            "organization_id": "eb8c54ee33f247c7a7f3186c325f1a4c",
+            "documents": [
+              {
+                "document_id": 1,
+                "workspace_id": 1,
+                "knowledge_base_id": 1,
+                "content_hash": "070c309ae4c9a569b86626e15d6cab3b0bc23f143c9a0ecc015f7b202c12f5f2",
+                "chunk_count": 1,
+                "chunk_id": 1,
+                "chunk_hash": "070c309ae4c9a569b86626e15d6cab3b0bc23f143c9a0ecc015f7b202c12f5f2",
+                "embedding_provider": "synthetic",
+                "embedding_model_sha256": "40f732cf9fedb74d3708d4c93f3aaad54d23cc3739481d3b8b2f517c1b6e4b21",
+                "index_fingerprint": "7dfd55df74d863af",
+                "vector_collection": "knowledge_7dfd55df74d863af_3"
+              }
+            ],
+            "searches": {
+              "semantic": [
+                {
+                  "document_id": 1,
+                  "chunk_id": 1,
+                  "chunk_hash": "070c309ae4c9a569b86626e15d6cab3b0bc23f143c9a0ecc015f7b202c12f5f2"
+                }
+              ],
+              "hybrid": [
+                {
+                  "document_id": 1,
+                  "chunk_id": 1,
+                  "chunk_hash": "070c309ae4c9a569b86626e15d6cab3b0bc23f143c9a0ecc015f7b202c12f5f2"
+                }
+              ]
+            },
+            "roles": [
+              "owner",
+              "viewer"
+            ],
+            "usage": {
+              "plan": "trial",
+              "ai_requests": {
+                "used": 1,
+                "reserved": 0,
+                "settled": 1,
+                "remaining": 99,
+                "attempts": 1,
+                "refunded": 0
+              },
+              "documents": {
+                "used": 1,
+                "limit": 200
+              },
+              "members": {
+                "used": 2,
+                "limit": 3
+              }
+            },
+            "recorded_external_model_runs": 0
+          },
+          "owner_b": {
+            "organization_id": "903c70caf26f479d871bd7ccfe2343bf",
+            "documents": [
+              {
+                "document_id": 1,
+                "workspace_id": 1,
+                "knowledge_base_id": 1,
+                "content_hash": "3d321aeccc6f06f84fd59d45a1d30bcbba52a8f65f0803daa3476b3fea4360d5",
+                "chunk_count": 1,
+                "chunk_id": 1,
+                "chunk_hash": "3d321aeccc6f06f84fd59d45a1d30bcbba52a8f65f0803daa3476b3fea4360d5",
+                "embedding_provider": "synthetic",
+                "embedding_model_sha256": "40f732cf9fedb74d3708d4c93f3aaad54d23cc3739481d3b8b2f517c1b6e4b21",
+                "index_fingerprint": "7dfd55df74d863af",
+                "vector_collection": "knowledge_7dfd55df74d863af_3"
+              }
+            ],
+            "searches": {
+              "semantic": [
+                {
+                  "document_id": 1,
+                  "chunk_id": 1,
+                  "chunk_hash": "3d321aeccc6f06f84fd59d45a1d30bcbba52a8f65f0803daa3476b3fea4360d5"
+                }
+              ],
+              "hybrid": [
+                {
+                  "document_id": 1,
+                  "chunk_id": 1,
+                  "chunk_hash": "3d321aeccc6f06f84fd59d45a1d30bcbba52a8f65f0803daa3476b3fea4360d5"
+                }
+              ]
+            },
+            "roles": [
+              "owner"
+            ],
+            "usage": {
+              "plan": "trial",
+              "ai_requests": {
+                "used": 1,
+                "reserved": 0,
+                "settled": 1,
+                "remaining": 99,
+                "attempts": 1,
+                "refunded": 0
+              },
+              "documents": {
+                "used": 1,
+                "limit": 200
+              },
+              "members": {
+                "used": 1,
+                "limit": 3
+              }
+            },
+            "recorded_external_model_runs": 0
+          }
+        },
+        "checks": {
+          "fresh_login": true,
+          "anonymous_rejected": true,
+          "cross_organization_rejected": true,
+          "csrf_rejected": true,
+          "viewer_mutation_rejected": true,
+          "colliding_ids_isolated": true
+        }
+      }
+    },
+    "original_retains_new_document": {
+      "passed": true,
+      "signature": {
+        "schema_version": 1,
+        "organizations": {
+          "owner_a": {
+            "organization_id": "eb8c54ee33f247c7a7f3186c325f1a4c",
+            "documents": [
+              {
+                "document_id": 1,
+                "workspace_id": 1,
+                "knowledge_base_id": 1,
+                "content_hash": "070c309ae4c9a569b86626e15d6cab3b0bc23f143c9a0ecc015f7b202c12f5f2",
+                "chunk_count": 1,
+                "chunk_id": 1,
+                "chunk_hash": "070c309ae4c9a569b86626e15d6cab3b0bc23f143c9a0ecc015f7b202c12f5f2",
+                "embedding_provider": "synthetic",
+                "embedding_model_sha256": "40f732cf9fedb74d3708d4c93f3aaad54d23cc3739481d3b8b2f517c1b6e4b21",
+                "index_fingerprint": "7dfd55df74d863af",
+                "vector_collection": "knowledge_7dfd55df74d863af_3"
+              },
+              {
+                "document_id": 2,
+                "workspace_id": 1,
+                "knowledge_base_id": 1,
+                "content_hash": "dcb5b65570cb06bf5a348ac070bfd9c7932451a55223d8d4f228864a78c685e9",
+                "chunk_count": 1,
+                "chunk_id": 2,
+                "chunk_hash": "dcb5b65570cb06bf5a348ac070bfd9c7932451a55223d8d4f228864a78c685e9",
+                "embedding_provider": "synthetic",
+                "embedding_model_sha256": "40f732cf9fedb74d3708d4c93f3aaad54d23cc3739481d3b8b2f517c1b6e4b21",
+                "index_fingerprint": "7dfd55df74d863af",
+                "vector_collection": "knowledge_7dfd55df74d863af_3"
+              }
+            ],
+            "searches": {
+              "semantic": [
+                {
+                  "document_id": 1,
+                  "chunk_id": 1,
+                  "chunk_hash": "070c309ae4c9a569b86626e15d6cab3b0bc23f143c9a0ecc015f7b202c12f5f2"
+                },
+                {
+                  "document_id": 2,
+                  "chunk_id": 2,
+                  "chunk_hash": "dcb5b65570cb06bf5a348ac070bfd9c7932451a55223d8d4f228864a78c685e9"
+                }
+              ],
+              "hybrid": [
+                {
+                  "document_id": 1,
+                  "chunk_id": 1,
+                  "chunk_hash": "070c309ae4c9a569b86626e15d6cab3b0bc23f143c9a0ecc015f7b202c12f5f2"
+                },
+                {
+                  "document_id": 2,
+                  "chunk_id": 2,
+                  "chunk_hash": "dcb5b65570cb06bf5a348ac070bfd9c7932451a55223d8d4f228864a78c685e9"
+                }
+              ]
+            },
+            "roles": [
+              "owner",
+              "viewer"
+            ],
+            "usage": {
+              "plan": "trial",
+              "ai_requests": {
+                "used": 1,
+                "reserved": 0,
+                "settled": 1,
+                "remaining": 99,
+                "attempts": 1,
+                "refunded": 0
+              },
+              "documents": {
+                "used": 2,
+                "limit": 200
+              },
+              "members": {
+                "used": 2,
+                "limit": 3
+              }
+            },
+            "recorded_external_model_runs": 0
+          },
+          "owner_b": {
+            "organization_id": "903c70caf26f479d871bd7ccfe2343bf",
+            "documents": [
+              {
+                "document_id": 1,
+                "workspace_id": 1,
+                "knowledge_base_id": 1,
+                "content_hash": "3d321aeccc6f06f84fd59d45a1d30bcbba52a8f65f0803daa3476b3fea4360d5",
+                "chunk_count": 1,
+                "chunk_id": 1,
+                "chunk_hash": "3d321aeccc6f06f84fd59d45a1d30bcbba52a8f65f0803daa3476b3fea4360d5",
+                "embedding_provider": "synthetic",
+                "embedding_model_sha256": "40f732cf9fedb74d3708d4c93f3aaad54d23cc3739481d3b8b2f517c1b6e4b21",
+                "index_fingerprint": "7dfd55df74d863af",
+                "vector_collection": "knowledge_7dfd55df74d863af_3"
+              }
+            ],
+            "searches": {
+              "semantic": [
+                {
+                  "document_id": 1,
+                  "chunk_id": 1,
+                  "chunk_hash": "3d321aeccc6f06f84fd59d45a1d30bcbba52a8f65f0803daa3476b3fea4360d5"
+                }
+              ],
+              "hybrid": [
+                {
+                  "document_id": 1,
+                  "chunk_id": 1,
+                  "chunk_hash": "3d321aeccc6f06f84fd59d45a1d30bcbba52a8f65f0803daa3476b3fea4360d5"
+                }
+              ]
+            },
+            "roles": [
+              "owner"
+            ],
+            "usage": {
+              "plan": "trial",
+              "ai_requests": {
+                "used": 1,
+                "reserved": 0,
+                "settled": 1,
+                "remaining": 99,
+                "attempts": 1,
+                "refunded": 0
+              },
+              "documents": {
+                "used": 1,
+                "limit": 200
+              },
+              "members": {
+                "used": 1,
+                "limit": 3
+              }
+            },
+            "recorded_external_model_runs": 0
+          }
+        },
+        "checks": {
+          "fresh_login": true,
+          "anonymous_rejected": true,
+          "cross_organization_rejected": true,
+          "csrf_rejected": true,
+          "viewer_mutation_rejected": true,
+          "colliding_ids_isolated": true
+        }
+      }
+    }
+  },
+  "isolation": {
+    "sample_origin": "synthetic",
+    "embedding": "synthetic-constant-3d",
+    "vector_store": "real-qdrant-local",
+    "generation": "local-rules",
+    "runtime_network_guard": "docker-network-none",
+    "http_access": "docker-exec-loopback",
+    "docker_published_ports": [],
+    "host_bind_mounts": []
+  },
+  "limits": [
+    "Same candidate image/source only; not cross-version upgrade or downgrade.",
+    "Synthetic vectors validate persistence and isolation, not BGE downloads, cache or semantic quality.",
+    "New login works after restoring the control database; old sessions are not claimed revoked.",
+    "No production data, paid models, public TLS, Compose, capacity or customer acceptance.",
+    "Docker builds need public registry network; local mode uses the current Python environment."
+  ],
+  "cost": {
+    "provider_invoice_amount": null,
+    "model_tokens": null
+  },
+  "candidate": {
+    "commit": "918c5465c3e2927d41156e38915511bd86e9047c",
+    "source": "working_tree",
+    "build_context_sha256": "d559e2288904c83e985729d8db1300591d37ea9b2d1cd73d61758af8d328c763",
+    "file_count": 316,
+    "image_id": "sha256:a8de4928b4f0c3ed843e07549701e308af2f191660ebf680bf5b5a07549b30ed",
+    "docker_version": "28.0.4",
+    "health": {
+      "status": "ok",
+      "app": "知源合成恢复夹具",
+      "version": "0.17.0",
+      "scope": "saas-single-host-pilot"
+    }
+  },
+  "source_isolation": {
+    "fixture_mode": "synthetic_recovery",
+    "health_mode": "saas",
+    "process_uid": 1000,
+    "embedding_provider": "synthetic",
+    "embedding_model": "zhiyuan-recovery-synthetic-3d-v1",
+    "embedding_dimension": 3,
+    "generation_provider": "local",
+    "tenant_count": 2,
+    "total_external_calls": 0,
+    "local_model_run_count": 2,
+    "external_call_count_basis": "persisted_nonlocal_model_runs",
+    "outbound_guard": "python_socket_connect_dns_and_sendto",
+    "semantic_quality_evaluated": false,
+    "dotenv_disabled": true,
+    "pricing_configured": false,
+    "vector_stores": [
+      {
+        "organization_id": "903c70caf26f479d871bd7ccfe2343bf",
+        "relative_path": "tenants/903c70caf26f479d871bd7ccfe2343bf/vectors",
+        "opened": true
+      },
+      {
+        "organization_id": "eb8c54ee33f247c7a7f3186c325f1a4c",
+        "relative_path": "tenants/eb8c54ee33f247c7a7f3186c325f1a4c/vectors",
+        "opened": true
+      }
+    ],
+    "outbound_connection_attempts": 0,
+    "embedding_calls": 6,
+    "embedded_text_count": 6
+  },
+  "backup": {
+    "files": 7,
+    "bytes": 459870
+  },
+  "archive": {
+    "files": 7,
+    "bytes": 459870,
+    "vector_files": 4,
+    "vector_organizations": 2,
+    "archive_sha256": "6290ece4d9987f8c41c9b4ea528ed30530c46a523a14eb375f5ad2d451ff9792"
+  },
+  "restore": {
+    "files": 7
+  },
+  "restored_isolation": {
+    "fixture_mode": "synthetic_recovery",
+    "health_mode": "saas",
+    "process_uid": 1000,
+    "embedding_provider": "synthetic",
+    "embedding_model": "zhiyuan-recovery-synthetic-3d-v1",
+    "embedding_dimension": 3,
+    "generation_provider": "local",
+    "tenant_count": 2,
+    "total_external_calls": 0,
+    "local_model_run_count": 2,
+    "external_call_count_basis": "persisted_nonlocal_model_runs",
+    "outbound_guard": "python_socket_connect_dns_and_sendto",
+    "semantic_quality_evaluated": false,
+    "dotenv_disabled": true,
+    "pricing_configured": false,
+    "vector_stores": [
+      {
+        "organization_id": "903c70caf26f479d871bd7ccfe2343bf",
+        "relative_path": "tenants/903c70caf26f479d871bd7ccfe2343bf/vectors",
+        "opened": true
+      },
+      {
+        "organization_id": "eb8c54ee33f247c7a7f3186c325f1a4c",
+        "relative_path": "tenants/eb8c54ee33f247c7a7f3186c325f1a4c/vectors",
+        "opened": true
+      }
+    ],
+    "outbound_connection_attempts": 0,
+    "embedding_calls": 4,
+    "embedded_text_count": 4
+  },
+  "shutdown": {
+    "source": "lifespan_completed",
+    "restored": "lifespan_completed"
+  },
+  "cleanup": {
+    "errors": [],
+    "scope": "only resources labelled with this run ID; build cache is retained"
+  },
+  "command_trace": [
+    {
+      "operation": "context inspect",
+      "exit_code": 0,
+      "elapsed_ms": 100.2
+    },
+    {
+      "operation": "info --format",
+      "exit_code": 0,
+      "elapsed_ms": 270.75
+    },
+    {
+      "operation": "version --format",
+      "exit_code": 0,
+      "elapsed_ms": 19.47
+    },
+    {
+      "operation": "build --label",
+      "exit_code": 0,
+      "elapsed_ms": 35558.48
+    },
+    {
+      "operation": "image inspect",
+      "exit_code": 0,
+      "elapsed_ms": 14.44
+    },
+    {
+      "operation": "volume create",
+      "exit_code": 0,
+      "elapsed_ms": 14.44
+    },
+    {
+      "operation": "volume create",
+      "exit_code": 0,
+      "elapsed_ms": 13.55
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 264.8
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 194.11
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 106.46
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 127.83
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 134.16
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 129.34
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 137.91
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 130.0
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 135.03
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 130.18
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 138.97
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 127.83
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 203.22
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 2,
+      "elapsed_ms": 195.87
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 121.95
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 486.12
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 466.68
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 140.44
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 477.09
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 1495.65
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 146.57
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 207.88
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 135.56
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 121.17
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 464.5
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 465.02
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 469.59
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 126.16
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 123.42
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 124.75
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 128.89
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 121.67
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 131.98
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 125.95
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 130.41
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 128.89
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 139.39
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 141.78
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 130.29
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 130.83
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 129.72
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 135.19
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 131.04
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 137.08
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 139.02
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 129.02
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 127.83
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 131.11
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 129.95
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 132.26
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 125.78
+    },
+    {
+      "operation": "stop --time",
+      "exit_code": 0,
+      "elapsed_ms": 826.69
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 15.94
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 13.91
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 222.53
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 240.09
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 101.11
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 133.01
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 131.67
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 141.3
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 126.46
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 125.36
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 141.65
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 128.19
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 139.71
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 126.59
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 205.42
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 475.76
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 1462.53
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 121.62
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 471.29
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 462.93
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 462.74
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 126.6
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 121.76
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 124.44
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 126.9
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 121.64
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 137.23
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 141.45
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 131.16
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 126.52
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 143.04
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 135.93
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 138.78
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 129.84
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 129.42
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 127.23
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 134.97
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 130.47
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 146.36
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 134.25
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 127.99
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 126.67
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 128.31
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 130.1
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 130.03
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 129.92
+    },
+    {
+      "operation": "stop --time",
+      "exit_code": 0,
+      "elapsed_ms": 767.64
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 15.37
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 14.1
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 241.31
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 245.12
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 2,
+      "elapsed_ms": 190.22
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 240.56
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 193.13
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 243.27
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 244.57
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 2,
+      "elapsed_ms": 188.14
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 243.94
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 238.16
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 109.03
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 136.95
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 131.32
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 129.61
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 136.7
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 134.46
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 126.79
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 122.21
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 122.84
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 129.46
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 205.24
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 123.95
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 481.14
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 459.14
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 461.4
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 122.17
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 118.78
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 118.39
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 127.26
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 120.66
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 161.9
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 136.89
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 135.88
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 125.72
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 1386.07
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 135.28
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 127.73
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 128.5
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 124.69
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 136.71
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 127.52
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 144.48
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 132.5
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 126.49
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 127.59
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 131.07
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 132.67
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 132.8
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 129.18
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 106.7
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 162.82
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 139.66
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 135.08
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 140.61
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 128.92
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 129.77
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 122.78
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 129.19
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 130.24
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 198.9
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 122.85
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 479.2
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 463.97
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 464.85
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 130.01
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 123.88
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 119.83
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 120.11
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 121.71
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 171.49
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 141.42
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 140.61
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 129.52
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 128.38
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 1393.11
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 135.96
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 126.03
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 129.87
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 129.98
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 136.19
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 127.89
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 141.97
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 135.92
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 126.15
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 126.01
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 124.86
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 127.77
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 126.91
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 125.27
+    },
+    {
+      "operation": "private HTTP probe",
+      "elapsed_ms": 123.98
+    },
+    {
+      "operation": "stop --time",
+      "exit_code": 0,
+      "elapsed_ms": 835.68
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 15.92
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 14.13
+    },
+    {
+      "operation": "stop --time",
+      "exit_code": 0,
+      "elapsed_ms": 817.93
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 14.33
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 14.71
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 14.04
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 13.71
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 14.23
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 14.37
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 14.43
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 14.04
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 14.37
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 13.84
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 14.25
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 13.59
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 13.58
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 14.21
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 13.53
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 14.28
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 14.06
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 14.21
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 13.9
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 14.25
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 14.15
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.83
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 17.68
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.5
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 16.96
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 14.03
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 28.04
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.66
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 17.14
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.5
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 16.86
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.44
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 17.04
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.52
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 31.31
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.66
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 17.79
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.41
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 17.12
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.9
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 20.07
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.73
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 17.5
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.46
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 17.46
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 14.16
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 17.99
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 14.03
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 17.58
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.78
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 17.42
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.44
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 17.71
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.37
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 19.58
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.49
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 27.86
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.67
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 30.44
+    },
+    {
+      "operation": "volume inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.35
+    },
+    {
+      "operation": "volume rm",
+      "exit_code": 0,
+      "elapsed_ms": 16.3
+    },
+    {
+      "operation": "volume inspect",
+      "exit_code": 0,
+      "elapsed_ms": 12.86
+    },
+    {
+      "operation": "volume rm",
+      "exit_code": 0,
+      "elapsed_ms": 15.56
+    },
+    {
+      "operation": "image inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.69
+    },
+    {
+      "operation": "image rm",
+      "exit_code": 0,
+      "elapsed_ms": 15.43
+    }
+  ],
+  "elapsed_ms": 83565.26
+}

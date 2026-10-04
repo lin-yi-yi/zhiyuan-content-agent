@@ -643,6 +643,39 @@ export interface RequiredFact {
   parameter: string;
 }
 
+export type QuestionScopeProvider = 'deepseek' | 'qwen' | 'doubao' | 'kimi';
+export type QuestionScopeMethod = 'rules' | 'model';
+export interface QuestionScopeRequest {
+  query: string;
+  workspace_id?: number;
+  knowledge_base_id?: number;
+  method: QuestionScopeMethod;
+  provider?: QuestionScopeProvider;
+  model?: string;
+}
+export interface QuestionScopeSpan { start: number; end: number; text: string }
+export interface QuestionScopeCandidate extends RequiredFact {
+  product_span: QuestionScopeSpan;
+  parameter_span: QuestionScopeSpan;
+}
+export type QuestionScopeIssueCode = 'missing_product' | 'missing_parameter' | 'ambiguous_binding' | 'negation' | 'unsupported_question' | 'too_many_requirements';
+export interface QuestionScopeProposal {
+  schema_version: 1;
+  query_hash: string;
+  method: QuestionScopeMethod;
+  parser_version: 'rules_v1' | 'model_structured_v1';
+  offset_unit: 'unicode_codepoint';
+  provider: QuestionScopeProvider | null;
+  model: string | null;
+  workspace_id: number;
+  knowledge_base_id: number;
+  status: 'proposed' | 'needs_clarification';
+  candidates: QuestionScopeCandidate[];
+  issues: Array<{code: QuestionScopeIssueCode; span: QuestionScopeSpan}>;
+  requires_confirmation: true;
+  requirements_complete: false;
+}
+
 export interface RagFactCatalogItem extends RequiredFact {
   evidence: Array<{document_id: number; chunk_id: number; source_url: string; locator: string; version_label: string}>;
 }
@@ -948,6 +981,9 @@ export const api = {
 
   answerWithRag: (body: RagAnswerRequest) =>
     request<RagAnswerResponse>('/api/v04/rag/answer', { method: 'POST', body: JSON.stringify(body) }),
+
+  proposeQuestionScope: (body: QuestionScopeRequest, signal?: AbortSignal) =>
+    request<QuestionScopeProposal>('/api/v04/rag/question-scope', {method: 'POST', body: JSON.stringify(body), signal}),
 
   ragFactCatalog: (knowledgeBaseId: number, workspaceId?: number, offset = 0, signal?: AbortSignal) => {
     const params = new URLSearchParams({knowledge_base_id: String(knowledgeBaseId), offset: String(offset), limit: '20'});

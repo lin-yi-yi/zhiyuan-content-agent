@@ -1,0 +1,420 @@
+{
+  "dataset_id": "question_scope_v1",
+  "annotations": [
+    {
+      "id": "qs-01",
+      "expected_status": "proposed",
+      "expected_pairs": [
+        {
+          "product_model": "合成岚屿 LY-40",
+          "parameter": "电压"
+        }
+      ],
+      "acceptable_issue_codes": [],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-02",
+      "expected_status": "proposed",
+      "expected_pairs": [
+        {
+          "product_model": "合成岚屿 LY-41",
+          "parameter": "材质"
+        }
+      ],
+      "acceptable_issue_codes": [],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-03",
+      "expected_status": "proposed",
+      "expected_pairs": [
+        {
+          "product_model": "合成岚屿 LY-40",
+          "parameter": "额定电流"
+        }
+      ],
+      "acceptable_issue_codes": [],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-04",
+      "expected_status": "proposed",
+      "expected_pairs": [
+        {
+          "product_model": "合成泊舟 BZ-7",
+          "parameter": "防护等级"
+        },
+        {
+          "product_model": "合成泊舟 BZ-7",
+          "parameter": "工作温度"
+        }
+      ],
+      "acceptable_issue_codes": [],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-05",
+      "expected_status": "proposed",
+      "expected_pairs": [
+        {
+          "product_model": "合成陌川 MC-999",
+          "parameter": "电压"
+        }
+      ],
+      "acceptable_issue_codes": [],
+      "grammar_scope": "supported",
+      "rationale": "陌生型号仍保留原文，不用资料目录补成已知型号。"
+    },
+    {
+      "id": "qs-06",
+      "expected_status": "proposed",
+      "expected_pairs": [
+        {
+          "product_model": "合成未登记 Ω-404",
+          "parameter": "流量"
+        }
+      ],
+      "acceptable_issue_codes": [],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-07",
+      "expected_status": "proposed",
+      "expected_pairs": [
+        {
+          "product_model": "合成岚屿 LY-40",
+          "parameter": "单价"
+        }
+      ],
+      "acceptable_issue_codes": [],
+      "grammar_scope": "supported",
+      "rationale": "问题范围包含可能没有资料的参数，不由目录过滤。"
+    },
+    {
+      "id": "qs-08",
+      "expected_status": "proposed",
+      "expected_pairs": [
+        {
+          "product_model": "合成岚屿 LY-41",
+          "parameter": "响应时间"
+        }
+      ],
+      "acceptable_issue_codes": [],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-09",
+      "expected_status": "proposed",
+      "expected_pairs": [
+        {
+          "product_model": "合成岚屿 LY-40",
+          "parameter": "电压"
+        },
+        {
+          "product_model": "合成岚屿 LY-40",
+          "parameter": "单价"
+        }
+      ],
+      "acceptable_issue_codes": [],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-10",
+      "expected_status": "proposed",
+      "expected_pairs": [
+        {
+          "product_model": "合成岚屿 LY-41",
+          "parameter": "流量"
+        },
+        {
+          "product_model": "合成岚屿 LY-41",
+          "parameter": "响应时间"
+        }
+      ],
+      "acceptable_issue_codes": [],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-11",
+      "expected_status": "proposed",
+      "expected_pairs": [
+        {
+          "product_model": "合成岚屿 LY-40",
+          "parameter": "电压"
+        },
+        {
+          "product_model": "合成岚屿 LY-40",
+          "parameter": "流量"
+        },
+        {
+          "product_model": "合成岚屿 LY-40",
+          "parameter": "报价有效期"
+        }
+      ],
+      "acceptable_issue_codes": [],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-12",
+      "expected_status": "proposed",
+      "expected_pairs": [
+        {
+          "product_model": "合成岚屿 LY-40",
+          "parameter": "电压"
+        },
+        {
+          "product_model": "合成岚屿 LY-41",
+          "parameter": "流量"
+        }
+      ],
+      "acceptable_issue_codes": [],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-13",
+      "expected_status": "proposed",
+      "expected_pairs": [
+        {
+          "product_model": "合成岚屿 LY-40",
+          "parameter": "电压"
+        },
+        {
+          "product_model": "合成泊舟 BZ-7",
+          "parameter": "材质"
+        }
+      ],
+      "acceptable_issue_codes": [],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-14",
+      "expected_status": "needs_clarification",
+      "expected_pairs": null,
+      "acceptable_issue_codes": [
+        "ambiguous_binding"
+      ],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-15",
+      "expected_status": "needs_clarification",
+      "expected_pairs": null,
+      "acceptable_issue_codes": [
+        "ambiguous_binding"
+      ],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-16",
+      "expected_status": "needs_clarification",
+      "expected_pairs": null,
+      "acceptable_issue_codes": [
+        "negation"
+      ],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-17",
+      "expected_status": "needs_clarification",
+      "expected_pairs": null,
+      "acceptable_issue_codes": [
+        "negation"
+      ],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-18",
+      "expected_status": "needs_clarification",
+      "expected_pairs": null,
+      "acceptable_issue_codes": [
+        "missing_product",
+        "ambiguous_binding"
+      ],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-19",
+      "expected_status": "needs_clarification",
+      "expected_pairs": null,
+      "acceptable_issue_codes": [
+        "missing_parameter",
+        "ambiguous_binding"
+      ],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-20",
+      "expected_status": "needs_clarification",
+      "expected_pairs": null,
+      "acceptable_issue_codes": [
+        "missing_product",
+        "unsupported_question"
+      ],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-21",
+      "expected_status": "proposed",
+      "expected_pairs": [
+        {
+          "product_model": "合成岚屿 ＬＹ－４０",
+          "parameter": "电压"
+        }
+      ],
+      "acceptable_issue_codes": [],
+      "grammar_scope": "supported",
+      "rationale": "全角原文不得自行规范化成 ASCII。"
+    },
+    {
+      "id": "qs-22",
+      "expected_status": "proposed",
+      "expected_pairs": [
+        {
+          "product_model": "合成🔬岚屿 LY-40",
+          "parameter": "启动时间⏱️"
+        }
+      ],
+      "acceptable_issue_codes": [],
+      "grammar_scope": "supported",
+      "rationale": "emoji 和 variation selector 按 Unicode codepoint 定位，不按 UTF-16。"
+    },
+    {
+      "id": "qs-23",
+      "expected_status": "proposed",
+      "expected_pairs": [
+        {
+          "product_model": "合成Café CF-2",
+          "parameter": "输入电压"
+        }
+      ],
+      "acceptable_issue_codes": [],
+      "grammar_scope": "supported",
+      "rationale": "组合字符不得 NFC 改写，跨度使用原始 codepoint。"
+    },
+    {
+      "id": "qs-24",
+      "expected_status": "proposed",
+      "expected_pairs": [
+        {
+          "product_model": "合成𠮷野 JY-3",
+          "parameter": "峰值电流"
+        }
+      ],
+      "acceptable_issue_codes": [],
+      "grammar_scope": "supported",
+      "rationale": "非 BMP 字符只计一个 codepoint。"
+    },
+    {
+      "id": "qs-25",
+      "expected_status": "needs_clarification",
+      "expected_pairs": null,
+      "acceptable_issue_codes": [
+        "unsupported_question",
+        "ambiguous_binding"
+      ],
+      "grammar_scope": "supported",
+      "rationale": "尾部指令不授权更改原文型号，不把它当系统指令。"
+    },
+    {
+      "id": "qs-26",
+      "expected_status": "needs_clarification",
+      "expected_pairs": null,
+      "acceptable_issue_codes": [
+        "unsupported_question",
+        "missing_product"
+      ],
+      "grammar_scope": "supported",
+      "rationale": "用户问题不能取消人工确认。"
+    },
+    {
+      "id": "qs-27",
+      "expected_status": "needs_clarification",
+      "expected_pairs": null,
+      "acceptable_issue_codes": [
+        "unsupported_question",
+        "ambiguous_binding"
+      ],
+      "grammar_scope": "supported",
+      "rationale": "越权指令不执行；混杂指令需澄清。"
+    },
+    {
+      "id": "qs-28",
+      "expected_status": "needs_clarification",
+      "expected_pairs": null,
+      "acceptable_issue_codes": [
+        "ambiguous_binding"
+      ],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-29",
+      "expected_status": "needs_clarification",
+      "expected_pairs": null,
+      "acceptable_issue_codes": [
+        "ambiguous_binding"
+      ],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-30",
+      "expected_status": "needs_clarification",
+      "expected_pairs": null,
+      "acceptable_issue_codes": [
+        "too_many_requirements"
+      ],
+      "grammar_scope": "supported",
+      "rationale": ""
+    },
+    {
+      "id": "qs-31",
+      "expected_status": "proposed",
+      "expected_pairs": [
+        {
+          "product_model": "合成岚屿 LY-40",
+          "parameter": "输入电压"
+        }
+      ],
+      "acceptable_issue_codes": [],
+      "grammar_scope": "outside_rules_v1",
+      "rationale": "语义明确但超出已承诺模板；保留为有限规则覆盖坏例，不改标注使报告全绿。"
+    },
+    {
+      "id": "qs-32",
+      "expected_status": "proposed",
+      "expected_pairs": [
+        {
+          "product_model": "合成岚屿 LY-41",
+          "parameter": "流量"
+        },
+        {
+          "product_model": "合成岚屿 LY-41",
+          "parameter": "单价"
+        }
+      ],
+      "acceptable_issue_codes": [],
+      "grammar_scope": "outside_rules_v1",
+      "rationale": "同义句的范围标注是人工待复核假设，不代表规则已具备自然语言理解。"
+    }
+  ]
+}

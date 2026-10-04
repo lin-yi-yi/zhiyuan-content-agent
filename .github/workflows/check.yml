@@ -20,6 +20,19 @@ jobs:
         run: ./scripts/setup.sh
       - name: Run backend and frontend checks
         run: ./scripts/check.sh
+      - name: Record question-only proposal evaluation (quality limits remain in report)
+        run: >-
+          .venv/bin/python scripts/evaluate_question_scope.py
+          --output .data/validation/question-scope/report.json
+      - name: Save synthetic question-scope evidence
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: question-scope-evaluation
+          path: .data/validation/question-scope/
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Verify private diagnostics through isolated processes
         run: >-
           .venv/bin/python scripts/diagnostic_smoke.py
@@ -63,7 +76,7 @@ jobs:
       - name: Verify container upgrade and snapshot rollback
         run: >-
           python scripts/container_smoke.py
-          --baseline-ref e91d14bb40e490232cbe057f8535f0681bbeef5d
+          --baseline-ref 7f4f1de1b67021cb5f7133a040986d232243060d
           --output .data/validation/container-smoke/report.json
       - name: Save synthetic container evidence
         if: always()

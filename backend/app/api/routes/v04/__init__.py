@@ -1,13 +1,17 @@
 """Backward-compatible foundation endpoints for the current local workbench."""
 from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from fastapi.routing import APIRoute
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy.orm import Session
 
 from app.agent_core.boundaries import (
     get_default_workspace,
     get_knowledge_base_or_default,
     list_capabilities,
+    require_capability,
     workspace_context,
 )
 from app.agent_core.langchain_adapter import framework_status
@@ -50,6 +54,31 @@ class RagAnswerRequest(RagSearchRequest):
     provider: str = "local"
     model: str = ""
     required_facts: RequiredFacts = Field(default_factory=list)
+
+
+class QuestionScopeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    # Keep the original string: proposal offsets refer to its Unicode code points.
+    query: str = Field(min_length=1, max_length=1000)
+    workspace_id: int | None = Field(None, ge=1)
+    knowledge_base_id: int | None = Field(None, ge=1)
+    method: Literal["rules", "model"] = "rules"
+    provider: Literal["deepseek", "qwen", "doubao", "kimi"] | None = None
+    model: str = Field("", max_length=100)
+
+    @model_validator(mode="after")
+    def explicit_method(self):
+        if not self.query.strip():
+            raise ValueError("请填写要整理的问题")
+        try:
+            self.query.encode("utf-8")
+        except UnicodeError:
+            raise ValueError("问题含无效字符，请重新输入") from None
+        if self.method == "model" and self.provider is None:
+            raise ValueError("模型整理需要明确选择供应商")
+        if self.method == "rules" and (self.provider is not None or self.model):
+            raise ValueError("本地规则整理不接受模型配置")
+        return self
 
 
 class ToolExecuteRequest(BaseModel):
@@ -237,6 +266,40 @@ def search_endpoint(body: RagSearchRequest, db: Session = Depends(get_db)):
         raise HTTPException(403, str(exc))
     except ValueError as exc:
         raise HTTPException(422, str(exc))
+
+
+class QuestionScopeRoute(APIRoute):
+    """Do not echo invalid questions (including unpaired surrogates) in 422 bodies."""
+    def get_route_handler(self):
+        handler = super().get_route_handler()
+
+        async def safe_handler(request):
+            try:
+                return await handler(request)
+            except RequestValidationError:
+                return JSONResponse({"detail": "问题范围或整理配置无效，请核对输入与模型设置"}, status_code=422)
+
+        return safe_handler
+
+
+def question_scope_endpoint(body: QuestionScopeRequest, db: Session = Depends(get_db)):
+    from app.agent_core.question_scope import QuestionScopeError, propose_question_scope
+    try:
+        # Resolve authorized scope before any possible external model request.
+        context = workspace_context(db, body.workspace_id)
+        require_capability("rag_retrieve", "search")
+        kb = get_knowledge_base_or_default(db, context, body.knowledge_base_id)
+        result = propose_question_scope(body.query, method=body.method, provider=body.provider, model=body.model)
+        return {**result, "workspace_id": context.workspace_id, "knowledge_base_id": kb.id}
+    except QuestionScopeError as exc:
+        return JSONResponse({"detail": str(exc), "code": exc.code}, status_code=exc.status_code)
+    except PermissionError:
+        raise HTTPException(403, "当前范围不允许整理问题") from None
+    except ValueError:
+        raise HTTPException(422, "问题范围或整理配置无效，请核对输入与模型设置") from None
+
+
+router.add_api_route("/rag/question-scope", question_scope_endpoint, methods=["POST"], route_class_override=QuestionScopeRoute)
 
 
 @router.post("/rag/answer")

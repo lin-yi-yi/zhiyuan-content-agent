@@ -15,7 +15,7 @@ SAFE = {"GET", "HEAD", "OPTIONS"}
 PUBLIC = {"/health", "/api/health", "/api/saas/session"}
 ACCOUNT = {"/api/saas/organizations", "/api/saas/invites/accept", "/api/saas/auth/logout"}
 LOGIN = {"/api/saas/auth/login", "/api/saas/auth/register"}
-QUERY_POSTS = {"/api/v04/rag/search", "/api/v04/rag/answer", "/api/models/chat"}
+QUERY_POSTS = {"/api/v04/rag/search", "/api/v04/rag/answer", "/api/v04/rag/question-scope", "/api/models/chat"}
 MAX_BODY = 2 * 1024 * 1024
 
 
@@ -56,6 +56,11 @@ def authorize(role, method, path):
 def consumes_ai(method, path, body=b""):
     if method != "POST":
         return False
+    if path == "/api/v04/rag/question-scope":
+        try:
+            return json.loads(body).get("method") == "model"
+        except (ValueError, AttributeError):
+            return False
     if path in {"/api/topics/custom-ideas/confirm", "/api/topics/import-url/confirm", "/api/topics/import-url"} or re.fullmatch(r"/api/sources/[^/]+/topic-ideas/confirm", path):
         try:
             return json.loads(body).get("auto_score") is True
