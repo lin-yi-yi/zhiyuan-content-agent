@@ -17,7 +17,7 @@
 | 默认首页 / 最新整合代码 | [`main`](https://github.com/lin-yi-yi/zhiyuan-content-agent/tree/main)；直接打开仓库即可看到当前版本 |
 | 后续开发分支 | [`codex/content-agent`](https://github.com/lin-yi-yi/zhiyuan-content-agent/tree/codex/content-agent)；由原 `codex/job-ready-agent-v06` 更名，避免把分支名中的 v06 误当当前版本 |
 | 本轮完成 | 磁盘余量只读预检、资料问答失败排错编号、错误响应上下文隔离、第四组学习实验 |
-| 本地验证 | v0.14.0：**1145 个后端测试、57 个前端测试及构建通过**；磁盘演练、页面排错及完整浏览器流程通过；容器进度见 [本轮验收](docs/validation/v014-operations-2026-10-04.md) |
+| 本地验证 | v0.14.0：**1145 个后端测试、57 个前端测试及构建通过**；磁盘演练、页面排错、完整浏览器流程及 v0.13→v0.14 容器升级恢复通过；详见 [本轮验收](docs/validation/v014-operations-2026-10-04.md) |
 | GitHub 自动检查 | `Project checks` 执行测试、构建、前端依赖审计、隔离浏览器流程及 Docker 升级恢复；具体结果以相应提交为准；[运行记录](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml)。顶部徽章显示 `main` 最新状态 |
 | 真实业务验证 | 本轮使用合成资料与模拟模型响应；真实供应商账单、客户验收、付费和公网生产环境尚未验证 |
 
