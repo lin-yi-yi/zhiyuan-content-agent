@@ -1,6 +1,6 @@
 # 知源内容工作台 v0.15.0 — 安装与运行
 
-本指南随 `lin-yi-yi/zhiyuan-content-agent` 维护，默认获取 `main` 已整合代码。当前源码为 v0.15.0，开发基线为 v0.14.0 `84d80d0`；发布状态见 [README](README.md)。运行范围是本机与单机小团队试点。
+本指南对应 `lin-yi-yi/zhiyuan-content-agent` v0.15.0，`main` 是默认整合入口。候选验收与合并状态见 [README](README.md)，运行范围是本机与单机小团队试点。
 
 ## 1. 准备环境
 
@@ -106,7 +106,7 @@ if [ ! -f .env.saas ]; then cp .env.saas.example .env.saas; fi
 .venv/bin/python scripts/saas_recovery_smoke.py --runtime local
 ```
 
-它不接受现有业务数据路径，运行认证、角色、用量与真实 Qdrant 恢复；本机九阶段已通过，但不验证 BGE 下载、缓存或模型质量。Docker 命令和隔离范围见 [恢复演练指南](docs/saas-recovery.md)，本轮后端 1235 项、前端 57 项及构建通过；Docker CI 待验证。
+它不接受现有业务数据路径，运行认证、角色、用量与真实 Qdrant 恢复；本机和候选 `068db87` 的 Docker 九阶段已通过，但不验证 BGE 下载、缓存或模型质量。Docker 命令和隔离范围见 [恢复演练指南](docs/saas-recovery.md)。本轮后端 1235 项、前端 57 项、构建及 1 条完整浏览器流程通过，npm 已知漏洞 0；当前提交的完整 CI 状态见 [验收记录](docs/validation/v015-saas-recovery-2026-10-04.md)。
 
 ## 常见问题
 

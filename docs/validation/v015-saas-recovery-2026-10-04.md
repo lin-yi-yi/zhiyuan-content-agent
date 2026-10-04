@@ -37,7 +37,7 @@
 
 ## 回归与远程验证
 
-本地最终回归已完成，Docker 结果待候选提交运行后补入。本机未安装 Docker，不能把本地子进程结果当作容器结果。
+本地最终回归已完成。Docker 演练在 GitHub Ubuntu 24.04 / Docker 28.0.4 执行；本机未安装 Docker，本地子进程与远程容器结果分开记录。
 
 | 检查 | 实际结果 |
 | --- | --- |
@@ -50,7 +50,20 @@
 
 最终本机恢复报告在忽略目录 `.data/validation/v015/local-recovery-final.json`；其中 `source=working_tree`、HEAD 与构建输入 hash 共同记录当时来源，不能仅用旧 HEAD 声称本轮代码已经包含在基线里。新增两项符号链接回归在修复前确实失败，修复后纳入完整 1235 项回归。
 
-新增 `saas-recovery` CI job 采用 Ubuntu 24.04、Python 3.12 和同一个候选镜像；运行时 `--network none`，不发布端口，不挂宿主目录，源归档卷只读挂载。HTTP 从 `docker exec` 访问容器 loopback；检查非 root UID、退出状态和生命周期关闭完成。镜像构建需要公共依赖网络。原有 `container-recovery` 则独立验证 v0.14.0 基线到本轮候选的本地词项模式升级回退，两个演练范围不混用。
+新增 `saas-recovery` CI job 使用同一个候选镜像；运行时 `--network none`，不发布端口，不挂宿主目录，源归档卷只读挂载。HTTP 从 `docker exec` 访问容器 loopback；检查非 root UID、退出状态和生命周期关闭完成。镜像构建需要公共依赖网络。
+
+实际候选提交为 `068db87b8f8f603452d0a77242575d3d8536a40b`，两项容器演练的候选源码摘要相同：`3390f14fb8627707c9d0ddf9d8ba8699e1b688aaf4eb112394f7f8aefb66515f`，健康接口均返回 0.15.0。两镜像独立构建，因此 image ID 分别记录，不能把源码摘要等同镜像 ID。
+
+| 远程演练 | 实际结果与证据 |
+| --- | --- |
+| 同候选 SaaS 恢复 | 九阶段全部通过，56.940 秒，清理错误 0；运行 UID 1000，两个真实租户向量存储，合成模型三维；[job](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37210286351/job/111459904016)、[原始合成 JSON](v015-saas-068db87.json) |
+| 本地模式版本对升级回退 | v0.14.0 `84d80d0` → v0.15.0 `068db87` 的八阶段全部通过，79.993 秒，清理错误 0；[job](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37210286351/job/111459903809)、[原始合成 JSON](v015-container-068db87.json) |
+
+SaaS 归档为 7 文件、459,870 字节，其中两组织 4 个向量文件；恢复前后 local 模型记录各 2 条，外部模型记录及出站连接尝试均 0。恢复逻辑签名等于原快照；原卷签名等于追加资料后的版本，且与原快照不同。原库和恢复库最终均记录生命周期关闭完成。实际非 root 卷写入、只读源卷读取及真实 Qdrant 重开已在该候选容器验证。
+
+版本对演练独立使用 local/lexical，只备份 1 个 SQLite 文件、270,336 字节，向量 absent。旧版读取恢复快照、候选读取恢复快照、原候选保留新审核内容均通过；不能用这项结果宣称 SaaS 跨版本恢复已完成。两个报告从对应 artifact 下载，核对候选提交、版本、阶段、签名和清理后原样归档；构建及运行日志按 CI 保留 7 天。耗时均为包含构建和完整检查的演练时间，不是生产恢复目标。
+
+相同候选的 [Linux 完整检查](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37210286351/job/111459903888)成功：后端 1235 passed（120.14 秒，1 个既有弃用警告）、前端 19＋38 项、构建通过、npm 已知漏洞 0、Chromium 1 条通过（7.2 秒）。这些数字来自该 job 日志，不以本机结果替代；后续文档提交和合并提交以自身 CI 状态为准。
 
 v0.14.0 合并提交自身的 [main 检查](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37209074287)及[开发分支检查](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37209105578)已完成且成功；它们是基线证据，不能替代本轮候选检查。
 

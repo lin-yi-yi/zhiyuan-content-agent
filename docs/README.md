@@ -39,7 +39,7 @@
 
 | 类别 | 入口与使用方式 |
 | --- | --- |
-| 当前阶段的验收证据 | [v0.15.0 SaaS 恢复](validation/v015-saas-recovery-2026-10-04.md)及[项目状态](project-status.md)：本机九阶段已过，1235 项后端、57 项前端及构建通过；Docker CI 待验证 |
+| 当前阶段的验收证据 | [v0.15.0 SaaS 恢复](validation/v015-saas-recovery-2026-10-04.md)及[项目状态](project-status.md)：1235 项后端、57 项前端、构建及 1 条浏览器流程通过；候选 Docker 双组织恢复 9 阶段和版本对升级回退 8 阶段通过。当前提交完整 CI 状态按运行记录核对 |
 | 近期历史证据 | [v0.14.0 运维与排错](validation/v014-operations-2026-10-04.md)、[P0 工业 FAQ](validation/p0-industrial-faq-2026-10-03.md)、[P1 模型追溯](validation/p1-model-tracing-2026-10-03.md) 保留当时提交、结果和限制 |
 | 资料机制 | [信源核验与入库](source-evidence-workflow.md)、[AIHOT 接入](aihot-source-integration.md)：了解机制和授权边界；旧页面名称按上方映射阅读 |
 | 检索研究 | [v0.8 混合检索实验](research/v08-hybrid-retrieval.md)：保留样本、策略取舍和坏例，不能作为当前整体准确率 |

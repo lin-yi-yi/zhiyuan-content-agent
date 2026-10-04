@@ -1,6 +1,6 @@
 # SaaS 单机试点运维
 
-本文按 v0.15.0 工程验证版维护，适用范围仍是单主机、单应用进程的 SaaS 试点。组织身份及用量在独立 `control.db`，业务资料在各组织独立 SQLite 和向量目录。以下工具不迁移或覆盖原本的 `.data/demo.db`。双组织 Qdrant 恢复已完成本机九阶段实跑，1235 项后端、57 项前端及构建通过；Docker CI 待验证，见 [本轮验收](validation/v015-saas-recovery-2026-10-04.md)。Compose 是部署模板，不据此宣称公网、生产或 SaaS 浏览器验收通过；[v0.14.0 记录](validation/v014-operations-2026-10-04.md)保留当时的本地模式边界。
+本文按 v0.15.0 工程验证版维护，适用范围仍是单主机、单应用进程的 SaaS 试点。组织身份及用量在独立 `control.db`，业务资料在各组织独立 SQLite 和向量目录。以下工具不迁移或覆盖原本的 `.data/demo.db`。双组织 Qdrant 恢复已完成本机和候选 `068db87` Docker 的九阶段实跑；本地模式版本对升级回退另有八阶段通过，两套清理错误均为 0，见 [本轮验收](validation/v015-saas-recovery-2026-10-04.md)。Compose 是部署模板，不据此宣称公网、生产或 SaaS 浏览器验收通过；[v0.14.0 记录](validation/v014-operations-2026-10-04.md)保留当时的本地模式边界。
 
 ## 本机启动
 
@@ -88,7 +88,7 @@ AI 额度统计业务 HTTP 受理尝试，包含执行中的预留，不能当�
 
 恢复到新目录后，先用 `saas_admin.py --data-dir <新目录> list-orgs` 核对组织与套餐，再用新 `SAAS_DATA_DIR` 在本机端口启动。分别登录至少两个组织检查资料隔离、文档数量、查询引用、成员权限和套餐用量。恢复检查通过后才切换正式入口。向量模型缓存不在备份中，需要使用原版本模型恢复缓存；不要把更换嵌入模型后的检索当作同一索引验收。
 
-可先运行 [双组织合成恢复演练](saas-recovery.md)：`.venv/bin/python scripts/saas_recovery_smoke.py --runtime local`。它自动建立隔离数据，不接受现有业务目录；本机九阶段已通过，包含真实 Qdrant、新登录权限和用量核对。固定三维 synthetic 向量不是 BGE 缓存或质量证明；同候选恢复不覆盖跨版本降级。控制库会恢复备份中的会话记录，重新登录成功不能证明旧会话已撤销。
+可先运行 [双组织合成恢复演练](saas-recovery.md)：`.venv/bin/python scripts/saas_recovery_smoke.py --runtime local`。它自动建立隔离数据，不接受现有业务目录；本机及候选 Docker 九阶段已通过，包含真实 Qdrant、新登录权限和用量核对。固定三维 synthetic 向量不是 BGE 缓存或质量证明；同候选恢复不覆盖跨版本降级。控制库会恢复备份中的会话记录，重新登录成功不能证明旧会话已撤销。
 
 ## HTTPS 与 Compose 模板
 
