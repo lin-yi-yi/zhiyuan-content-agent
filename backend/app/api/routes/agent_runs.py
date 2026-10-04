@@ -2,7 +2,7 @@
 import asyncio
 from decimal import Decimal
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from sqlalchemy import and_, case, distinct, func, or_
 from sqlalchemy.orm import Session
 
@@ -17,11 +17,12 @@ from app.services.content_growth_agent import (
     submit_agent_run_review,
 )
 from app.services.workflow_support import WorkflowConflict
+from app.core.diagnostics import emit_diagnostic, request_diagnostic_context, safe_error_type
 
 router = APIRouter(prefix="/agent-runs", tags=["agent-runs"])
 
 
-def execute_agent_run_background(run_id: int, tenant_context=None) -> None:
+def execute_agent_run_background(run_id: int, tenant_context=None, request_id=None) -> None:
     """Starlette runs this sync function in its thread pool.
 
     Each worker owns its event loop and DB session. Legacy synchronous model
@@ -30,7 +31,14 @@ def execute_agent_run_background(run_id: int, tenant_context=None) -> None:
     from app.saas.context import current_tenant
     token = current_tenant.set(tenant_context or current_tenant.get())
     try:
-        asyncio.run(execute_agent_run(run_id))
+        with request_diagnostic_context(request_id):
+            try:
+                asyncio.run(execute_agent_run(run_id))
+            except Exception as exc:
+                # The 201 response may already be sent. Preserve correlation even
+                # if DB/session failure prevents saving the normal task failure.
+                emit_diagnostic("workflow_background_failed", agent_run_id=run_id,
+                                code="BACKGROUND_FAILED", error_type=safe_error_type(exc))
     finally:
         current_tenant.reset(token)
 
@@ -38,13 +46,15 @@ def execute_agent_run_background(run_id: int, tenant_context=None) -> None:
 @router.post("", response_model=AgentRunResult, status_code=201)
 async def create_agent_run_endpoint(
     body: AgentRunCreate,
+    request: Request,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     """启动一次内容增长 Agent 任务。"""
-    result = create_agent_run(body, db)
+    request_id = getattr(request.state, "request_id", None)
+    result = create_agent_run(body, db, request_id=request_id)
     from app.saas.context import current_tenant
-    background_tasks.add_task(execute_agent_run_background, result.id, current_tenant.get())
+    background_tasks.add_task(execute_agent_run_background, result.id, current_tenant.get(), request_id)
     return result
 
 
@@ -122,15 +132,16 @@ def list_agent_model_runs(run_id: int, limit: int = Query(100, ge=1, le=500),
 
 
 @router.post("/{run_id}/retry", response_model=AgentRunResult)
-async def retry_agent_run(run_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+async def retry_agent_run(run_id: int, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    request_id = getattr(request.state, "request_id", None)
     try:
-        result = prepare_retry_agent_run(run_id, db)
+        result = prepare_retry_agent_run(run_id, db, request_id=request_id)
     except WorkflowConflict as exc:
         raise HTTPException(409, str(exc)) from exc
     if not result:
         raise HTTPException(404, "Agent 任务不存在")
     from app.saas.context import current_tenant
-    background_tasks.add_task(execute_agent_run_background, run_id, current_tenant.get())
+    background_tasks.add_task(execute_agent_run_background, run_id, current_tenant.get(), request_id)
     return result
 
 

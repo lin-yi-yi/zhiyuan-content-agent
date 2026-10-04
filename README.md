@@ -1,6 +1,6 @@
 # 知源 · AI 内容与交付 Agent
 
-`zhiyuan-content-agent` · **v0.11.0 本地验证版** · RAG / LangGraph / 人工审核
+`zhiyuan-content-agent` · **v0.12.0 工程验证版** · RAG / LangGraph / 人工审核
 
 [![Project checks](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml/badge.svg?branch=main)](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml?query=branch%3Amain)
 
@@ -16,9 +16,9 @@
 | --- | --- |
 | 默认首页 / 最新整合代码 | [`main`](https://github.com/lin-yi-yi/zhiyuan-content-agent/tree/main)；直接打开仓库即可看到当前版本 |
 | 后续开发分支 | [`codex/content-agent`](https://github.com/lin-yi-yi/zhiyuan-content-agent/tree/codex/content-agent)；由原 `codex/job-ready-agent-v06` 更名，避免把分支名中的 v06 误当当前版本 |
-| 本轮完成 | 问答必需参数与模型声明核对、本地 SQLite／Qdrant 停机备份恢复、真实页面回归与 CI、开发路线与学习实验 |
-| 本地验证 | v0.11.0：**902 个后端测试、39 个前端测试、构建与 1 条完整浏览器流程通过**；合成工业 FAQ 26 项流程检查通过，保留 2 个自由问答坏例；[本轮验收](docs/validation/v011-reliability-2026-10-04.md) |
-| GitHub 自动检查 | `Project checks` 在推送和 Pull Request 时执行测试、构建、前端依赖审计及隔离浏览器流程；[运行记录](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml)。顶部徽章显示 `main` 最新状态 |
+| 本轮完成 | 冻结合成 FAQ 评测、请求与执行尝试关联、异常预留人工对账、特定版本容器升级回退脚本与 CI、第二组学习实验 |
+| 本地验证 | v0.12.0：**992 个后端测试、39 个前端测试、构建与 1 条完整浏览器流程通过**；真实缓存向量与混合检索保留坏例；[本轮验收](docs/validation/v012-engineering-2026-10-04.md) |
+| GitHub 自动检查 | `Project checks` 执行测试、构建、前端依赖审计、隔离浏览器流程及 Docker 升级恢复；具体结果以相应提交为准；[运行记录](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml)。顶部徽章显示 `main` 最新状态 |
 | 真实业务验证 | 本轮使用合成资料与模拟模型响应；真实供应商账单、客户验收、付费和公网生产环境尚未验证 |
 
 **[开发路线与商用验收](ROADMAP.md) · [学习实验](docs/learning-labs.md) · [项目状态与下一步](docs/project-status.md) · [安装与运行](SETUP.md) · [演示流程](docs/demo-walkthrough.md) · [文档导航](docs/README.md) · [开发交接](CONTRIBUTING.md) · [版本记录](CHANGELOG.md)**
@@ -62,7 +62,7 @@ RAG_RETRIEVAL_MODE=lexical ./scripts/start.sh
 
 模型与信源、运行诊断进入「设置与连接」；团队模式还提供成员、用量和账号。模型评分和编辑器检查清单不能代替人工批准。
 
-## v0.11.0 当前能力
+## v0.12.0 当前能力
 
 | 能力 | 实现与边界 |
 | --- | --- |
@@ -78,6 +78,9 @@ RAG_RETRIEVAL_MODE=lexical ./scripts/start.sh
 | 本地数据恢复 | 显式选择 SQLite 与 Qdrant 路径；停机快照、WAL、文件清单与哈希校验；只恢复到新或空目录。合成索引恢复后可查询，实际业务恢复需另验收 |
 | 内容流程 | LangGraph 条件流程：检索、选题、正文、卡片、质量检查和有限修订；步骤记录、重试和取消 |
 | 调用追溯 | 模型调用关联任务、步骤及工作流尝试；区分格式回退和 JSON 修复，记录指令版本 hash、用量及配置价格下的估算。缺失留空，估算不等于供应商账单 |
+| 请求诊断 | 服务器生成请求 ID，关联 HTTP、后台任务、执行尝试及新预留记录；JSON 日志仅包含允许的元数据。尚无日志落盘保证和通知告警 |
+| 异常预留核对 | 本地运营 CLI 默认预览，显式停机后处理单条已查明预留；幂等键、账本与审计同事务。只处理受理次数，不处理资金或供应商退款 |
+| 冻结评测 | 20 题、14 份合成资料、开发/保留组、文件与配置哈希、坏例与分母；真实缓存 Embedding 可离线运行。标签待人工复核，不是独立盲测或生成模型质量验收 |
 | 审核版本 | 退回原稿修改并重新送审；编辑已批准的正文/卡片会使旧批准失效，保留审核及编辑前内容快照 |
 | 正式交付清单 | 服务端检查批准状态、正文/卡片 hash、当前引用有效性；通过后生成含正文、出处、品牌快照、审核版本及人工发布检查的 Markdown |
 | 素材与复盘 | Canvas 卡片预览、PNG/ZIP 下载；手工发布记录、累计效果数据和报告 |
@@ -145,7 +148,7 @@ DEEPSEEK_MODEL=deepseek-chat
 
 模型凭证由运营环境保管，组织所有者选择启用连接。AIHOT 的 SaaS 使用需要来源方商业授权，默认关闭。外部来源、图片、字体和模型服务按实际授权使用。
 
-脚本仅监听 `127.0.0.1`。公开访问需要 HTTPS、运维、备份恢复与生产验收；Docker/Compose 文件只是部署准备。GitHub CI 执行测试与构建，不执行部署。详见 [SaaS 运维指南](docs/saas-operations.md)。
+脚本仅监听 `127.0.0.1`。公开访问需要 HTTPS、运维、备份恢复与生产验收；新增 [单容器升级回退演练](docs/container-acceptance.md)仅验证特定版本对的本地词项模式，SaaS/Compose 和公网部署仍需另外验收。GitHub CI 不执行部署。详见 [SaaS 运维指南](docs/saas-operations.md)。
 
 ## 商业化尚未完成的部分
 
@@ -166,9 +169,14 @@ AI 辅助说明和交付清单不构成完整生产合规证明。服务中断�
 
 # 独立临时数据中比较检索策略，不调用在线生成模型
 .venv/bin/python scripts/evaluate_hybrid_retrieval.py
+
+# 冻结开发组，保留误接收等坏例；不调用在线生成模型
+.venv/bin/python scripts/evaluate_frozen_faq.py
 ```
 
 检查脚本覆盖后端行为、Python 编译、前端行为与生产构建。另用 `(cd frontend && npm run test:e2e)` 运行隔离的浏览器业务回归，首次先按 [浏览器回归说明](docs/browser-regression.md) 安装 Chromium。本地数据保护见 [备份恢复](docs/local-backup.md)。自动检查、浏览器验收和真实客户效果分别记录，不能互相替代。
+
+本轮工程说明：[冻结评测](docs/frozen-faq-evaluation.md)、[请求诊断](docs/diagnostics.md)、[人工用量核对](docs/usage-reconciliation.md)、[容器升级回退](docs/container-acceptance.md)。新评测仍发现跨型号自由提问和复合缺项问题被误接收；严格参数契约不能替代自由问题理解，也不能泛化为所有内容均已核验。
 
 - [v0.9 商业化计划与价格实验](docs/v09-commercialization-plan.md)
 - [v0.10 工业 FAQ 审计、实现与本地验收](docs/validation/p0-industrial-faq-2026-10-03.md)

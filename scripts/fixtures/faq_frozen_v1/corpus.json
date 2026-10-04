@@ -1,0 +1,285 @@
+{
+  "dataset_id": "faq-frozen-synthetic-v1",
+  "documents": [
+    {
+      "key": "d-power",
+      "scenario_family": "dev-power",
+      "split": "development",
+      "state": "verified",
+      "title": "合成青岚 QL-12 合成资料 d-power",
+      "version_label": "synthetic-d-power-v1",
+      "content": "【完全虚构的独立版本软件评测材料，非真实产品与操作指导】合成青岚 QL-12 的额定电压为 12 V DC，仅适用于直流输入。 本记录只列明所述事项，不能推出其他型号、未登记参数或商业承诺。",
+      "citations": [
+        {
+          "product_model": "合成青岚 QL-12",
+          "parameter": "额定电压",
+          "value": "12 V DC",
+          "claim": "合成青岚 QL-12 额定电压",
+          "excerpt": "合成青岚 QL-12 的额定电压为 12 V DC，仅适用于直流输入。",
+          "locator": "合成记录第 1 段",
+          "source_url": "https://example.com/frozen-faq-v1/d-power"
+        }
+      ]
+    },
+    {
+      "key": "d-pressure-a",
+      "scenario_family": "dev-pressure",
+      "split": "development",
+      "state": "verified",
+      "title": "合成青岚 QL-20 合成资料 d-pressure-a",
+      "version_label": "synthetic-d-pressure-a-v1",
+      "content": "【完全虚构的独立版本软件评测材料，非真实产品与操作指导】合成青岚 QL-20 的额定压力为 3 bar；此值不适用于 QL-21。 本记录只列明所述事项，不能推出其他型号、未登记参数或商业承诺。",
+      "citations": [
+        {
+          "product_model": "合成青岚 QL-20",
+          "parameter": "额定压力",
+          "value": "3 bar",
+          "claim": "合成青岚 QL-20 额定压力",
+          "excerpt": "合成青岚 QL-20 的额定压力为 3 bar；此值不适用于 QL-21。",
+          "locator": "合成记录第 1 段",
+          "source_url": "https://example.com/frozen-faq-v1/d-pressure-a"
+        }
+      ]
+    },
+    {
+      "key": "d-pressure-b",
+      "scenario_family": "dev-pressure",
+      "split": "development",
+      "state": "verified",
+      "title": "合成青岚 QL-21 合成资料 d-pressure-b",
+      "version_label": "synthetic-d-pressure-b-v1",
+      "content": "【完全虚构的独立版本软件评测材料，非真实产品与操作指导】合成青岚 QL-21 的额定压力为 7 bar；此值不适用于 QL-20。 本记录只列明所述事项，不能推出其他型号、未登记参数或商业承诺。",
+      "citations": [
+        {
+          "product_model": "合成青岚 QL-21",
+          "parameter": "额定压力",
+          "value": "7 bar",
+          "claim": "合成青岚 QL-21 额定压力",
+          "excerpt": "合成青岚 QL-21 的额定压力为 7 bar；此值不适用于 QL-20。",
+          "locator": "合成记录第 1 段",
+          "source_url": "https://example.com/frozen-faq-v1/d-pressure-b"
+        }
+      ]
+    },
+    {
+      "key": "d-flow",
+      "scenario_family": "dev-flow",
+      "split": "development",
+      "state": "verified",
+      "title": "合成澜石 LS-8 合成资料 d-flow",
+      "version_label": "synthetic-d-flow-v1",
+      "content": "【完全虚构的独立版本软件评测材料，非真实产品与操作指导】合成澜石 LS-8 的额定流量为 8 L/min。资料未提供质保期限与售价。 本记录只列明所述事项，不能推出其他型号、未登记参数或商业承诺。",
+      "citations": [
+        {
+          "product_model": "合成澜石 LS-8",
+          "parameter": "额定流量",
+          "value": "8 L/min",
+          "claim": "合成澜石 LS-8 额定流量",
+          "excerpt": "合成澜石 LS-8 的额定流量为 8 L/min。资料未提供质保期限与售价。",
+          "locator": "合成记录第 1 段",
+          "source_url": "https://example.com/frozen-faq-v1/d-flow"
+        }
+      ]
+    },
+    {
+      "key": "d-outdoor",
+      "scenario_family": "dev-outdoor",
+      "split": "development",
+      "state": "verified",
+      "title": "合成南序 NX-5 合成资料 d-outdoor",
+      "version_label": "synthetic-d-outdoor-v1",
+      "content": "【完全虚构的独立版本软件评测材料，非真实产品与操作指导】合成南序 NX-5 的室外使用能力为不支持，仅可用于资料规定的室内环境。 本记录只列明所述事项，不能推出其他型号、未登记参数或商业承诺。",
+      "citations": [
+        {
+          "product_model": "合成南序 NX-5",
+          "parameter": "室外使用",
+          "value": "不支持",
+          "claim": "合成南序 NX-5 室外使用",
+          "excerpt": "合成南序 NX-5 的室外使用能力为不支持，仅可用于资料规定的室内环境。",
+          "locator": "合成记录第 1 段",
+          "source_url": "https://example.com/frozen-faq-v1/d-outdoor"
+        }
+      ]
+    },
+    {
+      "key": "d-conflict-a",
+      "scenario_family": "dev-current-conflict",
+      "split": "development",
+      "state": "verified",
+      "title": "合成初枫 CF-1 合成资料 d-conflict-a",
+      "version_label": "synthetic-d-conflict-a-v1",
+      "content": "【完全虚构的独立版本软件评测材料，非真实产品与操作指导】合成初枫 CF-1 的额定电压为 24 V DC。 本记录只列明所述事项，不能推出其他型号、未登记参数或商业承诺。",
+      "citations": [
+        {
+          "product_model": "合成初枫 CF-1",
+          "parameter": "额定电压",
+          "value": "24 V DC",
+          "claim": "合成初枫 CF-1 额定电压",
+          "excerpt": "合成初枫 CF-1 的额定电压为 24 V DC。",
+          "locator": "合成记录第 1 段",
+          "source_url": "https://example.com/frozen-faq-v1/d-conflict-a"
+        }
+      ]
+    },
+    {
+      "key": "d-conflict-b",
+      "scenario_family": "dev-current-conflict",
+      "split": "development",
+      "state": "legacy_verified_conflict",
+      "title": "合成初枫 CF-1 合成资料 d-conflict-b",
+      "version_label": "synthetic-d-conflict-b-v1",
+      "content": "【完全虚构的独立版本软件评测材料，非真实产品与操作指导】合成初枫 CF-1 的额定电压为 48 V DC。 本记录只列明所述事项，不能推出其他型号、未登记参数或商业承诺。",
+      "citations": [
+        {
+          "product_model": "合成初枫 CF-1",
+          "parameter": "额定电压",
+          "value": "48 V DC",
+          "claim": "合成初枫 CF-1 额定电压",
+          "excerpt": "合成初枫 CF-1 的额定电压为 48 V DC。",
+          "locator": "合成记录第 1 段",
+          "source_url": "https://example.com/frozen-faq-v1/d-conflict-b"
+        }
+      ]
+    },
+    {
+      "key": "r-filter",
+      "scenario_family": "reserved-filter",
+      "split": "reserved",
+      "state": "verified",
+      "title": "合成晗川 HC-9 合成资料 r-filter",
+      "version_label": "synthetic-r-filter-v1",
+      "content": "【完全虚构的独立版本软件评测材料，非真实产品与操作指导】合成晗川 HC-9 的滤网检查周期为每 45 天，需要记录检查日期。 本记录只列明所述事项，不能推出其他型号、未登记参数或商业承诺。",
+      "citations": [
+        {
+          "product_model": "合成晗川 HC-9",
+          "parameter": "滤网检查周期",
+          "value": "每 45 天",
+          "claim": "合成晗川 HC-9 滤网检查周期",
+          "excerpt": "合成晗川 HC-9 的滤网检查周期为每 45 天，需要记录检查日期。",
+          "locator": "合成记录第 1 段",
+          "source_url": "https://example.com/frozen-faq-v1/r-filter"
+        }
+      ]
+    },
+    {
+      "key": "r-heat-a",
+      "scenario_family": "reserved-heat",
+      "split": "reserved",
+      "state": "verified",
+      "title": "合成晗川 HC-30 合成资料 r-heat-a",
+      "version_label": "synthetic-r-heat-a-v1",
+      "content": "【完全虚构的独立版本软件评测材料，非真实产品与操作指导】合成晗川 HC-30 的环境温度上限为 40 摄氏度，此记录不能代表 HC-31。 本记录只列明所述事项，不能推出其他型号、未登记参数或商业承诺。",
+      "citations": [
+        {
+          "product_model": "合成晗川 HC-30",
+          "parameter": "环境温度上限",
+          "value": "40 摄氏度",
+          "claim": "合成晗川 HC-30 环境温度上限",
+          "excerpt": "合成晗川 HC-30 的环境温度上限为 40 摄氏度，此记录不能代表 HC-31。",
+          "locator": "合成记录第 1 段",
+          "source_url": "https://example.com/frozen-faq-v1/r-heat-a"
+        }
+      ]
+    },
+    {
+      "key": "r-heat-b",
+      "scenario_family": "reserved-heat",
+      "split": "reserved",
+      "state": "verified",
+      "title": "合成晗川 HC-31 合成资料 r-heat-b",
+      "version_label": "synthetic-r-heat-b-v1",
+      "content": "【完全虚构的独立版本软件评测材料，非真实产品与操作指导】合成晗川 HC-31 的环境温度上限为 60 摄氏度，此记录不能代表 HC-30。 本记录只列明所述事项，不能推出其他型号、未登记参数或商业承诺。",
+      "citations": [
+        {
+          "product_model": "合成晗川 HC-31",
+          "parameter": "环境温度上限",
+          "value": "60 摄氏度",
+          "claim": "合成晗川 HC-31 环境温度上限",
+          "excerpt": "合成晗川 HC-31 的环境温度上限为 60 摄氏度，此记录不能代表 HC-30。",
+          "locator": "合成记录第 1 段",
+          "source_url": "https://example.com/frozen-faq-v1/r-heat-b"
+        }
+      ]
+    },
+    {
+      "key": "r-power",
+      "scenario_family": "reserved-battery",
+      "split": "reserved",
+      "state": "verified",
+      "title": "合成望汐 WX-6 合成资料 r-power",
+      "version_label": "synthetic-r-power-v1",
+      "content": "【完全虚构的独立版本软件评测材料，非真实产品与操作指导】合成望汐 WX-6 的额定功率为 18 W。续航时长和采购单价未登记，不能根据功率推算。 本记录只列明所述事项，不能推出其他型号、未登记参数或商业承诺。",
+      "citations": [
+        {
+          "product_model": "合成望汐 WX-6",
+          "parameter": "额定功率",
+          "value": "18 W",
+          "claim": "合成望汐 WX-6 额定功率",
+          "excerpt": "合成望汐 WX-6 的额定功率为 18 W。续航时长和采购单价未登记，不能根据功率推算。",
+          "locator": "合成记录第 1 段",
+          "source_url": "https://example.com/frozen-faq-v1/r-power"
+        }
+      ]
+    },
+    {
+      "key": "r-solvent",
+      "scenario_family": "reserved-solvent",
+      "split": "reserved",
+      "state": "verified",
+      "title": "合成枫渡 FD-2 合成资料 r-solvent",
+      "version_label": "synthetic-r-solvent-v1",
+      "content": "【完全虚构的独立版本软件评测材料，非真实产品与操作指导】合成枫渡 FD-2 的有机溶剂使用能力为不支持；资料仅说明清水适用，不允许推导为所有液体均适用。 本记录只列明所述事项，不能推出其他型号、未登记参数或商业承诺。",
+      "citations": [
+        {
+          "product_model": "合成枫渡 FD-2",
+          "parameter": "有机溶剂使用",
+          "value": "不支持",
+          "claim": "合成枫渡 FD-2 有机溶剂使用",
+          "excerpt": "合成枫渡 FD-2 的有机溶剂使用能力为不支持；资料仅说明清水适用，不允许推导为所有液体均适用。",
+          "locator": "合成记录第 1 段",
+          "source_url": "https://example.com/frozen-faq-v1/r-solvent"
+        }
+      ]
+    },
+    {
+      "key": "r-conflict-a",
+      "scenario_family": "reserved-unit-conflict",
+      "split": "reserved",
+      "state": "verified",
+      "title": "合成雨杉 YS-8 合成资料 r-conflict-a",
+      "version_label": "synthetic-r-conflict-a-v1",
+      "content": "【完全虚构的独立版本软件评测材料，非真实产品与操作指导】合成雨杉 YS-8 的额定电流为 5 mA。 本记录只列明所述事项，不能推出其他型号、未登记参数或商业承诺。",
+      "citations": [
+        {
+          "product_model": "合成雨杉 YS-8",
+          "parameter": "额定电流",
+          "value": "5 mA",
+          "claim": "合成雨杉 YS-8 额定电流",
+          "excerpt": "合成雨杉 YS-8 的额定电流为 5 mA。",
+          "locator": "合成记录第 1 段",
+          "source_url": "https://example.com/frozen-faq-v1/r-conflict-a"
+        }
+      ]
+    },
+    {
+      "key": "r-conflict-b",
+      "scenario_family": "reserved-unit-conflict",
+      "split": "reserved",
+      "state": "legacy_verified_conflict",
+      "title": "合成雨杉 YS-8 合成资料 r-conflict-b",
+      "version_label": "synthetic-r-conflict-b-v1",
+      "content": "【完全虚构的独立版本软件评测材料，非真实产品与操作指导】合成雨杉 YS-8 的额定电流为 5 MA。 本记录只列明所述事项，不能推出其他型号、未登记参数或商业承诺。",
+      "citations": [
+        {
+          "product_model": "合成雨杉 YS-8",
+          "parameter": "额定电流",
+          "value": "5 MA",
+          "claim": "合成雨杉 YS-8 额定电流",
+          "excerpt": "合成雨杉 YS-8 的额定电流为 5 MA。",
+          "locator": "合成记录第 1 段",
+          "source_url": "https://example.com/frozen-faq-v1/r-conflict-b"
+        }
+      ]
+    }
+  ]
+}

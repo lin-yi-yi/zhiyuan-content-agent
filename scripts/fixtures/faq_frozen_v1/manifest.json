@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "dataset_id": "faq-frozen-synthetic-v1",
+  "frozen_at": "2026-10-04T13:05:51.468581+00:00",
+  "baseline_commit": "9364eb0",
+  "sample_origin": "synthetic",
+  "annotation_author": "development_assistant",
+  "annotation_review_status": "pending_human_review",
+  "unseen_status": "not_claimed",
+  "real_authorized_sample_count": 0,
+  "partition_policy": "scenario_family_and_material_scope_disjoint",
+  "reserved_policy": "Intended to be excluded from tuning this frozen configuration; not an independently unseen or blind test. Repository access and future tuning history cannot be automatically certified.",
+  "legacy_development_datasets": [
+    "industrial-faq-synthetic-v1",
+    "content-evidence-demo-v1",
+    "hybrid-identifiers-synthetic-v1"
+  ],
+  "files": {
+    "corpus.json": "23efad5769bb964bd086920f0a07e9e4a7a7b3793e41e871e5b63deaeb16996a",
+    "cases.json": "a9abe6c92977103a165ce7c5c8173c118586ac9763a0031a8c1a964e4179ce03"
+  },
+  "configuration": {
+    "top_k": 3,
+    "answer_provider": "local",
+    "candidate_min_score": 0.08,
+    "lexical_min_overlap": 0.18,
+    "semantic_min_score": 0.55,
+    "embedding_provider": "fastembed",
+    "embedding_model": "BAAI/bge-small-zh-v1.5",
+    "embedding_dimensions": 512,
+    "embedding_threads": 2,
+    "rrf_k": 60,
+    "bm25_k1": 1.2,
+    "bm25_b": 0.75,
+    "chunk_size": 420,
+    "chunk_overlap": 70,
+    "allowed_modes": [
+      "lexical",
+      "semantic",
+      "hybrid"
+    ],
+    "default_mode": "lexical"
+  },
+  "configuration_sha256": "9c626fba5263b6aee1ac189a3625d242fb4b4f2e00b637efa6080aaae7e72b51",
+  "split_counts": {
+    "development": 10,
+    "reserved": 10
+  },
+  "family_counts": {
+    "development": 5,
+    "reserved": 5
+  },
+  "categories": [
+    "paraphrase",
+    "cross_model",
+    "compound_missing",
+    "negation",
+    "conflict"
+  ],
+  "limitations": [
+    "全部材料与标签由开发助手同时编写，尚未逐题人工审定；不是独立盲测。",
+    "开发者已知既有实现与坏例；新建题目不代表模型、开发者或系统真正未见过。",
+    "场景族分组只能阻止显式登记的重叠，不能证明不存在语义近似或模板关联。",
+    "每个场景族独立知识库，测已知范围内检索，不代表大库检索或跨客户业务效果。",
+    "保留集一旦用于诊断并据此改实现或阈值，该次后续比较须记为开发反馈，不再据此宣称未参与调参。",
+    "冲突样本使用临时库注入历史已核验矛盾记录；不是系统允许正常核验冲突材料。"
+  ]
+}
