@@ -304,7 +304,7 @@ def test_ai_quota_is_per_org_and_failed_request_is_refunded(teams):
     assert chat(b).status_code == 200
 
 
-def test_model_exception_refunds_reservation_and_redacts_error(teams, monkeypatch):
+def test_model_exception_keeps_uncertain_reservation_and_redacts_error(teams, monkeypatch):
     from app.llm.local import LocalRuleBasedClient
     from app.saas.context import current_tenant
     a, b = teams
@@ -318,7 +318,7 @@ def test_model_exception_refunds_reservation_and_redacts_error(teams, monkeypatc
     assert "synthetic-secret" not in failed.text
     assert called == [a.org]
     usage = a.client.get("/api/saas/billing").json()["usage"]["ai_requests"]
-    assert usage["used"] == 0 and usage["refunded"] == 1 and usage["reserved"] == 0
+    assert usage["used"] == 1 and usage["refunded"] == 0 and usage["reserved"] == 1
     assert b.client.get("/api/saas/billing").json()["usage"]["ai_requests"]["attempts"] == 0
     assert current_tenant.get() is None
 

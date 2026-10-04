@@ -1,6 +1,6 @@
 # 知源文档导航
 
-当前使用与交接路线面向 **v0.12.0 工程验证版**。版本、分支、最近检查及剩余限制以 [项目状态](project-status.md) 为入口；历史材料保留各自日期与验证范围。
+当前使用与交接路线面向 **v0.13.0 工程验证版**。版本、分支、最近检查及剩余限制以 [项目状态](project-status.md) 和 [v0.13.0 工程验证记录](validation/v013-reliability-2026-10-04.md) 为入口；历史材料保留各自日期与验证范围。
 
 ## 第一次使用
 
@@ -22,7 +22,10 @@
 | [本地备份恢复](local-backup.md) | 默认本地或明确指定的 SQLite 与 Qdrant 停机快照、恢复到新目录 |
 | [浏览器业务回归](browser-regression.md) | 自动点击资料、任务、审核和下载；查看隔离条件与失败产物 |
 | [冻结合成 FAQ 评测](frozen-faq-evaluation.md) | 固定问题、资料、配置和坏例，区分开发/保留组与人工标签限制 |
+| [问题范围人工确认](question-clarification.md) | 从当前资料目录选择型号和参数，补充缺项并确认；了解与一般资料问答的区别 |
+| [工具问答事实契约](rag-tool-facts.md) | 将显式参数透传给 `rag.answer`，处理未知字段由忽略改为 422 的兼容变更 |
 | [请求与工作流诊断](diagnostics.md) | 从请求 ID 定位执行尝试和步骤；了解日志字段与未覆盖的告警 |
+| [用量结算失败与未知结果](usage-finalization-failures.md) | 区分业务受理、响应传输和结算回执；核对单次自动尝试与未知预留 |
 | [中断预留人工对账](usage-reconciliation.md) | 已查明请求状态后，预览并以幂等、带审计的方式处理单条额度 |
 | [容器升级与快照回退](container-acceptance.md) | 构建明确的基线与候选版本，在隔离卷中验证完整交付和恢复 |
 | [v0.10 试点计划](v010-pilot-plan.md) | 准备真实授权材料、人员责任和验收口径 |
@@ -33,7 +36,7 @@
 
 | 类别 | 入口与使用方式 |
 | --- | --- |
-| 当前阶段的验收证据 | 从 [项目状态](project-status.md) 进入对应记录；[P0 工业 FAQ](validation/p0-industrial-faq-2026-10-03.md)、[P1 模型追溯](validation/p1-model-tracing-2026-10-03.md) 保留当时提交、结果和限制 |
+| 当前阶段的验收证据 | [v0.13.0 工程验证](validation/v013-reliability-2026-10-04.md)及[项目状态](project-status.md)；[P0 工业 FAQ](validation/p0-industrial-faq-2026-10-03.md)、[P1 模型追溯](validation/p1-model-tracing-2026-10-03.md) 保留当时提交、结果和限制 |
 | 资料机制 | [信源核验与入库](source-evidence-workflow.md)、[AIHOT 接入](aihot-source-integration.md)：了解机制和授权边界；旧页面名称按上方映射阅读 |
 | 检索研究 | [v0.8 混合检索实验](research/v08-hybrid-retrieval.md)：保留样本、策略取舍和坏例，不能作为当前整体准确率 |
 | 历史验收 | [v0.8 工作台](validation/v08-workbench-acceptance.md)、[v0.9 商业流程](validation/v09-commercial-workflow-acceptance.md)、[团队试点](validation/saas-pilot-acceptance.md)：按记录中的时间、版本和环境理解 |

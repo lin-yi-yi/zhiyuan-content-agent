@@ -1,4 +1,4 @@
-# 知源内容工作台 v0.12.0 — 安装与运行
+# 知源内容工作台 v0.13.0 — 安装与运行
 
 本指南对应 `lin-yi-yi/zhiyuan-content-agent` 的最新 `main` 分支。当前范围是本机运行与单机小团队试点，能力及验证边界见 [README](README.md)。
 
@@ -114,4 +114,4 @@ if [ ! -f .env.saas ]; then cp .env.saas.example .env.saas; fi
 
 `/api/health` 返回当前运行版本；`/api/ready` 检查数据库可用性，连接失败返回 503。团队模式下 readiness 需要已登录的组织上下文。项目交接与定向测试入口见 [开发指南](CONTRIBUTING.md)，完整文档分组见 [文档导航](docs/README.md)。
 
-更完整的能力、限制及验证记录以 [README](README.md) 和 [v0.12.0 工程验收记录](docs/validation/v012-engineering-2026-10-04.md) 为准。容器升级与快照回退按 [专用说明](docs/container-acceptance.md)在隔离环境进行；排错时用 [请求关联诊断](docs/diagnostics.md)核对执行尝试。
+更完整的能力、限制及验证记录以 [README](README.md) 和 [v0.13.0 工程验收记录](docs/validation/v013-reliability-2026-10-04.md) 为准。容器升级与快照回退按 [专用说明](docs/container-acceptance.md)在隔离环境进行；排错时用 [请求关联诊断](docs/diagnostics.md)核对执行尝试。问答范围确认见 [参数目录说明](docs/question-clarification.md)，未知用量处置见 [结算故障说明](docs/usage-finalization-failures.md)。

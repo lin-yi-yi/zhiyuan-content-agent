@@ -138,7 +138,7 @@ def test_saas_business_exception_stays_500_and_keeps_authenticated_context(appli
     correlation = request_id(response)
     assert response.json()["request_id"] == correlation
     records = [record for record in events() if record["request_id"] == correlation]
-    assert [record["event"] for record in records] == ["http_failed", "http_response"]
+    assert [record["event"] for record in records] == ["http_failed", "http_response", "usage_outcome_unknown"]
     assert all(record["organization_id"] == team.org for record in records)
     assert_private_events(events)
 

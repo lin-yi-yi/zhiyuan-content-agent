@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { api, KnowledgeBase, RagAnswerResponse, RagSearchHit } from '../api/client';
+import { api, KnowledgeBase, RagAnswerResponse, RagSearchHit, RequiredFact } from '../api/client';
 import { workbench, RetrievalStatus } from '../api/workbench';
 import EvidenceProvenance from '../components/EvidenceProvenance';
 import { EvidenceScope, safeEvidenceUrl } from '../api/evidence';
 import { useWorkspace } from '../components/WorkspaceContext';
 import { useAvailableModels } from '../components/useAvailableModels';
-import { parseRagRequiredFacts, ragFactCoverage, RagQuestionScope, selectRagKnowledgeBase } from '../utils/ragFacts';
+import { addRagCatalogFact, ragFactCoverage, validateRagFactRows } from '../utils/ragFacts';
+import RagFactCatalogPicker from '../components/RagFactCatalogPicker';
 import '../styles/ragFacts.css';
 
 type AnswerWithHealth=RagAnswerResponse&{answer_mode?:string;evidence_health?:{excluded_count:number;expired_count:number;unverified_count:number;untracked_count:number;warnings:string[]}};
@@ -39,9 +40,15 @@ export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledge
   const {canWrite}=useWorkspace();
   const {models,modelsError}=useAvailableModels();
   const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([]);
-  const [questionScope, setQuestionScope] = useState<RagQuestionScope>({knowledgeBaseId:null,productModel:'',parameters:''});
-  const {knowledgeBaseId,productModel,parameters}=questionScope;
-  const setKnowledgeBaseId=(id:number|null)=>setQuestionScope(previous=>selectRagKnowledgeBase(previous,id));
+  const [knowledgeBaseId, updateKnowledgeBaseId] = useState<number|null>(null);
+  const [factRows, setFactRows] = useState<RequiredFact[]>([{product_model:'',parameter:''}]);
+  const [factsConfirmed, setFactsConfirmed] = useState(false);
+  const hasFactInput=factRows.some(row=>row.product_model.trim()||row.parameter.trim());
+  const setKnowledgeBaseId=(id:number|null)=>{
+    if(knowledgeBaseId!==id){setFactRows([{product_model:'',parameter:''}]);setFactsConfirmed(false);}
+    updateKnowledgeBaseId(id);
+  };
+  const updateFacts=(rows:RequiredFact[])=>{setFactRows(rows);setFactsConfirmed(false);};
   const [query, setQuery] = useState('');
   const [topK, setTopK] = useState(5);
   const [retrievalMode,setRetrievalMode]=useState<''|'semantic'|'lexical'|'hybrid'>('');
@@ -72,7 +79,7 @@ export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledge
   }, []);
 
   useEffect(()=>{if(models.length)setProvider((models.find(item=>item.is_default)||models.find(item=>item.provider==='local')||models[0]).provider);},[models]);
-  useEffect(()=>{retrievalGeneration.current+=1;setHits([]);setAnswer(null);setResultContext(null);setError('');},[query,retrievalMode,knowledgeBaseId,topK,provider,productModel,parameters]);
+  useEffect(()=>{retrievalGeneration.current+=1;setHits([]);setAnswer(null);setResultContext(null);setError('');},[query,retrievalMode,knowledgeBaseId,topK,provider,factRows]);
   const handleSearch = async () => {
     if (!query.trim()) return;
     const generation=++retrievalGeneration.current;
@@ -101,7 +108,10 @@ export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledge
   const handleAnswer = async () => {
     if (!query.trim()) return;
     let requiredFacts;
-    try {requiredFacts=parseRagRequiredFacts(productModel,parameters);}
+    try {
+      requiredFacts=validateRagFactRows(factRows);
+      if(requiredFacts.length&&!factsConfirmed)throw new Error('请先对照原问题确认本次需要核对的型号和参数。');
+    }
     catch(err) {setError(err instanceof Error?err.message:String(err));return;}
     const generation=++retrievalGeneration.current;
     const searchedQuery=query.trim(),searchedKnowledgeBase=knowledgeBases.find(item=>item.id===knowledgeBaseId)?.name||'当前知识库';
@@ -149,26 +159,33 @@ export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledge
           </div>
           <div className="form-group">
             <label htmlFor="rag-question">你想了解什么？</label>
-            <textarea id="rag-question" disabled={loading} placeholder="例如：资料中规定的审核步骤是什么？" rows={4} value={query} onChange={e => setQuery(e.target.value)} />
+            <textarea id="rag-question" disabled={loading} placeholder="例如：资料中规定的审核步骤是什么？" rows={4} value={query} onChange={e => {setQuery(e.target.value);setFactsConfirmed(false);}} />
           </div>
           <fieldset className="rag-fact-requirements" disabled={loading}>
-            <legend>本次必需参数（可选）</legend>
-            <p id="rag-facts-help" className="subtle">填写型号与所问参数，缺少任意一项已核验依据时拒答。两项留空则不评估参数覆盖；系统不会自动从问题中推断参数。</p>
-            <div className="form-group">
-              <label htmlFor="rag-product-model">产品型号（含品牌）</label>
-              <input id="rag-product-model" value={productModel} maxLength={200} aria-describedby="rag-facts-help" placeholder="例如：合成星桥 XP-24" onChange={e=>setQuestionScope(previous=>({...previous,productModel:e.target.value}))}/>
+            <legend>核对型号和参数（可选）</legend>
+            <p id="rag-facts-help" className="subtle">产品参数问题可先列清要求，最多 10 项，可包含多个型号。缺少任一项已核验依据时拒答。留空仍可进行资料问答，但不评估问题是否已完整回答。</p>
+            {knowledgeBaseId&&<RagFactCatalogPicker key={`${initialScope?.workspace_id||0}:${knowledgeBaseId}`} knowledgeBaseId={knowledgeBaseId} workspaceId={initialScope?.workspace_id} disabled={loading} onAdd={fact=>{
+              try{updateFacts(addRagCatalogFact(factRows,fact));setError('');}
+              catch(err){setError(err instanceof Error?err.message:String(err));}
+            }}/>}
+            <div className="rag-fact-rows">
+              {factRows.map((row,index)=><div className="rag-fact-row" key={index}>
+                <div className="form-group"><label htmlFor={`rag-model-${index}`}>型号 {index+1}（含品牌）</label>
+                  <input id={`rag-model-${index}`} value={row.product_model} maxLength={200} placeholder="例如：合成星桥 XP-24" onChange={e=>updateFacts(factRows.map((value,i)=>i===index?{...value,product_model:e.target.value}:value))}/></div>
+                <div className="form-group"><label htmlFor={`rag-parameter-${index}`}>参数 {index+1}</label>
+                  <input id={`rag-parameter-${index}`} value={row.parameter} maxLength={200} placeholder="例如：额定电压、售价（每行一项）" onChange={e=>updateFacts(factRows.map((value,i)=>i===index?{...value,parameter:e.target.value}:value))}/></div>
+                <button type="button" className="btn" aria-label={`删除参数 ${index+1}`} onClick={()=>updateFacts(factRows.length===1?[{product_model:'',parameter:''}]:factRows.filter((_,i)=>i!==index))}>删除</button>
+              </div>)}
             </div>
-            <div className="form-group">
-              <label htmlFor="rag-required-parameters">本次所问参数 · 每行一个，最多 10 项</label>
-              <textarea id="rag-required-parameters" rows={3} value={parameters} aria-describedby="rag-parameters-help" placeholder={'额定电压 / 直流输入\n售价'} onChange={e=>setQuestionScope(previous=>({...previous,parameters:e.target.value}))}/>
-              <p id="rag-parameters-help" className="subtle">可填写资料中尚未登记的参数。名称按资料登记值核对，不自动识别同义词；每项最多 200 字。切换知识库会清空型号和参数。</p>
-            </div>
+            <button type="button" className="btn" disabled={loading||factRows.length>=10} onClick={()=>updateFacts([...factRows,{product_model:'',parameter:''}])}>添加手填参数</button>
+            <p className="subtle">可填写资料中没有的型号或参数，例如售价。名称按资料登记值核对，不自动识别同义词。选择候选不会替你确认需求。</p>
+            {hasFactInput&&<label className="rag-confirm-requirements"><input type="checkbox" checked={factsConfirmed} onChange={e=>setFactsConfirmed(e.target.checked)}/><span>我已对照原问题，确认本次需要核对的型号和参数。</span></label>}
           </fieldset>
           <div className="form-group"><label htmlFor="rag-model">回答方式</label><select id="rag-model" disabled={loading} value={provider} onChange={e=>setProvider(e.target.value)}>{models.map(item=><option key={item.provider} value={item.provider}>{item.provider==='local'?'原文摘录 · 无需密钥':item.model||item.provider}</option>)}</select><p className="task-model-hint">{provider==='local'?'摘录相关原文，保留来源。':'将问题和检索到的片段发送给所选模型。'}</p></div>
           <details className="calm-details"><summary>检索设置与实验</summary><div className="form-group"><label htmlFor="rag-strategy">检索策略</label><select id="rag-strategy" disabled={loading} value={retrievalMode} onChange={e=>setRetrievalMode(e.target.value as typeof retrievalMode)}><option value="">跟随系统默认</option><option value="semantic">语义检索 · 理解相近含义</option><option value="hybrid">双路融合 · BM25 + 向量 + RRF</option><option value="lexical">词项检索 · 无需向量</option></select><p className="subtle">双路融合适合比较术语和语义召回；需要已有语义索引，结果不保证优于单路。排序分不代表答案正确率。</p></div><div className="form-group"><label htmlFor="rag-topk">最多展示的证据</label><select id="rag-topk" disabled={loading} value={topK} onChange={e=>setTopK(Number(e.target.value))}><option value={3}>3 条</option><option value={5}>5 条</option><option value={8}>8 条</option></select></div><button className="btn" onClick={handleSearch} disabled={loading||!query.trim()||!knowledgeBaseId}>只查看检索结果</button></details>
           <div className="form-actions">
 
-            <button className="btn btn-primary" onClick={handleAnswer} disabled={loading || !query.trim() || !models.length || !knowledgeBaseId}>{loading?'正在查找依据…':'提问 →'}</button>
+            <button className="btn btn-primary" onClick={handleAnswer} disabled={loading || !query.trim() || !models.length || !knowledgeBaseId || (hasFactInput&&!factsConfirmed)}>{loading?'正在查找依据…':hasFactInput?'按确认参数提问 →':'资料问答 →'}</button>
           </div>
           {error && <div className="source-rag-status error" role="alert">{error}</div>}
         </div>

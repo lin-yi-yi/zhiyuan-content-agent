@@ -10,7 +10,7 @@ CI checkout 需要包含基线提交（例如 `fetch-depth: 0`）。工具不 fe
 
 ```bash
 python scripts/container_smoke.py \
-  --baseline-ref 9364eb0f908b79e68abe1fd30e23d66337b6df6f \
+  --baseline-ref 3b054e968fb6600ca1d9a7c772882b7ad56c97a7 \
   --output .data/validation/container-smoke/report.json
 ```
 

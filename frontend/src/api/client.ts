@@ -619,6 +619,22 @@ export interface RequiredFact {
   parameter: string;
 }
 
+export interface RagFactCatalogItem extends RequiredFact {
+  evidence: Array<{document_id: number; chunk_id: number; source_url: string; locator: string; version_label: string}>;
+}
+
+export interface RagFactCatalog {
+  workspace_id: number;
+  knowledge_base_id: number;
+  items: RagFactCatalogItem[];
+  total: number;
+  offset: number;
+  limit: number;
+  has_more: boolean;
+  requirements_complete: false;
+  suggestion_method: 'reviewed_evidence_metadata';
+}
+
 export interface RagAnswerRequest {
   query: string;
   workspace_id?: number;
@@ -908,4 +924,10 @@ export const api = {
 
   answerWithRag: (body: RagAnswerRequest) =>
     request<RagAnswerResponse>('/api/v04/rag/answer', { method: 'POST', body: JSON.stringify(body) }),
+
+  ragFactCatalog: (knowledgeBaseId: number, workspaceId?: number, offset = 0, signal?: AbortSignal) => {
+    const params = new URLSearchParams({knowledge_base_id: String(knowledgeBaseId), offset: String(offset), limit: '20'});
+    if (workspaceId != null) params.set('workspace_id', String(workspaceId));
+    return request<RagFactCatalog>(`/api/v04/rag/fact-catalog?${params}`, {signal});
+  },
 };

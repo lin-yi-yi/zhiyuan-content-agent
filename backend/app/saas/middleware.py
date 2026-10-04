@@ -78,6 +78,9 @@ class SaaSMiddleware:
         request = Request(scope)
         path, method = scope.get("path", "").rstrip("/") or "/", scope["method"]
         tenant_token = reservation = None
+        usage_outcome = "unknown"
+        business_status = None
+        finalization_attempted = False
         started = False
         body = b""
         try:
@@ -124,17 +127,38 @@ class SaaSMiddleware:
                     # never a caller header. Standalone middleware keeps a fresh ID.
                     usage_request_id = valid_request_id(current_request_id.get()) or uuid.uuid4().hex
                     reservation = await run_in_threadpool(reserve_usage, context.organization_id, usage_request_id)
+                    scope.setdefault("state", {})["_usage_outcome"] = "unknown"
             else:
                 context = None
 
             async def wrapped_send(message):
-                nonlocal started, reservation
+                nonlocal started, reservation, usage_outcome, business_status, finalization_attempted
                 if message["type"] == "http.response.start":
                     status = message["status"]
-                    if reservation:
+                    if business_status is None and not scope.get("state", {}).get("_business_outcome_unknown"):
+                        # Server business acceptance is decided before audit or
+                        # transport: a later failure cannot undo that decision.
+                        business_status = status
+                        usage_outcome = "accepted" if status < 400 else "rejected"
+                        if reservation:
+                            scope.setdefault("state", {})["_usage_outcome"] = usage_outcome
+                    if reservation and usage_outcome != "unknown" and not finalization_attempted:
                         from app.saas.commerce import finalize_usage
-                        await run_in_threadpool(finalize_usage, reservation, status < 400)
-                        reservation = None
+                        finalization_attempted = True
+                        try:
+                            await run_in_threadpool(finalize_usage, reservation, usage_outcome == "accepted")
+                        except BaseException as exc:
+                            from app.core.diagnostics import emit_diagnostic, safe_error_type
+                            # A commit could have succeeded before its receipt
+                            # failed. Never attempt an opposite finalization or
+                            # claim that the database is certainly still reserved.
+                            emit_diagnostic("usage_finalization_failed", code="USAGE_FINALIZATION_UNCONFIRMED",
+                                            usage_outcome=usage_outcome, http_status=business_status,
+                                            error_type=safe_error_type(exc))
+                            if not isinstance(exc, Exception):
+                                raise  # Preserve cancellation/shutdown semantics.
+                        else:
+                            reservation = None
                     if context and method not in SAFE and status < 400:
                         from app.saas.auth import record_audit
                         await run_in_threadpool(record_audit, context, "api.mutation", path, {"method": method, "status": status})
@@ -161,11 +185,17 @@ class SaaSMiddleware:
                 await JSONResponse({"detail": str(exc)}, status_code=status)(scope, receive, send)
             else:
                 from app.core.diagnostics import emit_diagnostic, safe_error_type
-                emit_diagnostic("saas_boundary_failed", error_type=safe_error_type(exc))
+                emit_diagnostic("saas_boundary_failed", error_type=safe_error_type(exc),
+                                usage_outcome=scope.get("state", {}).get("_usage_outcome"))
                 await JSONResponse({"detail": "服务暂时不可用，请稍后重试"}, status_code=503)(scope, receive, send)
         finally:
-            if reservation:
-                from app.saas.commerce import finalize_usage
-                await run_in_threadpool(finalize_usage, reservation, False)
-            if tenant_token is not None:
-                current_tenant.reset(tenant_token)
+            try:
+                if reservation and usage_outcome == "unknown":
+                    from app.core.diagnostics import emit_diagnostic
+                    # No business response is not evidence of rejection. Leave
+                    # uncertain attempts charged for explicit operator review.
+                    emit_diagnostic("usage_outcome_unknown", code="USAGE_OUTCOME_UNKNOWN",
+                                    usage_outcome="unknown")
+            finally:
+                if tenant_token is not None:
+                    current_tenant.reset(tenant_token)
