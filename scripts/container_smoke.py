@@ -52,6 +52,7 @@ def require(condition, message):
 def runtime_environment(data_dir="/app/.data"):
     env = {
         "PYTHON_DOTENV_DISABLED": "1", "SAAS_MODE": "false", "APP_ENV": "local",
+        "DIAGNOSTIC_LOG_DIR": "",
         "DATABASE_URL": f"sqlite:///{data_dir}/demo.db",
         "RAG_RETRIEVAL_MODE": "lexical", "RAG_VECTOR_PATH": f"{data_dir}/qdrant",
         "RAG_EMBEDDING_CACHE_DIR": f"{data_dir}/models", "RAG_EMBEDDING_API_KEY": "",

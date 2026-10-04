@@ -9,33 +9,107 @@ from datetime import datetime, timezone
 import json
 import logging
 import math
+import os
+import sys
+from threading import RLock
 import re
 import time
 from uuid import uuid4
 
 from starlette.responses import JSONResponse
 
+from app.core.diagnostic_schema import (EVENTS as _EVENTS, CODES as _CODES,
+    ERROR_TYPES as _ERROR_TYPES, STEPS as _STEPS, STATUSES as _STATUSES,
+    valid_request_id, safe_route_template)
 
 LOGGER = logging.getLogger("content_agent.diagnostics")
 current_request_id: ContextVar[str | None] = ContextVar("diagnostic_request_id", default=None)
-_EVENTS = {
-    "http_response", "http_failed", "http_failed_after_response", "saas_boundary_failed",
-    "workflow_started", "workflow_finished", "workflow_step_failed", "workflow_background_failed",
-    "usage_finalization_failed", "usage_outcome_unknown",
-}
-_CODES = {"REQUEST_FAILED", "BACKGROUND_FAILED", "INSUFFICIENT_EVIDENCE", "INVALID_CITATIONS",
-          "WORKFLOW_CONFLICT", "RETRIEVAL_FAILED", "MODEL_CALL_FAILED", "STEP_FAILED",
-          "USAGE_FINALIZATION_UNCONFIRMED", "USAGE_OUTCOME_UNKNOWN"}
-_ERROR_TYPES = {
-    "ValueError", "TypeError", "RuntimeError", "OSError", "TimeoutError", "ConnectionError",
-    "PermissionError", "FileNotFoundError", "OperationalError", "IntegrityError", "StatementError",
-    "SQLAlchemyError", "ConnectionUnavailable", "ModelCallError", "RetrievalError", "EvidenceError",
-    "CitationError", "WorkflowConflict", "WorkflowCancelled", "UnexpectedError",
-}
-_STEPS = {"retrieve_context", "topic_ideas", "create_topic", "score_topic", "generate_draft",
-          "generate_cards", "compliance_check", "evaluate_package", "revise_package",
-          "reevaluate_package", "agent_decision", "human_review", "queued", "cancelled"}
-_STATUSES = {"pending", "running", "failed", "cancelled", "awaiting_review", "approved", "rejected"}
+
+_store_guard = RLock()
+_active_store = None
+_active_lifetimes = set()
+_sink_notices = set()
+
+
+class DiagnosticConfigurationError(RuntimeError):
+    """Fixed startup error without private paths or configuration values."""
+
+
+def _sink_failure_notice(code="DIAGNOSTIC_SINK_DEGRADED"):
+    events = {"DIAGNOSTIC_SINK_DEGRADED": "diagnostic_sink_degraded",
+              "DIAGNOSTIC_RECORD_REJECTED": "diagnostic_record_rejected"}
+    if code not in events or code in _sink_notices:
+        return
+    _sink_notices.add(code)
+    try:
+        sys.stderr.write(json.dumps({"event": events[code], "code": code}, separators=(",", ":")) + "\n")
+        sys.stderr.flush()
+    except Exception:
+        pass  # This fallback can fail too; never claim delivery or change business results.
+
+
+@contextmanager
+def persistent_diagnostics():
+    """Only the application lifespan owns the optional file sink, never imports.
+
+    A process-global sink cannot distinguish simultaneous app lifetimes; reject
+    overlap involving a configured sink instead of copying another app's events.
+    Default disabled lifetimes may overlap and never open a filesystem path.
+    """
+    global _active_store, _sink_notices
+    directory = os.environ.get("DIAGNOSTIC_LOG_DIR", "")
+    owner = object()
+    store = None
+    with _store_guard:
+        if _active_store is not None or (directory and _active_lifetimes):
+            raise DiagnosticConfigurationError("诊断日志已有应用实例占用，请先停止已有实例。")
+        if directory:
+            from app.core.diagnostic_store import DiagnosticStore
+            try:
+                values = [os.environ.get("DIAGNOSTIC_LOG_MAX_BYTES", "1048576"),
+                          os.environ.get("DIAGNOSTIC_LOG_BACKUP_COUNT", "5")]
+                if not all(re.fullmatch(r"[0-9]{1,9}", value) for value in values):
+                    raise ValueError()
+                store = DiagnosticStore(directory, max_bytes=int(values[0]), backup_count=int(values[1]))
+            except Exception:
+                raise DiagnosticConfigurationError("诊断日志配置无效或目录不可用，请检查私有目录、权限与单进程占用。") from None
+            _active_store = store
+            _sink_notices = set()
+        _active_lifetimes.add(owner)
+    try:
+        yield store
+    finally:
+        with _store_guard:
+            if store is not None and _active_store is store:
+                try:
+                    store.close()
+                    if store.status()["error_code"] == "CLOSE_FAILED":
+                        _sink_failure_notice()
+                except Exception:
+                    _sink_failure_notice()
+                finally:
+                    _active_store = None
+            _active_lifetimes.discard(owner)
+
+
+def diagnostic_sink_status():
+    """Process-local metadata for operators/tests, not a public cross-tenant API."""
+    with _store_guard:
+        if _active_store is None:
+            return {"state": "disabled", "written": 0, "dropped": 0, "error_code": None}
+        return _active_store.status()
+
+
+def _persist_diagnostic(payload):
+    with _store_guard:
+        if _active_store is not None:
+            try:
+                if not _active_store.append(payload):
+                    code = ("DIAGNOSTIC_RECORD_REJECTED" if _active_store.status()["error_code"] == "INVALID_RECORD"
+                            else "DIAGNOSTIC_SINK_DEGRADED")
+                    _sink_failure_notice(code)
+            except Exception:
+                _sink_failure_notice()
 
 
 class _SafeStreamHandler(logging.StreamHandler):
@@ -55,9 +129,6 @@ def configure_diagnostics_logging():
     # http_response event replaces it; lifecycle/error logging remains enabled.
     logging.getLogger("uvicorn.access").disabled = True
 
-
-def valid_request_id(value):
-    return value if isinstance(value, str) and re.fullmatch(r"[a-f0-9]{32}", value) else None
 
 
 @contextmanager
@@ -99,7 +170,7 @@ def emit_diagnostic(event, *, agent_run_id=None, agent_step_id=None, step_key=No
         "usage_outcome": usage_outcome if usage_outcome in {"accepted", "rejected", "unknown"} else None,
         "method": method if method in {"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"} else None,
         # This argument comes only from a matched, registered route, never URL.path.
-        "route": route,
+        "route": safe_route_template(route),
     }
     try:
         LOGGER.log(logging.WARNING if error_type or (http_status or 0) >= 400
@@ -108,6 +179,7 @@ def emit_diagnostic(event, *, agent_run_id=None, agent_step_id=None, step_key=No
     except Exception:
         # Best effort only: emitting metadata must never change business results.
         pass
+    _persist_diagnostic(payload)
 
 
 def _route_template(scope):

@@ -134,6 +134,7 @@ def configure_fixture_environment(store: Path, port: int) -> None:
             os.environ.pop(name, None)
     os.environ.update({
         "PYTHON_DOTENV_DISABLED": "1", "SAAS_MODE": "true", "APP_ENV": "local",
+        "DIAGNOSTIC_LOG_DIR": "",
         "APP_NAME": "知源合成恢复夹具",
         "SAAS_DATA_DIR": str(store), "DATABASE_URL": "sqlite:///:memory:",
         "SAAS_ENV_FILE": str(store / "never-load.env"),

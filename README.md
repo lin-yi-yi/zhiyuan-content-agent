@@ -1,6 +1,6 @@
 # 知源 · AI 内容与交付 Agent
 
-`zhiyuan-content-agent` · **v0.15.0 工程验证版** · RAG / LangGraph / 人工审核
+`zhiyuan-content-agent` · **v0.16.0 工程验证版** · RAG / LangGraph / 人工审核
 
 [![Project checks](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml/badge.svg?branch=main)](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml?query=branch%3Amain)
 
@@ -16,12 +16,12 @@
 | --- | --- |
 | 默认首页 / 整合主线 | [`main`](https://github.com/lin-yi-yi/zhiyuan-content-agent/tree/main)；默认显示已整合版本；开发分支的未合并改动通过 Pull Request 查看 |
 | 后续开发分支 | [`codex/content-agent`](https://github.com/lin-yi-yi/zhiyuan-content-agent/tree/codex/content-agent)；由原 `codex/job-ready-agent-v06` 更名，避免把分支名中的 v06 误当当前版本 |
-| 本轮实现 | SaaS 应用 lifespan 统一服务锁、双组织真实 Qdrant 停机恢复演练、第五组学习实验、独立 SaaS 恢复 CI job |
-| 本地验证 | **1235 项后端、57 项前端、构建及 1 条完整浏览器流程通过**，npm 已知漏洞 0；合成 SaaS 恢复九阶段通过。详见 [本轮验收](docs/validation/v015-saas-recovery-2026-10-04.md) |
-| Docker 演练 | 候选 `068db87`：双组织 Qdrant 恢复 **9 阶段**、v0.14→v0.15 本地模式升级回退 **8 阶段**均通过，两套清理错误均为 0；范围及报告见 [验收记录](docs/validation/v015-saas-recovery-2026-10-04.md) |
-| 历史验证 | v0.14.0：1145 个后端测试、57 个前端测试及构建通过；磁盘、页面、浏览器及特定版本对容器恢复见 [历史验收](docs/validation/v014-operations-2026-10-04.md) |
-| GitHub 自动检查 | 候选 `068db87` 的 push / PR 共 6 项检查全部成功，覆盖 `checks`、`container-recovery`、`saas-recovery`；后续提交看自身[运行记录](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml)。顶部徽章显示 `main` 状态，候选检查通过不等于已合并 |
-| 真实业务验证 | 本轮恢复演练使用合成账号、资料与固定合成向量，生成仅 local；真实供应商账单、客户验收、付费和公网生产环境尚未验证 |
+| 本轮实现 | 默认关闭的私有诊断 JSONL、限额轮转、按服务器请求 ID 只读查询；写入故障停止落盘并保留业务响应，损坏或读取不完整明确返回不确定状态 |
+| 本轮验证 | **1441 项后端、57 项前端、编译构建及 1 条 Chromium 业务流程通过**，npm 已知漏洞 0；v0.16.0 真实本地子进程诊断演练 **9 阶段通过**，清理错误 0。GitHub CI 待核对，见 [本轮验收](docs/validation/v016-diagnostics-2026-10-04.md) |
+| 历史回归 | v0.15.0 的完整回归、浏览器与依赖审计结果保留在 [历史验收](docs/validation/v015-saas-recovery-2026-10-04.md)，不作为 v0.16.0 结果 |
+| 历史 Docker 演练 | v0.15.0 候选 `068db87`：双组织 Qdrant 恢复 **9 阶段**、v0.14→v0.15 本地模式升级回退 **8 阶段**均通过，两套清理错误均为 0；[验收记录](docs/validation/v015-saas-recovery-2026-10-04.md)保留具体提交与范围 |
+| GitHub 自动检查 | v0.16.0 候选检查待验证。历史候选 `068db87` 的 push / PR 共 6 项检查成功；新提交须核对自身[运行记录](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml)。顶部徽章显示 `main` 状态，不能替代未合并候选的检查 |
+| 真实业务验证 | 本轮使用临时合成资料与故障注入，无付费模型或外部通知；真实供应商账单、客户验收、付费和公网生产环境尚未验证 |
 
 **[开发路线与商用验收](ROADMAP.md) · [学习实验](docs/learning-labs.md) · [项目状态与下一步](docs/project-status.md) · [安装与运行](SETUP.md) · [演示流程](docs/demo-walkthrough.md) · [文档导航](docs/README.md) · [开发交接](CONTRIBUTING.md) · [版本记录](CHANGELOG.md)**
 
@@ -64,7 +64,7 @@ RAG_RETRIEVAL_MODE=lexical ./scripts/start.sh
 
 模型与信源、运行诊断进入「设置与连接」；团队模式还提供成员、用量和账号。模型评分和编辑器检查清单不能代替人工批准。
 
-## v0.15.0 当前能力
+## v0.16.0 当前能力
 
 | 能力 | 实现与边界 |
 | --- | --- |
@@ -82,7 +82,7 @@ RAG_RETRIEVAL_MODE=lexical ./scripts/start.sh
 | 团队恢复演练 | 临时双组织、真实认证/权限/用量与 SQLite/Qdrant；新目标恢复后重新登录、检索并保留原卷新增资料。本机与候选 Docker 九阶段通过；固定三维合成向量不验证 BGE 质量或缓存，跨版本 SaaS 和生产验收仍待 |
 | 内容流程 | LangGraph 条件流程：检索、选题、正文、卡片、质量检查和有限修订；步骤记录、重试和取消 |
 | 调用追溯 | 模型调用关联任务、步骤及工作流尝试；区分格式回退和 JSON 修复，记录指令版本 hash、用量及配置价格下的估算。缺失留空，估算不等于供应商账单 |
-| 请求诊断 | 服务器生成请求 ID，关联 HTTP、后台任务、执行尝试及新预留记录；资料问答失败时可复制编号，旧上下文结果会丢弃。JSON 日志仅包含允许的元数据，尚无日志落盘保证和通知告警 |
+| 请求诊断 | 服务器请求 ID 关联 HTTP、后台任务、执行尝试及新预留记录，页面可复制排错编号；可选私有 JSONL 轮转只写白名单元数据。标准库 CLI 按 ID 只读查询，损坏/变更不当作完整历史；写入失败降级停写，不改变业务结果。默认关闭，无通知告警或断电耐久保证 |
 | 磁盘预检 | 显式目录和阈值的只读 CLI，区分正常、低空间与未知；不读取数据库、不清理文件。是一次检查，不是持续告警、写入保证或容量验收 |
 | 异常预留核对 | 本地运营 CLI 默认预览，显式停机后处理单条已查明预留；幂等键、账本与审计同事务。只处理受理次数，不处理资金或供应商退款 |
 | 结算故障保护 | 首次业务受理/拒绝只尝试一次结算；兜底 500、取消或无响应保留未知预留，审计或发送故障不反向退款；日志记录未确认状态，交由人工核对 |
@@ -139,6 +139,12 @@ DEEPSEEK_MODEL=deepseek-chat
 
 可用 `PORT=8770 ./scripts/start.sh` 调整端口。日志记录调用哈希、耗时、token 和错误类型；接口不返回历史提示词和回答原文，旧库原文记录不会自动清除。调用配额不是精确人民币账单，费用需与供应商对账。
 
+## 可选：私有诊断与按编号排错
+
+诊断默认仍输出到进程标准错误，**文件落盘默认关闭**。启用时显式设置 `DIAGNOSTIC_LOG_DIR` 为绝对路径，指向当前用户拥有、无组或其他用户权限的现有独立目录；新目录须为空，日志文件权限为 `0600`。默认每文件最多 1 MiB、保留 5 个旧档和 1 个活动文件；权限、格式或占用不符时拒绝启动，不接管或清理其他文件。
+
+文件只保存版本化的事件、编号、状态、耗时等允许字段，不保存提示词、资料正文、密钥、原始 URL 或异常正文。可用 `scripts/diagnostic_query.py --directory ... --request-id ...` 只读查询；它不获取写锁、不修复日志。查到记录也不代表历史完整，轮转后查不到只表示保留窗口内未观察到，损坏或读取中变更返回不确定状态。启用、退出码和处置步骤见 [请求诊断指南](docs/diagnostics.md)。R08 仍部分完成，尚无持续监测或外部告警。
+
 ## 可选：SaaS 小团队试点
 
 没有 `.env.saas` 时根据 `.env.saas.example` 创建，不要覆盖已有凭证。
@@ -181,11 +187,14 @@ AI 辅助说明和交付清单不构成完整生产合规证明。服务中断�
 
 # 临时双组织与真实 Qdrant 恢复；使用合成向量，不调用在线模型
 .venv/bin/python scripts/saas_recovery_smoke.py --runtime local
+
+# 临时子进程与私有目录：诊断查询、重启、轮转、写入/fsync故障
+.venv/bin/python scripts/diagnostic_smoke.py
 ```
 
 检查脚本覆盖后端行为、Python 编译、前端行为与生产构建。另用 `(cd frontend && npm run test:e2e)` 运行隔离的浏览器业务回归，首次先按 [浏览器回归说明](docs/browser-regression.md) 安装 Chromium。本地数据保护见 [备份恢复](docs/local-backup.md)。自动检查、浏览器验收和真实客户效果分别记录，不能互相替代。
 
-本轮工程说明：[双组织 SaaS 与 Qdrant 恢复](docs/saas-recovery.md)、[第五组学习实验](docs/learning-labs.md)。已有基础：[磁盘余量预检](docs/ops-health.md)、[页面排错编号](docs/request-troubleshooting.md)、[人工确认问题范围](docs/question-clarification.md)、[工具问答契约](docs/rag-tool-facts.md)、[结算故障与未知状态](docs/usage-finalization-failures.md)、[冻结评测](docs/frozen-faq-evaluation.md)、[请求诊断](docs/diagnostics.md)、[人工用量核对](docs/usage-reconciliation.md)、[容器升级回退](docs/container-acceptance.md)。冻结自由问答坏例仍然存在；人工确认和严格参数契约不能替代自由问题理解，也不能泛化为所有内容均已核验。
+本轮工程说明：[私有轮转诊断与只读查询](docs/diagnostics.md)、[v0.16.0 验收进度](docs/validation/v016-diagnostics-2026-10-04.md)。已有基础：[双组织 SaaS 与 Qdrant 恢复](docs/saas-recovery.md)、[学习实验](docs/learning-labs.md)、[磁盘余量预检](docs/ops-health.md)、[页面排错编号](docs/request-troubleshooting.md)、[人工确认问题范围](docs/question-clarification.md)、[工具问答契约](docs/rag-tool-facts.md)、[结算故障与未知状态](docs/usage-finalization-failures.md)、[冻结评测](docs/frozen-faq-evaluation.md)、[人工用量核对](docs/usage-reconciliation.md)、[容器升级回退](docs/container-acceptance.md)。冻结自由问答坏例仍然存在；人工确认和严格参数契约不能替代自由问题理解，也不能泛化为所有内容均已核验。
 
 - [v0.9 商业化计划与价格实验](docs/v09-commercialization-plan.md)
 - [v0.10 工业 FAQ 审计、实现与本地验收](docs/validation/p0-industrial-faq-2026-10-03.md)

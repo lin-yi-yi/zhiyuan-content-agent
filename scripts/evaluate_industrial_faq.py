@@ -31,6 +31,7 @@ def configure_offline(folder):
         "DATABASE_URL": f"sqlite:///{Path(folder) / 'industrial-faq.db'}",
         "RAG_RETRIEVAL_MODE": "lexical", "RAG_VECTOR_PATH": str(Path(folder) / "vectors"),
         "AIHOT_ENABLED": "false", "GITHUB_ENABLED": "false",
+        "DIAGNOSTIC_LOG_DIR": "",
     })
     for provider in ("DEEPSEEK", "QWEN", "DOUBAO", "KIMI", "OPENAI"):
         os.environ[f"{provider}_API_KEY"] = ""

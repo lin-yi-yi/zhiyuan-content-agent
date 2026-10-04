@@ -2,7 +2,7 @@
 
 先读 [项目状态](docs/project-status.md)，按 [SETUP](SETUP.md) 准备 Python 3.12+ 和 Node.js 22，再用 [工业 FAQ 演示](docs/demo-walkthrough.md) 理解完整业务。后续改动按 [开发路线](ROADMAP.md)的验收标准推进；学习者按 [实验记录](docs/learning-labs.md)复现实际变更。当前范围是单机小团队试点；不要把本地测试通过写成生产或客户验收通过。
 
-v0.14.0 新增 [一次性磁盘预检](docs/ops-health.md)与 [资料问答排错编号](docs/request-troubleshooting.md)。R08 仍部分完成；本轮浏览器、容器和最终候选检查以 [验收记录](docs/validation/v014-operations-2026-10-04.md)为准，未完成的项目保持待验证。
+v0.16.0 新增默认关闭的 [私有诊断落盘与请求查询](docs/diagnostics.md)，配合已有磁盘预检与页面排错编号。R08 仍部分完成；本轮实际检查以 [验收记录](docs/validation/v016-diagnostics-2026-10-04.md)为准。目标环境告警、真实模型与客户接受继续分开验收。
 
 ## 开始改动前
 
@@ -32,7 +32,7 @@ git remote -v
 | 审核与交付 | `services/review_lifecycle.py`、`services/delivery.py`、`frontend/src/pages/DraftEditorPage.tsx` | 编辑后批准失效、旧内容快照、当前证据、正式清单和预览素材的区别 |
 | 模型调用 | `backend/app/llm/`、`api/routes/models.py` | 调用关联、JSON 修复、失败日志、未知 token/费用、不返回敏感原文 |
 | 团队与复盘 | `backend/app/saas/`、`services/pilot.py`、`frontend/src/pages/PilotPage.tsx` | 组织边界、角色权限、有效交付版本、缺失值与真实零值 |
-| 运维与排错 | `scripts/ops_health.py`、`core/diagnostics.py`、`frontend/src/components/RequestFailure.tsx`、`frontend/src/api/client.ts` | 目录与阈值显式输入、错误不泄露路径；仅从响应头取得编号，组织变化或读取错误体后的旧结果不得回写 |
+| 运维与排错 | `scripts/ops_health.py`、`scripts/diagnostic_query.py`、`core/diagnostics.py`、`core/diagnostic_store.py`、`frontend/src/components/RequestFailure.tsx` | 私有目录、字段白名单、轮转和降级停写；查询只读且不推断完整历史；页面只从响应头取得编号，组织变化后旧结果不得回写 |
 
 表中省略前缀的前端路径相对 `frontend/src/`，后端路径相对 `backend/app/`。测试集中于 `tests/`，前端行为测试在 `frontend/tests/`。先读相关测试再改动，不为已有能力重建第二套实现。
 
@@ -44,7 +44,7 @@ git remote -v
 ./scripts/check.sh
 ```
 
-脚本禁用 dotenv、隔离 SQLite 与词项模式、强制 local 任务模型，清除继承的模型凭证/价格并关闭信源和外部 LangSmith/LangChain 追踪，运行后端测试、Python 编译、前端行为测试和生产构建。不要把它的通过解释成真实语义模型、在线供应商、浏览器画面或生产环境已经验收。
+脚本禁用 dotenv、隔离 SQLite 与词项模式、强制 local 任务模型，清除继承的模型凭证/价格，禁用继承的诊断目录并关闭信源和外部 LangSmith/LangChain 追踪，运行后端测试、Python 编译、前端行为测试和生产构建。不要把它的通过解释成真实语义模型、在线供应商、浏览器画面或生产环境已经验收。
 
 开发期间可先跑相关用例。例如只改审核与交付：
 
@@ -66,6 +66,8 @@ PYTHON_DOTENV_DISABLED=1 SAAS_MODE=false DATABASE_URL=sqlite:///:memory: \
 磁盘工具专项为 `.venv/bin/python -m pytest tests/test_ops_health.py -q`，只使用临时目录。工具不加载应用配置、不读取数据库或扫描资料；练习低空间应提高阈值，不要填满真实磁盘。问答排错改动要检查合法/非法响应头、正文伪造、复制失败，以及读取错误体期间切换组织的拒绝路径；模拟请求测试不能代替真实页面或 SaaS 登录验收。
 
 涉及页面业务流程时，运行 [真实浏览器回归](docs/browser-regression.md)：首次安装 Chromium 后执行 `(cd frontend && npm run test:e2e)`。它启动自己的临时合成服务，不能复用日常资料库。CI 也执行该流程并保存合成报告，失败时保留 trace 和截图。
+
+涉及诊断持久化时，另运行 `.venv/bin/python scripts/diagnostic_smoke.py`。它创建临时合成库、启动真实 Uvicorn 子进程，检查重启、锁冲突、轮转、故障降级和查询隐私；不读取日常诊断目录。报告默认在 `.data/validation/diagnostic-smoke/report.json`。CI 的 `checks` job 同样执行九阶段演练并保留合成产物 7 天。
 
 新行为应补能抓住原问题的测试；状态、权限或范围变化同时检查拒绝路径。纯文档修改核对命令、链接和实际页面文案即可。GitHub `Project checks` 执行检查与构建，不负责部署；实际结果应附当前运行记录，不照抄历史测试数。
 

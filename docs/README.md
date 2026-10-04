@@ -1,6 +1,6 @@
 # 知源文档导航
 
-当前使用与交接路线面向 **v0.15.0 工程验证版**。当前版本与开发基线、最近检查及剩余限制以 [项目状态](project-status.md) 为入口；历史材料保留各自日期与验证范围。
+当前使用与交接路线面向 **v0.16.0 工程验证版**。私有诊断、只读查询、本机完整回归与子进程演练已验证，GitHub CI 待核对；以 [项目状态](project-status.md) 和 [本轮验收](validation/v016-diagnostics-2026-10-04.md) 为入口，历史材料保留各自日期与验证范围。
 
 ## 第一次使用
 
@@ -25,7 +25,7 @@
 | [冻结合成 FAQ 评测](frozen-faq-evaluation.md) | 固定问题、资料、配置和坏例，区分开发/保留组与人工标签限制 |
 | [问题范围人工确认](question-clarification.md) | 从当前资料目录选择型号和参数，补充缺项并确认；了解与一般资料问答的区别 |
 | [工具问答事实契约](rag-tool-facts.md) | 将显式参数透传给 `rag.answer`，处理未知字段由忽略改为 422 的兼容变更 |
-| [请求与工作流诊断](diagnostics.md) | 从请求 ID 定位执行尝试和步骤；了解日志字段与未覆盖的告警 |
+| [请求与工作流诊断](diagnostics.md) | 可选私有元数据轮转、按请求 ID 只读查询、扫描未知状态与写入降级；文件落盘默认关闭，未覆盖外部告警 |
 | [磁盘余量预检](ops-health.md) | 按明确目录和阈值检查可用空间，区分低空间与无法判断，避免自动删数据 |
 | [页面排错编号](request-troubleshooting.md) | 在资料问答失败时复制编号，对照私有日志定位同一次请求 |
 | [用量结算失败与未知结果](usage-finalization-failures.md) | 区分业务受理、响应传输和结算回执；核对单次自动尝试与未知预留 |
@@ -39,7 +39,8 @@
 
 | 类别 | 入口与使用方式 |
 | --- | --- |
-| 当前阶段的验收证据 | [v0.15.0 SaaS 恢复](validation/v015-saas-recovery-2026-10-04.md)及[项目状态](project-status.md)：1235 项后端、57 项前端、构建及 1 条浏览器流程通过；候选 Docker 双组织恢复 9 阶段和版本对升级回退 8 阶段通过。当前提交完整 CI 状态按运行记录核对 |
+| 当前阶段的验收证据 | [v0.16.0 私有诊断](validation/v016-diagnostics-2026-10-04.md)及[项目状态](project-status.md)：1441 项后端、57 项前端、编译构建、1 条 Chromium 流程与真实本地子进程 9 阶段通过；GitHub CI 待核对 |
+| v0.15.0 历史证据 | [SaaS 与 Qdrant 恢复](validation/v015-saas-recovery-2026-10-04.md)：1235 项后端、57 项前端、构建及 1 条浏览器流程通过；候选 `068db87` 的双组织 Docker 恢复 9 阶段和版本对升级回退 8 阶段通过，不作为 v0.16.0 结果 |
 | 近期历史证据 | [v0.14.0 运维与排错](validation/v014-operations-2026-10-04.md)、[P0 工业 FAQ](validation/p0-industrial-faq-2026-10-03.md)、[P1 模型追溯](validation/p1-model-tracing-2026-10-03.md) 保留当时提交、结果和限制 |
 | 资料机制 | [信源核验与入库](source-evidence-workflow.md)、[AIHOT 接入](aihot-source-integration.md)：了解机制和授权边界；旧页面名称按上方映射阅读 |
 | 检索研究 | [v0.8 混合检索实验](research/v08-hybrid-retrieval.md)：保留样本、策略取舍和坏例，不能作为当前整体准确率 |
