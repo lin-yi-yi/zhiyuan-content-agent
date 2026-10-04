@@ -9,7 +9,7 @@ const source = readFileSync(new URL('../src/utils/ragFacts.ts', import.meta.url)
 vm.runInNewContext(ts.transpileModule(source, {
   compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020},
 }).outputText, {exports: exported});
-const {parseRagRequiredFacts, selectRagKnowledgeBase, ragFactCoverage} = exported;
+const {parseRagRequiredFacts, selectRagKnowledgeBase, ragFactCoverage, validateRagFactRows, addRagCatalogFact} = exported;
 const plain = value => JSON.parse(JSON.stringify(value));
 
 test('手填参数原样保留：正常、缺价、响应时间与复合问题均可送往服务端核验', () => {
@@ -72,4 +72,39 @@ test('已核对、未评估与响应缺字段显示不同口径，不将覆盖�
     assert.match(status.explanation, /不代表问题可完整回答/);
   }
   assert.equal(ragFactCoverage({answerability: 'required_facts_present', required_facts: facts, missing_facts: facts}).label, '参数覆盖：缺少必需依据');
+});
+
+test('多型号清单保留未知型号、缺失参数和标点，不把目录当作需求白名单', () => {
+  const rows = [{product_model:' 未知 QL-22 ',parameter:'售价'}, {product_model:' 合成 QL-21 ',parameter:'额定压力 / 液体入口'}, {product_model:' ',parameter:''}];
+  assert.deepEqual(plain(validateRagFactRows(rows)), [
+    {product_model:'未知 QL-22',parameter:'售价'}, {product_model:'合成 QL-21',parameter:'额定压力 / 液体入口'},
+  ]);
+  assert.equal(rows[0].product_model, ' 未知 QL-22 ');
+  assert.equal(validateRagFactRows([{product_model:'A',parameter:'长, 宽；温度'}])[0].parameter, '长, 宽；温度');
+});
+
+test('多行中半填不能被静默丢掉，超数量和超长仍拒绝', () => {
+  const complete={product_model:'产品',parameter:'参数'};
+  assert.throws(()=>validateRagFactRows([complete,{product_model:'另一个型号',parameter:''}]), /每一行/);
+  assert.throws(()=>validateRagFactRows([complete,{product_model:'',parameter:'目录没有的参数'}]), /每一行/);
+  assert.throws(()=>validateRagFactRows(Array.from({length:11},()=>complete)), /10/);
+  assert.throws(()=>validateRagFactRows([{...complete,product_model:'甲'.repeat(201)}]), /200/);
+  assert.deepEqual(plain(validateRagFactRows([{product_model:' ',parameter:' '}])), []);
+});
+
+test('主动选择目录条目补空行或追加，不覆盖已填写的未知型号和缺项', () => {
+  const price={product_model:'未知型号',parameter:'售价'};
+  const selected={product_model:'已知型号',parameter:'电压',evidence:[{chunk_id:1}]};
+  const rows=[price,{product_model:'',parameter:''}];
+  assert.deepEqual(plain(addRagCatalogFact(rows,selected)), [price,{product_model:'已知型号',parameter:'电压'}]);
+  assert.deepEqual(plain(rows), [price,{product_model:'',parameter:''}]);
+  assert.deepEqual(plain(addRagCatalogFact([price],selected)), [price,{product_model:'已知型号',parameter:'电压'}]);
+});
+
+test('目录去重保留单位大小写，满清单不截断原要求', () => {
+  const row={product_model:'合成Ａ－１',parameter:'mA'};
+  const rows=[row];
+  assert.equal(addRagCatalogFact(rows,{product_model:' 合成 A-1 ',parameter:' mA '}), rows);
+  assert.equal(addRagCatalogFact(rows,{product_model:'合成A-1',parameter:'MA'}).length, 2);
+  assert.throws(()=>addRagCatalogFact(Array.from({length:10},(_,i)=>({product_model:'型号',parameter:`参数${i}`})),row), /10/);
 });

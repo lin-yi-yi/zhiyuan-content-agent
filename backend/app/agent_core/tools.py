@@ -2,7 +2,7 @@
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlalchemy.orm import Session
 
 from app.agent_core.boundaries import (
@@ -12,6 +12,7 @@ from app.agent_core.boundaries import (
 )
 from app.agent_core.rag_service import answer_question, index_source, search_knowledge
 from app.agent_core.embeddings import retrieval_status
+from app.schemas.evidence import RequiredFacts
 
 
 class RagSearchArguments(BaseModel):
@@ -22,11 +23,14 @@ class RagSearchArguments(BaseModel):
 
 
 class RagAnswerArguments(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     query: str = Field(..., min_length=1, max_length=1000)
     provider: str = Field("local", max_length=80)
     model: str = Field("", max_length=160)
     top_k: int = Field(5, ge=1, le=12)
     retrieval_mode: Literal["lexical", "semantic", "hybrid"] | None = None
+    required_facts: RequiredFacts = Field(default_factory=list)
 
 
 class SourceIndexArguments(BaseModel):
@@ -70,7 +74,7 @@ TOOL_REGISTRY: dict[str, ToolSpec] = {
     "rag.answer": ToolSpec(
         name="rag.answer",
         label="证据问答",
-        description="先检索证据，再基于证据回答；证据不足时拒答。",
+        description="在当前资料范围内先检索证据；可用 required_facts 显式列出型号与所问参数，缺项时在模型生成前拒答。",
         category="rag",
         capability="rag_retrieve",
         action="cite",
@@ -78,6 +82,10 @@ TOOL_REGISTRY: dict[str, ToolSpec] = {
         boundary_rules=[
             "答案必须来自检索证据",
             "证据不足时返回 refused=true",
+            "required_facts 最多 10 项；每项包含 product_model 和 parameter，缺项参数也应如实填写",
+            "必需事实只在当前 workspace 和 knowledge base 的有效检索摘录中核对，不跨范围补证",
+            "未传 required_facts 时 answerability=not_assessed，不代表已检查问题的全部事实",
+            "拒绝未知参数字段，避免显式要求被静默忽略",
             "模型调用只接收最小必要证据上下文",
         ],
         input_schema=RagAnswerArguments.model_json_schema(),
@@ -204,6 +212,7 @@ def _execute_rag_answer(
         model=parsed.model or "",
         top_k=parsed.top_k,
         retrieval_mode=parsed.retrieval_mode,
+        required_facts=parsed.required_facts,
     )
 
 

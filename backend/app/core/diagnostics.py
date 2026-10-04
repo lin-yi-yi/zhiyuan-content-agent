@@ -21,9 +21,11 @@ current_request_id: ContextVar[str | None] = ContextVar("diagnostic_request_id",
 _EVENTS = {
     "http_response", "http_failed", "http_failed_after_response", "saas_boundary_failed",
     "workflow_started", "workflow_finished", "workflow_step_failed", "workflow_background_failed",
+    "usage_finalization_failed", "usage_outcome_unknown",
 }
 _CODES = {"REQUEST_FAILED", "BACKGROUND_FAILED", "INSUFFICIENT_EVIDENCE", "INVALID_CITATIONS",
-          "WORKFLOW_CONFLICT", "RETRIEVAL_FAILED", "MODEL_CALL_FAILED", "STEP_FAILED"}
+          "WORKFLOW_CONFLICT", "RETRIEVAL_FAILED", "MODEL_CALL_FAILED", "STEP_FAILED",
+          "USAGE_FINALIZATION_UNCONFIRMED", "USAGE_OUTCOME_UNKNOWN"}
 _ERROR_TYPES = {
     "ValueError", "TypeError", "RuntimeError", "OSError", "TimeoutError", "ConnectionError",
     "PermissionError", "FileNotFoundError", "OperationalError", "IntegrityError", "StatementError",
@@ -74,7 +76,7 @@ def safe_error_type(exc):
 
 def emit_diagnostic(event, *, agent_run_id=None, agent_step_id=None, step_key=None,
                     workflow_attempt=None, status=None, code=None, error_type=None,
-                    elapsed_ms=None, http_status=None, method=None, route=None):
+                    elapsed_ms=None, http_status=None, method=None, route=None, usage_outcome=None):
     """Only explicit fields/enumerations; no arbitrary extra dicts or exceptions."""
     if event not in _EVENTS:
         return
@@ -94,12 +96,14 @@ def emit_diagnostic(event, *, agent_run_id=None, agent_step_id=None, step_key=No
         "error_type": error_type if error_type in _ERROR_TYPES else None,
         "elapsed_ms": duration,
         "http_status": http_status if type(http_status) is int and 100 <= http_status <= 599 else None,
+        "usage_outcome": usage_outcome if usage_outcome in {"accepted", "rejected", "unknown"} else None,
         "method": method if method in {"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"} else None,
         # This argument comes only from a matched, registered route, never URL.path.
         "route": route,
     }
     try:
-        LOGGER.log(logging.WARNING if error_type or (http_status or 0) >= 400 else logging.INFO,
+        LOGGER.log(logging.WARNING if error_type or (http_status or 0) >= 400
+                   or event in {"usage_finalization_failed", "usage_outcome_unknown"} else logging.INFO,
                    json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
     except Exception:
         # Best effort only: emitting metadata must never change business results.
@@ -110,24 +114,40 @@ def _route_template(scope):
     return getattr(scope.get("route"), "path", None) or "<unmatched>"
 
 
-async def _safe_request(app, scope, receive, send):
+async def _safe_request(app, scope, receive, send, *, mark_unknown_outcome=False,
+                        propagate_send_errors=False):
     started = False
+    send_failed = False
     start = time.perf_counter()
 
     async def guarded_send(message):
-        nonlocal started
+        nonlocal started, send_failed
         if message["type"] == "http.response.start":
             started = True
-        await send(message)
+        try:
+            await send(message)
+        except BaseException:
+            send_failed = True
+            raise
 
     try:
         await app(scope, receive, guarded_send)
     except Exception as exc:
+        if propagate_send_errors and send_failed:
+            # A downstream audit/transport failure belongs to the SaaS or
+            # outer safe boundary. Do not swallow it as a business failure
+            # after a response that might never have reached the transport.
+            raise
         emit_diagnostic("http_failed_after_response" if started else "http_failed",
                         code="REQUEST_FAILED", error_type=safe_error_type(exc),
                         method=scope.get("method"), route=_route_template(scope),
+                        usage_outcome=scope.get("state", {}).get("_usage_outcome"),
                         elapsed_ms=(time.perf_counter() - start) * 1000)
         if not started:
+            if mark_unknown_outcome:
+                # Private ASGI state, set only by the inner error boundary. A
+                # fallback 500 is not a business decision rejecting the attempt.
+                scope.setdefault("state", {})["_business_outcome_unknown"] = True
             await JSONResponse(status_code=500, content={
                 "detail": "处理失败，请查看运行日志并重试。", "request_id": current_request_id.get(),
             })(scope, receive, send)
@@ -143,7 +163,8 @@ class RequestErrorsMiddleware:
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
-        await _safe_request(self.app, scope, receive, send)
+        await _safe_request(self.app, scope, receive, send, mark_unknown_outcome=True,
+                            propagate_send_errors=True)
 
 
 class RequestDiagnosticsMiddleware:
@@ -171,7 +192,8 @@ class RequestDiagnosticsMiddleware:
                                 (b"x-content-type-options", b"nosniff")])
                 message = {**message, "headers": headers}
                 emit_diagnostic("http_response", http_status=message["status"], method=scope.get("method"),
-                                route=_route_template(scope), elapsed_ms=elapsed)
+                                route=_route_template(scope), elapsed_ms=elapsed,
+                                usage_outcome=scope.get("state", {}).get("_usage_outcome"))
             await send(message)
 
         with request_diagnostic_context(request_id):

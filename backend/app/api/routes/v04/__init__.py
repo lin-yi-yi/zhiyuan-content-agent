@@ -13,6 +13,7 @@ from app.agent_core.boundaries import (
 from app.agent_core.langchain_adapter import framework_status
 from app.agent_core.embeddings import retrieval_status
 from app.agent_core.rag_service import answer_question, index_source, search_knowledge
+from app.agent_core.fact_catalog import fact_catalog
 from app.agent_core.tools import execute_tool, list_tools
 from app.db.session import get_db
 from app.models.knowledge_base import KnowledgeBase, KnowledgeChunk
@@ -196,6 +197,20 @@ def index_source_endpoint(body: RagIndexSourceRequest, db: Session = Depends(get
             knowledge_base_id=body.knowledge_base_id,
             ingestion_profile=body.ingestion_profile,
         )
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc))
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
+
+
+@router.get("/rag/fact-catalog")
+def fact_catalog_endpoint(workspace_id: int | None = Query(None, ge=1),
+                          knowledge_base_id: int | None = Query(None, ge=1),
+                          offset: int = Query(0, ge=0), limit: int = Query(30, ge=1, le=50),
+                          db: Session = Depends(get_db)):
+    try:
+        context = workspace_context(db, workspace_id)
+        return fact_catalog(db, context, knowledge_base_id, offset, limit)
     except PermissionError as exc:
         raise HTTPException(403, str(exc))
     except ValueError as exc:

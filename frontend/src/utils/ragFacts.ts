@@ -25,6 +25,32 @@ export function parseRagRequiredFacts(productModel: string, parameters: string):
   return names.map(parameter => ({product_model: model, parameter}));
 }
 
+// Each row is one requirement; never split punctuation or silently discard a
+// half-filled row. Empty rows are merely UI placeholders, not requirements.
+export function validateRagFactRows(rows: RequiredFact[]): RequiredFact[] {
+  const filled = rows.map(row => ({product_model: row.product_model.trim(), parameter: row.parameter.trim()}))
+    .filter(row => row.product_model || row.parameter);
+  if (filled.length > 10) throw new Error('本次最多填写 10 个必需参数。');
+  if (filled.some(row => !row.product_model || !row.parameter)) throw new Error('请为每一行同时填写产品型号和参数，或删除该行。');
+  if (filled.some(row => [...row.product_model].length > 200 || [...row.parameter].length > 200)) throw new Error('每个型号和参数名称不能超过 200 个字符。');
+  return filled;
+}
+
+const factKey = (fact: RequiredFact) => [fact.product_model, fact.parameter]
+  .map(value => value.normalize('NFKC').replace(/\s+/gu, '')).join('\u0000');
+
+export function addRagCatalogFact(rows: RequiredFact[], fact: RequiredFact): RequiredFact[] {
+  if (rows.some(row => factKey(row) === factKey(fact))) return rows;
+  const copy = rows.map(row => ({...row}));
+  const empty = copy.findIndex(row => !row.product_model.trim() && !row.parameter.trim());
+  if (empty >= 0) copy[empty] = {product_model: fact.product_model, parameter: fact.parameter};
+  else {
+    if (copy.length >= 10) throw new Error('已达到 10 项，请先删除不需要的参数。');
+    copy.push({product_model: fact.product_model, parameter: fact.parameter});
+  }
+  return copy;
+}
+
 export function ragFactCoverage(answer: Pick<RagAnswerResponse, 'answerability' | 'required_facts' | 'missing_facts'>) {
   const missing = answer.missing_facts || [];
   // Fail conservatively if a response contains missing facts with a stale status.

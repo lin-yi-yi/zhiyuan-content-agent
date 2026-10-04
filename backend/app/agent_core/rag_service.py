@@ -353,15 +353,13 @@ def answer_question(question: str, db: Session, context: WorkspaceContext,
                                "limitation": "仅验证引用存在于检索结果，不等于结论已被证据蕴含。"}}
 
 
-def assess_required_facts(hits: list[SearchHit], required_facts=None) -> dict:
-    """Check explicit, reviewed parameters in selected passages; never infer intent.
+def available_reviewed_facts(hits: list[SearchHit]) -> list[dict]:
+    """Return located facts from live eligible hits without merging their sources.
 
-    The caller must pass only live eligible search hits. All citation fields are
-    validated defensively; document-wide citation metadata cannot make an unseen
-    passage qualify. This establishes evidence coverage, not answer correctness.
+    Callers establish document eligibility. This checks each citation against its
+    actual passage; metadata alone cannot make another passage count as evidence.
     """
-    required = [item.model_dump() for item in required_facts_adapter.validate_python(required_facts or [])]
-    available = {}
+    available = []
     for hit in hits:
         evidence = hit.metadata.get("evidence") or {}
         if (not isinstance(evidence, dict) or evidence.get("status") != "verified"
@@ -384,12 +382,26 @@ def assess_required_facts(hits: list[SearchHit], required_facts=None) -> dict:
                 normalize_public_url(source_url)
             except ValueError:
                 continue
-            available.setdefault((fact_text(product), fact_text(parameter)), {
+            available.append({
                 "product_model": product, "parameter": parameter, "value": value,
                 "excerpt": excerpt, "source_url": source_url, "locator": locator,
                 "version_label": evidence["version_label"], "note_id": evidence["note_id"],
                 "chunk_id": hit.chunk_id, "document_id": hit.document_id,
             })
+    return available
+
+
+def assess_required_facts(hits: list[SearchHit], required_facts=None) -> dict:
+    """Check explicit, reviewed parameters in selected passages; never infer intent.
+
+    The caller must pass only live eligible search hits. All citation fields are
+    validated defensively; document-wide citation metadata cannot make an unseen
+    passage qualify. This establishes evidence coverage, not answer correctness.
+    """
+    required = [item.model_dump() for item in required_facts_adapter.validate_python(required_facts or [])]
+    available = {}
+    for fact in available_reviewed_facts(hits):
+        available.setdefault((fact_text(fact["product_model"]), fact_text(fact["parameter"])), fact)
     missing, matched = [], []
     for item in required:
         match = available.get((fact_text(item["product_model"]), fact_text(item["parameter"])))

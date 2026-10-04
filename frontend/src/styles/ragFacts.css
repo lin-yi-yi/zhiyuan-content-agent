@@ -11,3 +11,19 @@
 .rag-fact-requirements .form-group > p { margin-top: 8px; line-height: 1.7; }
 .rag-fact-coverage { margin: 16px 0; padding: 14px 0; border-top: 1px solid currentColor; border-bottom: 1px solid currentColor; }
 .rag-fact-coverage ul { padding-left: 20px; margin: 10px 0 0; font-size: 13px; line-height: 1.8; overflow-wrap: anywhere; }
+.rag-fact-rows { display: grid; gap: 12px; margin: 16px 0; }
+.rag-fact-row { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto; gap: 10px; align-items: end; }
+.rag-fact-row .form-group { margin: 0; min-width: 0; }
+.rag-fact-row > .btn { margin-bottom: 2px; }
+.rag-confirm-requirements { display: flex; gap: 10px; align-items: flex-start; margin-top: 16px; line-height: 1.7; font-size: 13px; }
+.rag-confirm-requirements input { width: 16px; height: 16px; flex: 0 0 16px; margin: 4px 0 0; padding: 0; }
+.rag-confirm-requirements span { flex: 1; min-width: 0; }
+.rag-catalog-body { padding: 14px 0; }
+.rag-catalog-items { list-style: none; padding: 0; display: grid; gap: 12px; }
+.rag-catalog-items li { min-width: 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; }
+.rag-catalog-items .btn { white-space: normal; text-align: left; overflow-wrap: anywhere; }
+.rag-catalog-items details { margin-top: 8px; font-size: 12px; line-height: 1.7; }
+@media (max-width: 640px) {
+  .rag-fact-row { grid-template-columns: minmax(0,1fr); padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .rag-fact-row > .btn { justify-self: start; }
+}
