@@ -11,6 +11,7 @@
 | `./scripts/check.sh` 后端 | 992 passed，60.04 秒；1 个既有 Starlette/httpx 弃用警告 |
 | 同脚本前端 | 请求 5 项、工作流行为 34 项，共 39 项通过；Python 编译和 TypeScript/Vite 生产构建通过 |
 | `(cd frontend && npm run test:e2e)` | 1 条完整 Chromium 流程通过，8.1 秒；资料核验入库、任务生成、批准与下载、编辑使批准失效、重审与再次下载 |
+| `npm audit --registry=https://registry.npmjs.org --audit-level=moderate` | 2026-10-04 完整前端依赖检查为 0；仅代表当日 registry 已知告警 |
 | 新专项 | 冻结评测 25 项、诊断 13 项、对账 25 项、容器脚本 27 项，共 90 项；已包含在 992 项中，不重复相加 |
 
 本地日志及四份评测报告保存在忽略目录 `.data/validation/v012/`。浏览器使用隔离临时库，禁止后端外发与浏览器跨来源请求；没有覆盖全部页面、SaaS 登录或真实生成服务。源码经并行只读交叉审查；人工代码审查不替代运行验收。
@@ -42,7 +43,11 @@ semantic/hybrid 实际加载缓存 BGE ONNX，FastEmbed 0.8.0、512 维、2 线�
 
 ## 容器远程验收
 
-本机 27 项逻辑测试验证命令、构建输入过滤、资源清理与真实 API 合成流程；它们**不等于 Docker 验收**。新增 CI `container-recovery` 在 Ubuntu 24.04 的 Docker engine 构建基线 `9364eb0` 与本记录对应候选，报告写入 `container-recovery` artifact。首次远程结果待本次提交运行后核对，不预填通过。
+本机 27 项逻辑测试验证命令、构建输入过滤、资源清理与真实 API 合成流程；它们**不等于 Docker 验收**。实际远程演练已在 Ubuntu 24.04、Docker 28.0.4 完成：基线 `9364eb0f908b79e68abe1fd30e23d66337b6df6f` → 候选 `4309eef76bef91bb9ae2896daa038fc39fca11a4`，健康接口分别返回 0.11.0/0.12.0。8 个业务检查点全部通过，清理错误为 0；脚本全流程 57.18 秒，不能当作生产恢复时间或 SLO。
+
+证据：[远程容器 job](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37205113476/job/111444579435)、[原始合成报告](v012-container-4309eef.json)。报告从该 CI 的 `container-recovery` artifact 下载核对，保留镜像 ID、构建上下文 hash、阶段签名与命令耗时；构建/容器日志在 CI artifact 中按 7 天保留。本段记录这一明确提交的结果，之后提交以其 checks 为准。
+
+恢复归档仅 1 个 SQLite 文件，270,336 字节，`vector_index: absent`。恢复后的批准 hash 与基线一致，原候选卷仍保留不同的新 hash；不能把没有向量数据的恢复称为向量恢复成功。
 
 验收范围是一个明确版本对：旧版本在新卷建立已批准内容 → 重启 → 停机快照 → 候选升级同卷并改稿重审 → 重启 → 在另一个新卷恢复升级前快照 → 基线回退可读 → 原候选卷保持新内容 → 候选也能打开恢复卷。检查正文、批准 hash、引用、来源版本和定位，保留构建/运行日志、镜像 ID、上下文摘要与命令耗时。
 

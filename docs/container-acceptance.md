@@ -2,7 +2,7 @@
 
 `scripts/container_smoke.py` 为 GitHub Ubuntu runner 的现有 Linux Docker engine 提供隔离验收。宿主只需要 Python 标准库、Git 和 Docker CLI，不安装 Docker Desktop，也不依赖宿主的 Python 虚拟环境。
 
-**当前说明提供可执行流程；本机没有 Docker，脚本逻辑测试不能算容器验收通过。** 实际结果以运行该脚本的提交、JSON 报告和 CI 日志为准。第一次远程运行前，镜像构建、容器权限与重启恢复均属于待验证。
+2026-10-04 已在 GitHub Ubuntu 24.04 / Docker 28.0.4 实际通过 `9364eb0` → `4309eef` 的 8 个业务检查点，清理无错误；[具体证据](validation/v012-engineering-2026-10-04.md#容器远程验收)。本机没有 Docker，宿主逻辑测试与远程容器验收分开记录；后续版本仍以对应提交的 JSON 报告和 CI 为准。
 
 ## 执行
 
