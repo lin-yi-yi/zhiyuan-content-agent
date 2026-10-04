@@ -13,7 +13,6 @@ if [ ! -f frontend/dist/index.html ]; then
 fi
 export SAAS_PROJECT_ROOT="$PROJECT_ROOT"
 exec "$PYTHON_BIN" - <<'PY'
-import fcntl
 import importlib.util
 import os
 from pathlib import Path
@@ -61,12 +60,8 @@ os.environ.setdefault("AIHOT_ENABLED", "false")
 os.environ.setdefault("AIHOT_COMMERCIAL_AUTHORIZED", "false")
 os.environ.setdefault("GITHUB_ENABLED", "true")
 os.environ["PYTHONPATH"] = str(root / "backend")
-descriptor = os.open(data / ".service.lock", os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0), 0o600)
-try:
-    fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
-except BlockingIOError:
-    raise SystemExit("该 SaaS 数据目录已有服务或备份任务运行。") from None
-os.set_inheritable(descriptor, True)
+# The application lifespan owns the service lock for every entry point,
+# including direct uvicorn and Docker; do not inherit a second lock descriptor.
 print(f"知源 SaaS：{origin}\n本机监听 http://127.0.0.1:{port}；单 worker；数据目录 {data}\n按 Ctrl+C 停止。", flush=True)
 os.execv(sys.executable, [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", port, "--workers", "1"])
 PY

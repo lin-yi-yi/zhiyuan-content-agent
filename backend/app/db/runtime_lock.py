@@ -1,4 +1,4 @@
-"""Single-process ownership for local file-backed SQLite application lifetimes.
+"""Single-process ownership for local SQLite and SaaS data-root lifetimes.
 
 This advisory lock protects startup recovery as well as normal serving. It is
 not a distributed lock, database transaction lock or a multi-worker architecture.
@@ -15,6 +15,37 @@ from sqlalchemy.engine import make_url
 
 class DatabaseRuntimeLockError(RuntimeError):
     """Sanitized startup error: no database URL, path or credentials."""
+
+
+@contextmanager
+def saas_data_runtime_lock(data_dir):
+    """Coordinate every SaaS launcher with offline backups before opening stores.
+
+    Keep the lock inode after shutdown; deleting it could create two owners.
+    This protects cooperating processes, not arbitrary database/file writers.
+    """
+    descriptor = None
+    try:
+        try:
+            directory = Path(data_dir).expanduser().resolve()
+            directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+            lock_path = directory / ".service.lock"
+            flags = os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
+            descriptor = os.open(lock_path, flags, 0o600)
+            if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+                raise OSError("Invalid lock file")
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                raise DatabaseRuntimeLockError("该 SaaS 数据目录已有服务或备份任务运行，请停止已有实例后再启动。") from None
+        except DatabaseRuntimeLockError:
+            raise
+        except Exception:
+            raise DatabaseRuntimeLockError("无法取得 SaaS 运行锁，请检查数据目录和权限后重试。") from None
+        yield
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
 
 
 def _sqlite_file(database_url):

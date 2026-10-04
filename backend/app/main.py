@@ -1,5 +1,6 @@
 """FastAPI 主入口"""
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, ExitStack
+import os
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +14,7 @@ from app.api.routes import health, topics, drafts, cards, publish_logs, reports,
 from app.api.routes import knowledge, source_hub, evidence, github_sources, brands, delivery
 from app.api.routes import pilot
 from app.db.session import SessionLocal
-from app.db.runtime_lock import local_database_runtime_lock
+from app.db.runtime_lock import local_database_runtime_lock, saas_data_runtime_lock
 from app.core.diagnostics import RequestDiagnosticsMiddleware, RequestErrorsMiddleware, configure_diagnostics_logging
 
 @asynccontextmanager
@@ -22,7 +23,17 @@ async def lifespan(app):
     saas = is_saas_mode()
     # Port binding happens after lifespan startup. Lock before schema/recovery
     # so another process cannot mark the live owner's tasks as interrupted.
-    with local_database_runtime_lock(settings.DATABASE_URL, enabled=not saas):
+    runtime_lock = (saas_data_runtime_lock(os.getenv("SAAS_DATA_DIR", str(Path(__file__).resolve().parents[2] / ".data" / "saas")))
+                    if saas else local_database_runtime_lock(settings.DATABASE_URL))
+    with runtime_lock, ExitStack() as cleanup:
+        from app.agent_core.vector_store import close_vector_stores
+        from app.saas.store import close_control_db
+        from app.db.session import close_tenant_stores
+        # LIFO: close vectors, tenant databases, then control database. Every
+        # cleanup is attempted, including after partial startup, before unlock.
+        cleanup.callback(close_control_db)
+        cleanup.callback(close_tenant_stores)
+        cleanup.callback(close_vector_stores)
         if saas:
             from app.saas.middleware import public_origin
             from app.saas.store import init_control_db
@@ -35,15 +46,7 @@ async def lifespan(app):
             from app.services.content_growth_agent import recover_interrupted_agent_runs
             with SessionLocal() as db:
                 recover_interrupted_agent_runs(db)
-        try:
-            yield
-        finally:
-            from app.agent_core.vector_store import close_vector_stores
-            close_vector_stores()
-            from app.saas.store import close_control_db
-            from app.db.session import close_tenant_stores
-            close_tenant_stores()
-            close_control_db()
+        yield
 
 
 app = FastAPI(title=settings.APP_NAME, version=__version__, lifespan=lifespan)

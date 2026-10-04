@@ -1,6 +1,6 @@
 # 知源文档导航
 
-当前使用与交接路线面向 **v0.14.0 工程验证版**。版本、分支、最近检查及剩余限制以 [项目状态](project-status.md) 为入口；历史材料保留各自日期与验证范围。
+当前使用与交接路线面向 **v0.15.0 工程验证版**。当前版本与开发基线、最近检查及剩余限制以 [项目状态](project-status.md) 为入口；历史材料保留各自日期与验证范围。
 
 ## 第一次使用
 
@@ -19,6 +19,7 @@
 | [学习实验与能力验收](learning-labs.md) | 亲自运行、解释、复现故障、修改并验证，记录真实掌握程度 |
 | [模型调用、重试与费用](model-call-tracing.md) | 核对调用关联、未知用量和费用估算口径 |
 | [SaaS 运维](saas-operations.md) | 单机团队试点、备份恢复与运维约束 |
+| [双组织 SaaS 与 Qdrant 恢复](saas-recovery.md) | 临时合成账号、真实存储与 HTTP 核验；九个恢复门禁、运行命令和隔离边界 |
 | [本地备份恢复](local-backup.md) | 默认本地或明确指定的 SQLite 与 Qdrant 停机快照、恢复到新目录 |
 | [浏览器业务回归](browser-regression.md) | 自动点击资料、任务、审核和下载；查看隔离条件与失败产物 |
 | [冻结合成 FAQ 评测](frozen-faq-evaluation.md) | 固定问题、资料、配置和坏例，区分开发/保留组与人工标签限制 |
@@ -38,7 +39,8 @@
 
 | 类别 | 入口与使用方式 |
 | --- | --- |
-| 当前阶段的验收证据 | [v0.14.0 工程验证](validation/v014-operations-2026-10-04.md)及[项目状态](project-status.md)；[P0 工业 FAQ](validation/p0-industrial-faq-2026-10-03.md)、[P1 模型追溯](validation/p1-model-tracing-2026-10-03.md) 保留当时提交、结果和限制 |
+| 当前阶段的验收证据 | [v0.15.0 SaaS 恢复](validation/v015-saas-recovery-2026-10-04.md)及[项目状态](project-status.md)：本机九阶段已过，1235 项后端、57 项前端及构建通过；Docker CI 待验证 |
+| 近期历史证据 | [v0.14.0 运维与排错](validation/v014-operations-2026-10-04.md)、[P0 工业 FAQ](validation/p0-industrial-faq-2026-10-03.md)、[P1 模型追溯](validation/p1-model-tracing-2026-10-03.md) 保留当时提交、结果和限制 |
 | 资料机制 | [信源核验与入库](source-evidence-workflow.md)、[AIHOT 接入](aihot-source-integration.md)：了解机制和授权边界；旧页面名称按上方映射阅读 |
 | 检索研究 | [v0.8 混合检索实验](research/v08-hybrid-retrieval.md)：保留样本、策略取舍和坏例，不能作为当前整体准确率 |
 | 历史验收 | [v0.8 工作台](validation/v08-workbench-acceptance.md)、[v0.9 商业流程](validation/v09-commercial-workflow-acceptance.md)、[团队试点](validation/saas-pilot-acceptance.md)：按记录中的时间、版本和环境理解 |

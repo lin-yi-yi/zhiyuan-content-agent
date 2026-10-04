@@ -50,7 +50,7 @@ jobs:
       - name: Verify container upgrade and snapshot rollback
         run: >-
           python scripts/container_smoke.py
-          --baseline-ref 9d850dd89d9b41c100aa68341bcd190d6d1f6fc2
+          --baseline-ref 84d80d0c9f6f884e01aea79883c7dc25d5a62c14
           --output .data/validation/container-smoke/report.json
       - name: Save synthetic container evidence
         if: always()
@@ -58,6 +58,28 @@ jobs:
         with:
           name: container-recovery
           path: .data/validation/container-smoke/
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
+  saas-recovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Verify SaaS organizations and real Qdrant snapshot recovery
+        run: >-
+          python scripts/saas_recovery_smoke.py
+          --runtime docker
+          --output .data/validation/saas-recovery/report.json
+      - name: Save synthetic SaaS recovery evidence
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: saas-recovery
+          path: .data/validation/saas-recovery/
           include-hidden-files: true
           if-no-files-found: ignore
           retention-days: 7
