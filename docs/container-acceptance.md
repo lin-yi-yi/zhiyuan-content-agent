@@ -2,7 +2,7 @@
 
 `scripts/container_smoke.py` 为 GitHub Ubuntu runner 的现有 Linux Docker engine 提供隔离验收。宿主只需要 Python 标准库、Git 和 Docker CLI，不安装 Docker Desktop，也不依赖宿主的 Python 虚拟环境。
 
-2026-10-04 已在 GitHub Ubuntu 24.04 / Docker 28.0.4 实际通过 v0.12.0 `3b054e9` → v0.13.0 `6ee468a` 的 8 个业务检查点，清理无错误；[具体证据](validation/v013-reliability-2026-10-04.md#github-与容器检查)。历史 v0.11.0 → v0.12.0 结果仍保留在 [原验收记录](validation/v012-engineering-2026-10-04.md#容器远程验收)。本机没有 Docker，宿主逻辑测试与远程容器验收分开记录；后续版本仍以对应提交的 JSON 报告和 CI 为准。
+2026-10-04 已在 GitHub Ubuntu 24.04 / Docker 28.0.4 实际通过 v0.13.0 `9d850dd` → v0.14.0 `f58bd2e` 的 8 个业务检查点，清理无错误；[具体证据](validation/v014-operations-2026-10-04.md#github-与容器)。历史版本对保留在 [v0.13 记录](validation/v013-reliability-2026-10-04.md#github-与容器检查)和 [v0.12 记录](validation/v012-engineering-2026-10-04.md#容器远程验收)。本机没有 Docker，宿主逻辑测试与远程容器验收分开记录；后续版本仍以对应提交的 JSON 报告和 CI 为准。
 
 ## 执行
 
@@ -10,7 +10,7 @@ CI checkout 需要包含基线提交（例如 `fetch-depth: 0`）。工具不 fe
 
 ```bash
 python scripts/container_smoke.py \
-  --baseline-ref 3b054e968fb6600ca1d9a7c772882b7ad56c97a7 \
+  --baseline-ref 9d850dd89d9b41c100aa68341bcd190d6d1f6fc2 \
   --output .data/validation/container-smoke/report.json
 ```
 

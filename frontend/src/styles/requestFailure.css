@@ -1,0 +1,18 @@
+.request-failure {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-color, #d5b7b1);
+  border-radius: 10px;
+  background: var(--bg-secondary, #faf7f5);
+  overflow-wrap: anywhere;
+}
+.request-failure > p { margin: 0; }
+.request-failure-diagnostic { margin-top: 12px; display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
+.request-failure-diagnostic label { display: grid; gap: 6px; min-width: 0; flex: 1 1 280px; font-size: 12px; }
+.request-failure .request-failure-diagnostic input { box-sizing: border-box; width: 100%; min-width: 0; font-family: monospace; font-size: 13px; user-select: all; }
+.request-failure-diagnostic button { flex: 0 0 auto; }
+.request-failure-diagnostic p { flex-basis: 100%; margin: 0; }
+@media (max-width: 480px) {
+  .request-failure .request-failure-diagnostic input { font-size: 12px; letter-spacing: 0; }
+  .request-failure-diagnostic button { width: 100%; }
+}

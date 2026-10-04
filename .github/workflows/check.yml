@@ -50,7 +50,7 @@ jobs:
       - name: Verify container upgrade and snapshot rollback
         run: >-
           python scripts/container_smoke.py
-          --baseline-ref 3b054e968fb6600ca1d9a7c772882b7ad56c97a7
+          --baseline-ref 9d850dd89d9b41c100aa68341bcd190d6d1f6fc2
           --output .data/validation/container-smoke/report.json
       - name: Save synthetic container evidence
         if: always()
