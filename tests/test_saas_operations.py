@@ -242,14 +242,14 @@ def launch(project, **overrides):
                           capture_output=True, timeout=15)
 
 
-def test_launcher_isolated_defaults_loopback_single_worker_and_inherited_lock(launcher):
+def test_launcher_isolated_defaults_loopback_single_worker_delegates_lock_to_lifespan(launcher):
     result = launch(launcher, SAAS_MODE="false", DATABASE_URL="sqlite:///do-not-use-demo.db")
     assert result.returncode == 0, result.stderr
     state = json.loads(result.stdout.splitlines()[-1])
     assert state["mode"] == "true" and state["secure"] == "false"
     assert state["origin"] == "http://127.0.0.1:8766"
     assert state["args"] == ["app.main:app", "--host", "127.0.0.1", "--port", "8766", "--workers", "1"]
-    assert state["locked"] and not state["old_env_loaded"]
+    assert not state["locked"] and not state["old_env_loaded"]
     assert state["url"].endswith("/.data/saas/legacy-disabled.db")
 
 

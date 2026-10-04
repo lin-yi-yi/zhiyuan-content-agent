@@ -1,6 +1,6 @@
-# 知源内容工作台 v0.14.0 — 安装与运行
+# 知源内容工作台 v0.15.0 — 安装与运行
 
-本指南对应 `lin-yi-yi/zhiyuan-content-agent` 的最新 `main` 分支。当前范围是本机运行与单机小团队试点，能力及验证边界见 [README](README.md)。
+本指南对应 `lin-yi-yi/zhiyuan-content-agent` v0.15.0，`main` 是默认整合入口。候选验收与合并状态见 [README](README.md)，运行范围是本机与单机小团队试点。
 
 ## 1. 准备环境
 
@@ -84,7 +84,7 @@ if [ ! -f .env.saas ]; then cp .env.saas.example .env.saas; fi
 
 打开 [团队入口](http://127.0.0.1:8766)。示例允许注册账号和组织；团队数据默认在 `.data/saas/`，不会自动导入或覆盖 `.data/demo.db`。团队脚本读取 `.env.saas`，不读取本地 `.env`，同样只监听本机并使用单 worker。需要词项模式时也可在命令前设置 `RAG_RETRIEVAL_MODE=lexical`。
 
-备份恢复、权限与公开访问准备见 [团队运维指南](docs/saas-operations.md)；本机启动不等于已完成公网生产验收。
+备份恢复、权限与公开访问准备见 [团队运维指南](docs/saas-operations.md)。应用 lifespan 统一持有团队目录的 `.service.lock`，标准脚本、直接 Uvicorn 和 Docker 均受此锁约束；只能保护遵守锁协议的单机进程，不检测任意外部写入。本机启动不等于已完成公网生产验收。
 
 ## 5. 检查与练习
 
@@ -100,6 +100,14 @@ if [ ! -f .env.saas ]; then cp .env.saas.example .env.saas; fi
 
 页面业务回归另用 `(cd frontend && npm run test:e2e)`；首次需安装 Chromium，详情见 [浏览器业务回归](docs/browser-regression.md)。按 [学习实验](docs/learning-labs.md) 记录自己运行、排错和修改的证据；后续开发顺序见 [路线图](ROADMAP.md)。
 
+新增双组织恢复练习，自动使用临时数据和固定三维合成向量：
+
+```bash
+.venv/bin/python scripts/saas_recovery_smoke.py --runtime local
+```
+
+它不接受现有业务数据路径，运行认证、角色、用量与真实 Qdrant 恢复；本机和候选 `068db87` 的 Docker 九阶段已通过，但不验证 BGE 下载、缓存或模型质量。Docker 命令和隔离范围见 [恢复演练指南](docs/saas-recovery.md)。本轮后端 1235 项、前端 57 项、构建及 1 条完整浏览器流程通过，npm 已知漏洞 0；当前提交的完整 CI 状态见 [验收记录](docs/validation/v015-saas-recovery-2026-10-04.md)。
+
 ## 常见问题
 
 | 现象 | 处理 |
@@ -108,6 +116,7 @@ if [ ! -f .env.saas ]; then cp .env.saas.example .env.saas; fi
 | 前端安装或构建失败 | 确认 `node --version` 为 22，查看首次报错；安装依赖后重试，不必重装数据库 |
 | 8765 被占用 | 若是已有本项目服务，先停止旧实例；若是其他应用占用，可用 `PORT=8770 ./scripts/start.sh` 换端口 |
 | 提示同一 SQLite 数据库已有服务运行 | 先停止原服务，再启动新实例；换端口不能让两个实例同时操作同一业务库。服务退出会释放锁，不要删除锁文件强行启动。该保护只针对本地文件 SQLite，不是跨机器部署方案 |
+| 团队数据目录提示已有服务或备份任务 | 停止当前持锁进程后重试；应用退出时关闭存储并释放锁，不要删除 `.service.lock`。换启动入口或端口不会绕过目录锁 |
 | 团队端口需修改 | 同时设置 `SAAS_PORT` 和对应的 `SAAS_PUBLIC_ORIGIN`，例如 `SAAS_PORT=8771 SAAS_PUBLIC_ORIGIN=http://127.0.0.1:8771 ./scripts/start_saas.sh` |
 | 向量模型下载失败 | 查看后端日志，使用上面的 `lexical` 命令继续本地流程；下载恢复后重建语义索引 |
 | 页面仍是旧版本 | `start.sh` 会重新构建；团队模式修改前端后先在 `frontend` 目录执行 `npm run build`，再刷新页面；后端代码修改后重启服务 |
@@ -117,4 +126,4 @@ if [ ! -f .env.saas ]; then cp .env.saas.example .env.saas; fi
 
 `/api/health` 返回当前运行版本；`/api/ready` 检查数据库可用性，连接失败返回 503。团队模式下 readiness 需要已登录的组织上下文。项目交接与定向测试入口见 [开发指南](CONTRIBUTING.md)，完整文档分组见 [文档导航](docs/README.md)。
 
-更完整的能力、限制及验证记录以 [README](README.md) 和 [v0.14.0 工程验收记录](docs/validation/v014-operations-2026-10-04.md) 为准。容器升级与快照回退按 [专用说明](docs/container-acceptance.md)在隔离环境进行；排错时用 [请求关联诊断](docs/diagnostics.md)核对执行尝试。问答范围确认见 [参数目录说明](docs/question-clarification.md)，未知用量处置见 [结算故障说明](docs/usage-finalization-failures.md)。
+更完整的能力、限制及验证记录以 [README](README.md) 和 [v0.15.0 SaaS 恢复验收](docs/validation/v015-saas-recovery-2026-10-04.md) 为准。[v0.14.0 记录](docs/validation/v014-operations-2026-10-04.md)保留当时的测试、页面和容器范围。容器升级与快照回退按 [专用说明](docs/container-acceptance.md)在隔离环境进行；排错时用 [请求关联诊断](docs/diagnostics.md)核对执行尝试。问答范围确认见 [参数目录说明](docs/question-clarification.md)，未知用量处置见 [结算故障说明](docs/usage-finalization-failures.md)。
