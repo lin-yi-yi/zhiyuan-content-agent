@@ -1,6 +1,6 @@
 # 知源文档导航
 
-当前使用与交接路线面向 **v0.16.0 工程验证版**。私有诊断、只读查询、本机完整回归与子进程演练已验证，GitHub CI 待核对；以 [项目状态](project-status.md) 和 [本轮验收](validation/v016-diagnostics-2026-10-04.md) 为入口，历史材料保留各自日期与验证范围。
+当前使用与交接路线面向 **v0.16.0 工程验证版**。私有诊断、只读查询、本机完整回归与子进程演练已验证，GitHub 候选 `beefa25` 六项 CI 检查通过；以 [项目状态](project-status.md) 和 [本轮验收](validation/v016-diagnostics-2026-10-04.md) 为入口，历史材料保留各自日期与验证范围。
 
 ## 第一次使用
 
@@ -39,7 +39,7 @@
 
 | 类别 | 入口与使用方式 |
 | --- | --- |
-| 当前阶段的验收证据 | [v0.16.0 私有诊断](validation/v016-diagnostics-2026-10-04.md)及[项目状态](project-status.md)：1441 项后端、57 项前端、编译构建、1 条 Chromium 流程与真实本地子进程 9 阶段通过；GitHub CI 待核对 |
+| 当前阶段的验收证据 | [v0.16.0 私有诊断](validation/v016-diagnostics-2026-10-04.md)及[项目状态](project-status.md)：1441 项后端、57 项前端、编译构建、1 条 Chromium 流程与真实本地子进程 9 阶段通过；GitHub 候选 `beefa25` 六项 CI 检查通过 |
 | v0.15.0 历史证据 | [SaaS 与 Qdrant 恢复](validation/v015-saas-recovery-2026-10-04.md)：1235 项后端、57 项前端、构建及 1 条浏览器流程通过；候选 `068db87` 的双组织 Docker 恢复 9 阶段和版本对升级回退 8 阶段通过，不作为 v0.16.0 结果 |
 | 近期历史证据 | [v0.14.0 运维与排错](validation/v014-operations-2026-10-04.md)、[P0 工业 FAQ](validation/p0-industrial-faq-2026-10-03.md)、[P1 模型追溯](validation/p1-model-tracing-2026-10-03.md) 保留当时提交、结果和限制 |
 | 资料机制 | [信源核验与入库](source-evidence-workflow.md)、[AIHOT 接入](aihot-source-integration.md)：了解机制和授权边界；旧页面名称按上方映射阅读 |

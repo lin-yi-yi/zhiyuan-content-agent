@@ -50,7 +50,20 @@ macOS ARM64 / Python 3.12.13 实际运行九阶段，9.023 秒，全部通过，
 
 ## GitHub 验证
 
-新增演练接入 `checks` job，独立保留 `diagnostic-smoke` 合成 artifact 7 天。版本对容器基线更新到 v0.15.0 `e91d14b`；另外继续同候选双组织 Qdrant 恢复。候选提交与 Linux 实际结果将在完成后记录，当前不能以本机通过替代远程通过。
+候选为 `beefa2597dae564b2ee214d4910bd88a9d1626e6`，通过 [PR #9](https://github.com/lin-yi-yi/zhiyuan-content-agent/pull/9)整合。新增演练接入 `checks` job，独立保留 `diagnostic-smoke` 合成 artifact 7 天。以下报告来自候选 push 检查，后续文档提交与合并提交需核对自身 CI。
+
+| 远程验收 | 实际结果 |
+| --- | --- |
+| Linux 完整检查 | 后端 1441 passed（150.86 秒，1 个既有警告）、前端 19＋38 项、编译构建、npm 已知漏洞 0、Chromium 1 条（9.4 秒）全部通过；[job](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37212195476/job/111465475714) |
+| Linux 诊断子进程 | 9 阶段通过，17.492 秒、清理错误 0；Python 3.12.14 / x86_64，工作流受理与失败关联、降级停止续写和隐私检查均通过；[原始报告](v016-diagnostics-beefa25.json) |
+| v0.15 → v0.16 容器升级与快照回退 | 基线 `e91d14b` → 候选 `beefa25`，8 阶段通过，75.585 秒、清理错误 0；[job](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37212195476/job/111465475871)、[原始报告](v016-container-beefa25.json) |
+| 同候选双组织 Qdrant 恢复 | 9 阶段通过，66.658 秒、清理错误 0；[job](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37212195476/job/111465475866)、[原始报告](v016-saas-beefa25.json) |
+
+两项在 Ubuntu 24.04 / Docker 28.0.4 运行，候选健康版本均为 0.16.0，源码构建摘要均为 `0e08d9a0cfc86d45bec5fc56c5dbe2fe30380f935aa22c0f4b092336d58b2d96`。镜像分别构建，镜像 ID 以各自报告为准。容器运行使用 `--network none`、不发布端口或挂宿主目录；构建依赖下载有网络。
+
+版本对场景使用 local/lexical，恢复 1 个 SQLite 文件、270336 字节，向量 absent。同候选团队场景使用 UID 1000，恢复 7 文件、459870 字节，其中两个组织共 4 个真实 Qdrant 向量文件；local 模型记录 2 条、外部记录和出站尝试均 0，源与目标生命周期正常关闭。固定三维 synthetic 向量不验证 BGE 质量、缓存或跨版本 SaaS 迁移；耗时不是生产恢复目标。
+
+同一候选的 [push](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37212195476) 与 [PR](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37212225320)共六项检查全部成功。三份原始报告来自 push artifact，核对候选、版本、阶段与清理后原样保存；日志和后续提交的运行状态以对应 CI 为准。
 
 ## 下一步
 

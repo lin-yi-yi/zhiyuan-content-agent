@@ -17,10 +17,10 @@
 | 默认首页 / 整合主线 | [`main`](https://github.com/lin-yi-yi/zhiyuan-content-agent/tree/main)；默认显示已整合版本；开发分支的未合并改动通过 Pull Request 查看 |
 | 后续开发分支 | [`codex/content-agent`](https://github.com/lin-yi-yi/zhiyuan-content-agent/tree/codex/content-agent)；由原 `codex/job-ready-agent-v06` 更名，避免把分支名中的 v06 误当当前版本 |
 | 本轮实现 | 默认关闭的私有诊断 JSONL、限额轮转、按服务器请求 ID 只读查询；写入故障停止落盘并保留业务响应，损坏或读取不完整明确返回不确定状态 |
-| 本轮验证 | **1441 项后端、57 项前端、编译构建及 1 条 Chromium 业务流程通过**，npm 已知漏洞 0；v0.16.0 真实本地子进程诊断演练 **9 阶段通过**，清理错误 0。GitHub CI 待核对，见 [本轮验收](docs/validation/v016-diagnostics-2026-10-04.md) |
+| 本轮验证 | **1441 项后端、57 项前端、编译构建及 1 条 Chromium 业务流程通过**，npm 已知漏洞 0；v0.16.0 真实本地子进程诊断演练 **9 阶段通过**，清理错误 0。候选 `beefa25` 的六项 CI 检查通过，见 [本轮验收](docs/validation/v016-diagnostics-2026-10-04.md) |
 | 历史回归 | v0.15.0 的完整回归、浏览器与依赖审计结果保留在 [历史验收](docs/validation/v015-saas-recovery-2026-10-04.md)，不作为 v0.16.0 结果 |
-| 历史 Docker 演练 | v0.15.0 候选 `068db87`：双组织 Qdrant 恢复 **9 阶段**、v0.14→v0.15 本地模式升级回退 **8 阶段**均通过，两套清理错误均为 0；[验收记录](docs/validation/v015-saas-recovery-2026-10-04.md)保留具体提交与范围 |
-| GitHub 自动检查 | v0.16.0 候选检查待验证。历史候选 `068db87` 的 push / PR 共 6 项检查成功；新提交须核对自身[运行记录](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml)。顶部徽章显示 `main` 状态，不能替代未合并候选的检查 |
+| 本轮 Docker 演练 | 候选 `beefa25`：双组织 Qdrant 恢复 **9 阶段**、v0.15→v0.16 本地模式升级回退 **8 阶段**均通过，清理错误 0；[原始证据与范围](docs/validation/v016-diagnostics-2026-10-04.md) |
+| GitHub 自动检查 | v0.16.0 候选 `beefa25` 的 push / PR 共 6 项检查成功；Linux 诊断九阶段、完整测试及两类容器恢复均通过。后续提交核对自身[运行记录](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml)。顶部徽章显示 `main` 状态，不能替代未合并候选的检查 |
 | 真实业务验证 | 本轮使用临时合成资料与故障注入，无付费模型或外部通知；真实供应商账单、客户验收、付费和公网生产环境尚未验证 |
 
 **[开发路线与商用验收](ROADMAP.md) · [学习实验](docs/learning-labs.md) · [项目状态与下一步](docs/project-status.md) · [安装与运行](SETUP.md) · [演示流程](docs/demo-walkthrough.md) · [文档导航](docs/README.md) · [开发交接](CONTRIBUTING.md) · [版本记录](CHANGELOG.md)**
