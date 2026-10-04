@@ -1,6 +1,6 @@
 # 知源 · AI 内容与交付 Agent
 
-`zhiyuan-content-agent` · **v0.16.0 工程验证版** · RAG / LangGraph / 人工审核
+`zhiyuan-content-agent` · **v0.17.0 工程验证版** · RAG / LangGraph / 人工审核
 
 [![Project checks](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml/badge.svg?branch=main)](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml?query=branch%3Amain)
 
@@ -16,11 +16,11 @@
 | --- | --- |
 | 默认首页 / 整合主线 | [`main`](https://github.com/lin-yi-yi/zhiyuan-content-agent/tree/main)；默认显示已整合版本；开发分支的未合并改动通过 Pull Request 查看 |
 | 后续开发分支 | [`codex/content-agent`](https://github.com/lin-yi-yi/zhiyuan-content-agent/tree/codex/content-agent)；由原 `codex/job-ready-agent-v06` 更名，避免把分支名中的 v06 误当当前版本 |
-| 本轮实现 | 默认关闭的私有诊断 JSONL、限额轮转、按服务器请求 ID 只读查询；写入故障停止落盘并保留业务响应，损坏或读取不完整明确返回不确定状态 |
-| 本轮验证 | **1441 项后端、57 项前端、编译构建及 1 条 Chromium 业务流程通过**，npm 已知漏洞 0；v0.16.0 真实本地子进程诊断演练 **9 阶段通过**，清理错误 0。候选 `beefa25` 的六项 CI 检查通过，见 [本轮验收](docs/validation/v016-diagnostics-2026-10-04.md) |
-| 历史回归 | v0.15.0 的完整回归、浏览器与依赖审计结果保留在 [历史验收](docs/validation/v015-saas-recovery-2026-10-04.md)，不作为 v0.16.0 结果 |
-| 本轮 Docker 演练 | 候选 `beefa25`：双组织 Qdrant 恢复 **9 阶段**、v0.15→v0.16 本地模式升级回退 **8 阶段**均通过，清理错误 0；[原始证据与范围](docs/validation/v016-diagnostics-2026-10-04.md) |
-| GitHub 自动检查 | v0.16.0 候选 `beefa25` 的 push / PR 共 6 项检查成功；Linux 诊断九阶段、完整测试及两类容器恢复均通过。后续提交核对自身[运行记录](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml)。顶部徽章显示 `main` 状态，不能替代未合并候选的检查 |
+| 本轮实现 | 从问题原文提案型号/参数并显示位置；默认规则方式，显式模型方式；逐项加入、编辑与人工确认后接入证据缺项门禁 |
+| 本轮验证 | **1566 项后端、102 项前端、编译构建及 1 条 Chromium 业务流程通过**，npm 已知漏洞 0。新增 32 题开发评测：契约 32/32、支持语法 30/30，保留 2 道超模板坏例；见 [本轮验收](docs/validation/v017-question-scope-2026-10-04.md) |
+| 历史回归 | v0.16.0 的 1441 项后端、57 项前端及诊断/容器证据保留在 [历史验收](docs/validation/v016-diagnostics-2026-10-04.md)；其合并后 main 与开发分支 CI 已通过，不作为 v0.17.0 结果 |
+| 本轮 Docker 演练 | 待本候选 GitHub 检查；配置为同候选双组织 Qdrant 恢复及 v0.16→v0.17 本地模式升级回退，实际结果见本轮验收 |
+| GitHub 自动检查 | 本候选尚待 CI。新增离线提案评测报告，绿色运行仅代表完成评测，质量坏例保留；核对自身[运行记录](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml)。顶部徽章显示 main 状态 |
 | 真实业务验证 | 本轮使用临时合成资料与故障注入，无付费模型或外部通知；真实供应商账单、客户验收、付费和公网生产环境尚未验证 |
 
 **[开发路线与商用验收](ROADMAP.md) · [学习实验](docs/learning-labs.md) · [项目状态与下一步](docs/project-status.md) · [安装与运行](SETUP.md) · [演示流程](docs/demo-walkthrough.md) · [文档导航](docs/README.md) · [开发交接](CONTRIBUTING.md) · [版本记录](CHANGELOG.md)**
@@ -64,7 +64,7 @@ RAG_RETRIEVAL_MODE=lexical ./scripts/start.sh
 
 模型与信源、运行诊断进入「设置与连接」；团队模式还提供成员、用量和账号。模型评分和编辑器检查清单不能代替人工批准。
 
-## v0.16.0 当前能力
+## v0.17.0 当前能力
 
 | 能力 | 实现与边界 |
 | --- | --- |
@@ -76,6 +76,7 @@ RAG_RETRIEVAL_MODE=lexical ./scripts/start.sh
 | 信源核验 | AIHOT REST、GitHub 信息、安全网页读取；核验笔记保留来源、引用、权利依据、版本和有效期 |
 | 产品事实 | 核验引用可记录产品型号、参数、值及原文定位；任务可指定最多 10 项必需参数，缺依据则停止生成；同知识库相同产品参数的不同值须先处理冲突。仅做显式字段检查，不替代技术人员核对 |
 | 资料问答 | 中文向量检索、知识库范围过滤、引用回答；可选 BM25＋向量＋RRF。从当前已核验目录选择或手填多个型号和参数，确认范围后提问，缺任一项依据则拒答；未指定时仍可普通问答并显示覆盖未评估 |
+| 问题范围提案 | 有限规则或显式在线模型整理原问题，严格核对原文跨度；保持未知需求，不读取资料目录或自动批准。独立开发题集保留覆盖坏例，真实模型质量尚待验收；[使用说明](docs/question-scope-proposals.md) |
 | 工具问答契约 | 白名单 `rag.answer` 与直接问答共用 `required_facts` 校验与事实门禁；该工具的未知参数返回 422，避免拼错或被静默忽略。目录和工具均不自动识别完整问题 |
 | 参数声明核对 | 指定必需参数的在线问答只接受结构化声明，逐项核对型号、参数、值与 chunk；拒绝错值、遗漏及额外结论，成功回答由核验资料渲染。核对字段一致性，不验证资料真实性或未列要求 |
 | 本地数据恢复 | 显式选择 SQLite 与 Qdrant 路径；停机快照、WAL、文件清单与哈希校验；只恢复到新或空目录。合成索引恢复后可查询，实际业务恢复需另验收 |
@@ -188,13 +189,16 @@ AI 辅助说明和交付清单不构成完整生产合规证明。服务中断�
 # 临时双组织与真实 Qdrant 恢复；使用合成向量，不调用在线模型
 .venv/bin/python scripts/saas_recovery_smoke.py --runtime local
 
+# 只输入原问题的提案评测；质量坏例保留在报告中
+.venv/bin/python scripts/evaluate_question_scope.py
+
 # 临时子进程与私有目录：诊断查询、重启、轮转、写入/fsync故障
 .venv/bin/python scripts/diagnostic_smoke.py
 ```
 
 检查脚本覆盖后端行为、Python 编译、前端行为与生产构建。另用 `(cd frontend && npm run test:e2e)` 运行隔离的浏览器业务回归，首次先按 [浏览器回归说明](docs/browser-regression.md) 安装 Chromium。本地数据保护见 [备份恢复](docs/local-backup.md)。自动检查、浏览器验收和真实客户效果分别记录，不能互相替代。
 
-本轮工程说明：[私有轮转诊断与只读查询](docs/diagnostics.md)、[v0.16.0 验收进度](docs/validation/v016-diagnostics-2026-10-04.md)。已有基础：[双组织 SaaS 与 Qdrant 恢复](docs/saas-recovery.md)、[学习实验](docs/learning-labs.md)、[磁盘余量预检](docs/ops-health.md)、[页面排错编号](docs/request-troubleshooting.md)、[人工确认问题范围](docs/question-clarification.md)、[工具问答契约](docs/rag-tool-facts.md)、[结算故障与未知状态](docs/usage-finalization-failures.md)、[冻结评测](docs/frozen-faq-evaluation.md)、[人工用量核对](docs/usage-reconciliation.md)、[容器升级回退](docs/container-acceptance.md)。冻结自由问答坏例仍然存在；人工确认和严格参数契约不能替代自由问题理解，也不能泛化为所有内容均已核验。
+本轮工程说明：[问题范围提案](docs/question-scope-proposals.md)、[v0.17.0 验收](docs/validation/v017-question-scope-2026-10-04.md)。已有基础：[私有诊断](docs/diagnostics.md)、[双组织 SaaS 与 Qdrant 恢复](docs/saas-recovery.md)、[学习实验](docs/learning-labs.md)、[磁盘余量预检](docs/ops-health.md)、[页面排错编号](docs/request-troubleshooting.md)、[人工确认问题范围](docs/question-clarification.md)、[工具问答契约](docs/rag-tool-facts.md)、[结算故障与未知状态](docs/usage-finalization-failures.md)、[冻结评测](docs/frozen-faq-evaluation.md)、[人工用量核对](docs/usage-reconciliation.md)、[容器升级回退](docs/container-acceptance.md)。冻结自由问答坏例仍然存在；人工确认和严格参数契约不能替代自由问题理解，也不能泛化为所有内容均已核验。
 
 - [v0.9 商业化计划与价格实验](docs/v09-commercialization-plan.md)
 - [v0.10 工业 FAQ 审计、实现与本地验收](docs/validation/p0-industrial-faq-2026-10-03.md)

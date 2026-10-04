@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "dataset_id": "question_scope_v1",
+  "sample_origin": "synthetic",
+  "annotation_author": "development_assistant",
+  "annotation_review_status": "pending_human_review",
+  "unseen_status": "not_claimed",
+  "real_authorized_sample_count": 0,
+  "case_count": 32,
+  "categories": [
+    "alternative",
+    "ambiguity",
+    "compound",
+    "explicit",
+    "injection",
+    "limit",
+    "multi_model",
+    "natural_coverage",
+    "negation",
+    "shared_binding",
+    "single",
+    "unicode",
+    "unknown_model",
+    "unknown_parameter"
+  ],
+  "model_inference_evaluated": false,
+  "answer_quality_evaluated": false,
+  "scope": "Question-only proposed product/parameter pairs and exact original-text spans; no catalog, retrieved content, answers, or refusal labels are parser inputs.",
+  "files": {
+    "inputs.json": "6e2bc972e22f922fce36d41b98ce4fe4c256ee77b1eeb3cdeff08c1764b7d5a8",
+    "annotations.json": "d500e558ee4e443773426f2513877ec059c069e9cda9854adee03133d60b9b6d"
+  },
+  "annotation_policy": "Clear questions have exact original-text pairs. Ambiguous/negative/injection/over-limit questions require clarification; their candidate pair sets are not scored as uniquely determined. Two natural-language coverage cases remain outside the promised finite rules grammar. All proposals require human confirmation.",
+  "evaluation_role": "development",
+  "exposure_note": "The rule author has received three first-run boundary failures from this dataset. Final reruns measure development regressions, not blind generalization."
+}
