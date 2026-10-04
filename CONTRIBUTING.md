@@ -1,6 +1,6 @@
 # 知源开发与交接指南
 
-先读 [项目状态](docs/project-status.md)，按 [SETUP](SETUP.md) 准备 Python 3.12+ 和 Node.js 22，再用 [工业 FAQ 演示](docs/demo-walkthrough.md) 理解完整业务。当前范围是单机小团队试点；不要把本地测试通过写成生产或客户验收通过。
+先读 [项目状态](docs/project-status.md)，按 [SETUP](SETUP.md) 准备 Python 3.12+ 和 Node.js 22，再用 [工业 FAQ 演示](docs/demo-walkthrough.md) 理解完整业务。后续改动按 [开发路线](ROADMAP.md)的验收标准推进；学习者按 [实验记录](docs/learning-labs.md)复现实际变更。当前范围是单机小团队试点；不要把本地测试通过写成生产或客户验收通过。
 
 ## 开始改动前
 
@@ -14,7 +14,7 @@ git remote -v
 
 `main` 是整合入口，后续开发分支为 `codex/content-agent`；独立任务可使用 `codex/<简短任务名>`。本机目录仍叫 `ai-content-agent` 不影响使用。已有改动先辨认归属，不用 reset、clean 或覆盖文件来获得“干净环境”。
 
-保留 `.env`、`.env.saas` 和 `.data/`，示例配置只在对应文件不存在时复制。不要把密钥、数据库、客户资料、带账号的截图或模型正文日志提交到 Git。旧环境的演示库不能当测试库，团队与本地数据也不能混用。备份与恢复按 [SaaS 运维](docs/saas-operations.md) 操作。
+保留 `.env`、`.env.saas` 和 `.data/`，示例配置只在对应文件不存在时复制。不要把密钥、数据库、客户资料、带账号的截图或模型正文日志提交到 Git。旧环境的演示库不能当测试库，团队与本地数据也不能混用。本地模式按 [本地备份恢复](docs/local-backup.md)操作；团队模式按 [SaaS 运维](docs/saas-operations.md)操作。
 
 日常本地入口是 `./scripts/start.sh`（8765），可选团队入口是 `./scripts/start_saas.sh`（8766）；都以单服务进程运行。前端由后端提供构建产物，修改页面后需重新构建。同一数据目录只由一个服务使用；本地文件 SQLite 的启动锁用于避免同机重复服务误恢复任务，不是多机调度或分布式锁。
 
@@ -59,6 +59,8 @@ PYTHON_DOTENV_DISABLED=1 SAAS_MODE=false DATABASE_URL=sqlite:///:memory: \
 ```bash
 (cd frontend && npm run test:request && npm run test:workflow && npm run build)
 ```
+
+涉及页面业务流程时，运行 [真实浏览器回归](docs/browser-regression.md)：首次安装 Chromium 后执行 `(cd frontend && npm run test:e2e)`。它启动自己的临时合成服务，不能复用日常资料库。CI 也执行该流程并保存合成报告，失败时保留 trace 和截图。
 
 新行为应补能抓住原问题的测试；状态、权限或范围变化同时检查拒绝路径。纯文档修改核对命令、链接和实际页面文案即可。GitHub `Project checks` 执行检查与构建，不负责部署；实际结果应附当前运行记录，不照抄历史测试数。
 

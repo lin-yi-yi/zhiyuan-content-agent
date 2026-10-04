@@ -29,3 +29,18 @@ test('JSON解析期间切换组织同样丢弃旧数据',async()=>{
 test('清除会话后新请求不携带旧组织与CSRF，单个页面中止正常传递',async()=>{
  let sent;const api=harness(async(_url,opts)=>{sent=opts;return ok({});});api.configureRequestContext('team-a','csrf');api.configureRequestContext(null,null);const controller=new AbortController();controller.abort();await api.request('/api/saas/session',{signal:controller.signal});assert.equal(sent.signal.aborted,true);assert.equal(sent.headers.get('X-Organization-ID'),null);assert.equal(sent.headers.get('X-CSRF-Token'),null);
 });
+
+test('RAG 问答请求携带完整必需参数和知识库范围，缺项响应不会丢失', async()=>{
+ const facts=[{product_model:'合成星桥 XP-24',parameter:'额定电压 / 直流输入'},{product_model:'合成星桥 XP-24',parameter:'售价'}];
+ const response={answer:'缺少售价依据',refused:true,refusal_reason:'missing_structured_facts',answerability:'missing_required_facts',required_facts:facts,missing_facts:[facts[1]],coverage:{status:'sufficient'},citations:[]};
+ let sent;const client=harness(async(url,opts)=>{sent={url,opts};return ok(response);});
+ client.configureRequestContext('team-a','csrf-a');
+ const result=await client.api.answerWithRag({query:'合成星桥 XP-24 电压和售价是多少？',workspace_id:7,knowledge_base_id:12,provider:'local',required_facts:facts});
+ assert.equal(sent.url,'/api/v04/rag/answer');
+ assert.equal(sent.opts.method,'POST');
+ assert.equal(sent.opts.headers.get('X-Organization-ID'),'team-a');
+ assert.equal(sent.opts.headers.get('X-CSRF-Token'),'csrf-a');
+ const body=JSON.parse(sent.opts.body);
+ assert.deepEqual(body.required_facts,facts);assert.equal(body.workspace_id,7);assert.equal(body.knowledge_base_id,12);
+ assert.equal(result.refused,true);assert.deepEqual(result.missing_facts,[facts[1]]);
+});

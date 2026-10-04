@@ -1,4 +1,4 @@
-# 知源内容工作台 v0.10.1 — 安装与运行
+# 知源内容工作台 v0.11.0 — 安装与运行
 
 本指南对应 `lin-yi-yi/zhiyuan-content-agent` 的最新 `main` 分支。当前范围是本机运行与单机小团队试点，能力及验证边界见 [README](README.md)。
 
@@ -50,6 +50,8 @@ PYTHON_BIN=/实际路径/python3.12 ./scripts/setup.sh
 - `.data/qdrant/`：默认向量索引。
 - `.data/models/`：默认向量模型缓存。
 
+更新或迁移前，用 [本地备份恢复工具](docs/local-backup.md) 显式选择当前数据库和索引，停机后备份，再恢复到新目录验证。默认本地归档与团队模式归档不互换。
+
 `local` 与检索模式是两个独立选择：
 
 | 配置 | 含义 |
@@ -94,6 +96,8 @@ if [ ! -f .env.saas ]; then cp .env.saas.example .env.saas; fi
 
 `check.sh` 会在子进程中禁用 dotenv，清空继承的模型密钥、固定本地任务模型和空价格表，并关闭 LangSmith/LangChain 外部追踪；不会修改你的配置文件。前端依赖审计可单独运行 `cd frontend && npm audit --registry=https://registry.npmjs.org`，GitHub CI 同样执行并阻止已知 moderate 及以上告警。
 
+页面业务回归另用 `(cd frontend && npm run test:e2e)`；首次需安装 Chromium，详情见 [浏览器业务回归](docs/browser-regression.md)。按 [学习实验](docs/learning-labs.md) 记录自己运行、排错和修改的证据；后续开发顺序见 [路线图](ROADMAP.md)。
+
 ## 常见问题
 
 | 现象 | 处理 |
@@ -110,4 +114,4 @@ if [ ! -f .env.saas ]; then cp .env.saas.example .env.saas; fi
 
 `/api/health` 返回当前运行版本；`/api/ready` 检查数据库可用性，连接失败返回 503。团队模式下 readiness 需要已登录的组织上下文。项目交接与定向测试入口见 [开发指南](CONTRIBUTING.md)，完整文档分组见 [文档导航](docs/README.md)。
 
-更完整的能力、限制及验证记录以 [README](README.md) 和 [v0.10 本地验收记录](docs/validation/p0-industrial-faq-2026-10-03.md) 为准。
+更完整的能力、限制及验证记录以 [README](README.md) 和 [v0.11.0 本地验收记录](docs/validation/v011-reliability-2026-10-04.md) 为准。

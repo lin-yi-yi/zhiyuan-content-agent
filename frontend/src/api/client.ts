@@ -614,10 +614,35 @@ export interface RagSearchResponse {
   retrieval?: {mode?: string; strategy?: string};
 }
 
+export interface RequiredFact {
+  product_model: string;
+  parameter: string;
+}
+
+export interface RagAnswerRequest {
+  query: string;
+  workspace_id?: number;
+  knowledge_base_id?: number | null;
+  provider?: string;
+  model?: string;
+  top_k?: number;
+  retrieval_mode?: 'semantic' | 'lexical' | 'hybrid';
+  required_facts?: RequiredFact[];
+}
+
 export interface RagAnswerResponse {
   answer: string;
   refused: boolean;
   refusal_reason: string;
+  answerability: 'not_assessed' | 'required_facts_present' | 'missing_required_facts';
+  required_facts: RequiredFact[];
+  missing_facts: RequiredFact[];
+  answer_validation?: {
+    status: 'not_assessed' | 'matched' | 'failed';
+    scope: 'explicit_required_facts';
+    reason?: string;
+    limitation: string;
+  };
   coverage: Record<string, unknown>;
   citations: RagSearchHit[];
   retrieval?: {mode?: string; strategy?: string};
@@ -881,6 +906,6 @@ export const api = {
   searchRag: (body: { query: string; workspace_id?:number; knowledge_base_id?: number | null; top_k?: number;retrieval_mode?:'semantic'|'lexical'|'hybrid' }) =>
     request<RagSearchResponse>('/api/v04/rag/search', { method: 'POST', body: JSON.stringify(body) }),
 
-  answerWithRag: (body: { query: string; workspace_id?:number; knowledge_base_id?: number | null; provider?: string; model?: string; top_k?: number;retrieval_mode?:'semantic'|'lexical'|'hybrid' }) =>
+  answerWithRag: (body: RagAnswerRequest) =>
     request<RagAnswerResponse>('/api/v04/rag/answer', { method: 'POST', body: JSON.stringify(body) }),
 };
