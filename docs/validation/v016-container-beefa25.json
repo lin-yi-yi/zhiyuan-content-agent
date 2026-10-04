@@ -1,0 +1,970 @@
+{
+  "started_at": "2026-10-04T15:13:36.467677+00:00",
+  "status": "passed",
+  "stages": {
+    "baseline_approved": {
+      "passed": true,
+      "status": "approved",
+      "review_hash": "d689f49f87a5827cd7ba718fe7be2e04b64bd08d67d0c7b887d8d7c32528b41b",
+      "body_sha256": "44842ffb00002b19affe68c033d1385c33f696f91af7d2c00260b6d432040a2a",
+      "title": "合成星桥 XP-24 额定电压与额定流量答疑：资料整理",
+      "citations": [
+        {
+          "document_id": 1,
+          "chunk_id": 1,
+          "marker": "[chunk:1]",
+          "source_uri": "https://example.com/synthetic-industrial/spec",
+          "document_content_hash": "eef71d98a621dd537a86bdda7d8669a0b48d6c97201210ee5354b3c08352dfcd",
+          "version_label": "synthetic-XP24-v1",
+          "verification_status": "verified",
+          "locators": [
+            "参数手册第1段"
+          ]
+        }
+      ]
+    },
+    "baseline_restart": {
+      "passed": true,
+      "status": "approved",
+      "review_hash": "d689f49f87a5827cd7ba718fe7be2e04b64bd08d67d0c7b887d8d7c32528b41b",
+      "body_sha256": "44842ffb00002b19affe68c033d1385c33f696f91af7d2c00260b6d432040a2a",
+      "title": "合成星桥 XP-24 额定电压与额定流量答疑：资料整理",
+      "citations": [
+        {
+          "document_id": 1,
+          "chunk_id": 1,
+          "marker": "[chunk:1]",
+          "source_uri": "https://example.com/synthetic-industrial/spec",
+          "document_content_hash": "eef71d98a621dd537a86bdda7d8669a0b48d6c97201210ee5354b3c08352dfcd",
+          "version_label": "synthetic-XP24-v1",
+          "verification_status": "verified",
+          "locators": [
+            "参数手册第1段"
+          ]
+        }
+      ]
+    },
+    "candidate_reads_baseline": {
+      "passed": true,
+      "status": "approved",
+      "review_hash": "d689f49f87a5827cd7ba718fe7be2e04b64bd08d67d0c7b887d8d7c32528b41b",
+      "body_sha256": "44842ffb00002b19affe68c033d1385c33f696f91af7d2c00260b6d432040a2a",
+      "title": "合成星桥 XP-24 额定电压与额定流量答疑：资料整理",
+      "citations": [
+        {
+          "document_id": 1,
+          "chunk_id": 1,
+          "marker": "[chunk:1]",
+          "source_uri": "https://example.com/synthetic-industrial/spec",
+          "document_content_hash": "eef71d98a621dd537a86bdda7d8669a0b48d6c97201210ee5354b3c08352dfcd",
+          "version_label": "synthetic-XP24-v1",
+          "verification_status": "verified",
+          "locators": [
+            "参数手册第1段"
+          ]
+        }
+      ]
+    },
+    "candidate_reapproved": {
+      "passed": true,
+      "status": "approved",
+      "review_hash": "d8db80479c008373f094b90d8676ee974282b650b1f7f16255bdb602caade747",
+      "body_sha256": "38f7b116d56d3cd828d335b64002f61084eb3cf23171c3399905a8bcafae1fa6",
+      "title": "合成星桥 XP-24 额定电压与额定流量答疑：资料整理",
+      "citations": [
+        {
+          "document_id": 1,
+          "chunk_id": 1,
+          "marker": "[chunk:1]",
+          "source_uri": "https://example.com/synthetic-industrial/spec",
+          "document_content_hash": "eef71d98a621dd537a86bdda7d8669a0b48d6c97201210ee5354b3c08352dfcd",
+          "version_label": "synthetic-XP24-v1",
+          "verification_status": "verified",
+          "locators": [
+            "参数手册第1段"
+          ]
+        }
+      ]
+    },
+    "candidate_restart": {
+      "passed": true,
+      "status": "approved",
+      "review_hash": "d8db80479c008373f094b90d8676ee974282b650b1f7f16255bdb602caade747",
+      "body_sha256": "38f7b116d56d3cd828d335b64002f61084eb3cf23171c3399905a8bcafae1fa6",
+      "title": "合成星桥 XP-24 额定电压与额定流量答疑：资料整理",
+      "citations": [
+        {
+          "document_id": 1,
+          "chunk_id": 1,
+          "marker": "[chunk:1]",
+          "source_uri": "https://example.com/synthetic-industrial/spec",
+          "document_content_hash": "eef71d98a621dd537a86bdda7d8669a0b48d6c97201210ee5354b3c08352dfcd",
+          "version_label": "synthetic-XP24-v1",
+          "verification_status": "verified",
+          "locators": [
+            "参数手册第1段"
+          ]
+        }
+      ]
+    },
+    "baseline_on_restored_snapshot": {
+      "passed": true,
+      "status": "approved",
+      "review_hash": "d689f49f87a5827cd7ba718fe7be2e04b64bd08d67d0c7b887d8d7c32528b41b",
+      "body_sha256": "44842ffb00002b19affe68c033d1385c33f696f91af7d2c00260b6d432040a2a",
+      "title": "合成星桥 XP-24 额定电压与额定流量答疑：资料整理",
+      "citations": [
+        {
+          "document_id": 1,
+          "chunk_id": 1,
+          "marker": "[chunk:1]",
+          "source_uri": "https://example.com/synthetic-industrial/spec",
+          "document_content_hash": "eef71d98a621dd537a86bdda7d8669a0b48d6c97201210ee5354b3c08352dfcd",
+          "version_label": "synthetic-XP24-v1",
+          "verification_status": "verified",
+          "locators": [
+            "参数手册第1段"
+          ]
+        }
+      ]
+    },
+    "original_volume_unchanged_by_restore": {
+      "passed": true,
+      "status": "approved",
+      "review_hash": "d8db80479c008373f094b90d8676ee974282b650b1f7f16255bdb602caade747",
+      "body_sha256": "38f7b116d56d3cd828d335b64002f61084eb3cf23171c3399905a8bcafae1fa6",
+      "title": "合成星桥 XP-24 额定电压与额定流量答疑：资料整理",
+      "citations": [
+        {
+          "document_id": 1,
+          "chunk_id": 1,
+          "marker": "[chunk:1]",
+          "source_uri": "https://example.com/synthetic-industrial/spec",
+          "document_content_hash": "eef71d98a621dd537a86bdda7d8669a0b48d6c97201210ee5354b3c08352dfcd",
+          "version_label": "synthetic-XP24-v1",
+          "verification_status": "verified",
+          "locators": [
+            "参数手册第1段"
+          ]
+        }
+      ]
+    },
+    "candidate_on_restored_snapshot": {
+      "passed": true,
+      "status": "approved",
+      "review_hash": "d689f49f87a5827cd7ba718fe7be2e04b64bd08d67d0c7b887d8d7c32528b41b",
+      "body_sha256": "44842ffb00002b19affe68c033d1385c33f696f91af7d2c00260b6d432040a2a",
+      "title": "合成星桥 XP-24 额定电压与额定流量答疑：资料整理",
+      "citations": [
+        {
+          "document_id": 1,
+          "chunk_id": 1,
+          "marker": "[chunk:1]",
+          "source_uri": "https://example.com/synthetic-industrial/spec",
+          "document_content_hash": "eef71d98a621dd537a86bdda7d8669a0b48d6c97201210ee5354b3c08352dfcd",
+          "version_label": "synthetic-XP24-v1",
+          "verification_status": "verified",
+          "locators": [
+            "参数手册第1段"
+          ]
+        }
+      ]
+    }
+  },
+  "isolation": {
+    "runtime_network": "none",
+    "published_ports": [],
+    "host_bind_mounts": [],
+    "sample_origin": "synthetic",
+    "generation": "local_rules",
+    "retrieval": "lexical"
+  },
+  "cost": {
+    "provider_invoice_amount": null,
+    "model_tokens": null,
+    "reason": "No external model network; costs are not measured."
+  },
+  "limits": [
+    "Only the recorded baseline/candidate pair is exercised, not arbitrary downgrade or migration compatibility.",
+    "Rollback restores the pre-upgrade snapshot to a new volume; it never runs old code on the upgraded database.",
+    "Qdrant/BGE container restoration is not assessed: lexical mode creates no vector index.",
+    "No real data, paid models, SaaS, Compose/proxy/public network or customer review is exercised.",
+    "Image builds require network access to public package/base-image registries; runtime containers have none."
+  ],
+  "docker_version": "28.0.4",
+  "fixture": {
+    "dataset_id": "industrial-faq-synthetic-v1",
+    "sha256": "814cc2fcc78001536b5b58d388da81f7f4f840480074b0b4db73247a6eea8686"
+  },
+  "baseline": {
+    "commit": "e91d14bb40e490232cbe057f8535f0681bbeef5d",
+    "source": "git_archive",
+    "build_context_sha256": "35bfb68ff2a2efdd72ccac5c956fe1ef54d0ab01947cdb1ddf57e908abe2db33",
+    "file_count": 296,
+    "image_id": "sha256:0860c0d094e386d1c591ee736fda1890080b2795fc75c546a844ce6480a7ef0f",
+    "health": {
+      "status": "ok",
+      "app": "知源内容工作台",
+      "version": "0.15.0",
+      "scope": "local-single-user"
+    }
+  },
+  "candidate": {
+    "commit": "beefa2597dae564b2ee214d4910bd88a9d1626e6",
+    "source": "working_tree",
+    "build_context_sha256": "0e08d9a0cfc86d45bec5fc56c5dbe2fe30380f935aa22c0f4b092336d58b2d96",
+    "file_count": 301,
+    "image_id": "sha256:2f0a204f1b53295943540682661df7bed9da437409d0589aeb2f228c0e6e0bcd",
+    "health": {
+      "status": "ok",
+      "app": "知源内容工作台",
+      "version": "0.16.0",
+      "scope": "local-single-user"
+    }
+  },
+  "workflow_ids": {
+    "run_id": 1,
+    "draft_id": 1,
+    "knowledge_base_id": 2,
+    "document_id": 1,
+    "note_id": 1,
+    "required_facts": [
+      {
+        "product_model": "合成星桥 XP-24",
+        "parameter": "额定电压"
+      },
+      {
+        "product_model": "合成星桥 XP-24",
+        "parameter": "额定流量"
+      }
+    ]
+  },
+  "backup": {
+    "archive": "/app/.data/checkpoint.zip",
+    "files": 1,
+    "bytes": 270336,
+    "vector_index": "absent"
+  },
+  "restore": {
+    "destination": "/app/.data/restored",
+    "files": 1,
+    "vector_index": "absent"
+  },
+  "cleanup": {
+    "errors": [],
+    "scope": "only resources labelled with this run ID; build cache is retained"
+  },
+  "command_trace": [
+    {
+      "operation": "context inspect",
+      "exit_code": 0,
+      "elapsed_ms": 52.67
+    },
+    {
+      "operation": "info --format",
+      "exit_code": 0,
+      "elapsed_ms": 143.87
+    },
+    {
+      "operation": "version --format",
+      "exit_code": 0,
+      "elapsed_ms": 18.95
+    },
+    {
+      "operation": "build --label",
+      "exit_code": 0,
+      "elapsed_ms": 31701.12
+    },
+    {
+      "operation": "image inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.9
+    },
+    {
+      "operation": "build --label",
+      "exit_code": 0,
+      "elapsed_ms": 13825.55
+    },
+    {
+      "operation": "image inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.28
+    },
+    {
+      "operation": "volume create",
+      "exit_code": 0,
+      "elapsed_ms": 13.22
+    },
+    {
+      "operation": "volume create",
+      "exit_code": 0,
+      "elapsed_ms": 12.51
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 127.46
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 133.41
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 128.71
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 129.28
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 130.67
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 132.42
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 119.28
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 183.88
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 127.87
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 122.85
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 122.99
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 127.16
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 123.27
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 122.88
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 143.38
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 124.77
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 133.0
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 128.28
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 120.71
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 134.52
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 123.21
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 126.18
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 130.58
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 128.16
+    },
+    {
+      "operation": "restart --time",
+      "exit_code": 0,
+      "elapsed_ms": 618.0
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 125.02
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 124.88
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 128.93
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 134.38
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 117.07
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 181.75
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 129.6
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 137.21
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 132.03
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 130.31
+    },
+    {
+      "operation": "stop --time",
+      "exit_code": 0,
+      "elapsed_ms": 523.75
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 203.52
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 96.33
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 124.72
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 131.09
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 129.18
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 131.3
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 131.79
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 118.09
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 182.07
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 131.69
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 135.91
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 134.83
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 128.83
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 122.06
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 132.71
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 124.14
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 118.56
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 131.63
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 124.3
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 124.19
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 128.49
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 123.67
+    },
+    {
+      "operation": "restart --time",
+      "exit_code": 0,
+      "elapsed_ms": 546.57
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 128.15
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 132.13
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 126.7
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 137.83
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 118.39
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 184.51
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 134.28
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 138.42
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 131.43
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 129.04
+    },
+    {
+      "operation": "stop --time",
+      "exit_code": 0,
+      "elapsed_ms": 531.76
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 192.29
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 97.28
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 123.71
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 134.81
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 126.02
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 125.58
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 129.74
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 117.86
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 184.92
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 129.25
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 138.55
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 134.13
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 131.73
+    },
+    {
+      "operation": "start zhiyuan-smoke-c988a593f655-candidate",
+      "exit_code": 0,
+      "elapsed_ms": 92.47
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 128.51
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 134.71
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 124.87
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 134.34
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 118.33
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 183.88
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 132.07
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 140.65
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 132.21
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 128.65
+    },
+    {
+      "operation": "stop --time",
+      "exit_code": 0,
+      "elapsed_ms": 556.64
+    },
+    {
+      "operation": "run --name",
+      "exit_code": 0,
+      "elapsed_ms": 105.1
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 134.37
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 128.3
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 126.37
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 1,
+      "elapsed_ms": 124.41
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 131.37
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 118.53
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 184.46
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 130.24
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 138.22
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 135.72
+    },
+    {
+      "operation": "exec -i",
+      "exit_code": 0,
+      "elapsed_ms": 130.96
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 13.89
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 13.0
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 12.88
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 12.34
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 13.07
+    },
+    {
+      "operation": "logs --tail",
+      "exit_code": 0,
+      "elapsed_ms": 12.55
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 12.18
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 23.64
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 12.67
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 15.69
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 12.64
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 73.24
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.29
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 16.06
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 12.35
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 23.17
+    },
+    {
+      "operation": "container inspect",
+      "exit_code": 0,
+      "elapsed_ms": 12.57
+    },
+    {
+      "operation": "container rm",
+      "exit_code": 0,
+      "elapsed_ms": 78.58
+    },
+    {
+      "operation": "volume inspect",
+      "exit_code": 0,
+      "elapsed_ms": 13.14
+    },
+    {
+      "operation": "volume rm",
+      "exit_code": 0,
+      "elapsed_ms": 13.34
+    },
+    {
+      "operation": "volume inspect",
+      "exit_code": 0,
+      "elapsed_ms": 12.14
+    },
+    {
+      "operation": "volume rm",
+      "exit_code": 0,
+      "elapsed_ms": 12.82
+    },
+    {
+      "operation": "image inspect",
+      "exit_code": 0,
+      "elapsed_ms": 12.69
+    },
+    {
+      "operation": "image rm",
+      "exit_code": 0,
+      "elapsed_ms": 14.49
+    },
+    {
+      "operation": "image inspect",
+      "exit_code": 0,
+      "elapsed_ms": 12.61
+    },
+    {
+      "operation": "image rm",
+      "exit_code": 0,
+      "elapsed_ms": 14.06
+    }
+  ],
+  "elapsed_ms": 75585.29
+}

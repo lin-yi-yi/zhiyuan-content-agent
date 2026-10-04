@@ -20,6 +20,19 @@ jobs:
         run: ./scripts/setup.sh
       - name: Run backend and frontend checks
         run: ./scripts/check.sh
+      - name: Verify private diagnostics through isolated processes
+        run: >-
+          .venv/bin/python scripts/diagnostic_smoke.py
+          --output .data/validation/diagnostic-smoke/report.json
+      - name: Save synthetic diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: diagnostic-smoke
+          path: .data/validation/diagnostic-smoke/
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Audit frontend dependencies
         working-directory: frontend
         run: npm audit --audit-level=moderate --registry=https://registry.npmjs.org
@@ -50,7 +63,7 @@ jobs:
       - name: Verify container upgrade and snapshot rollback
         run: >-
           python scripts/container_smoke.py
-          --baseline-ref 84d80d0c9f6f884e01aea79883c7dc25d5a62c14
+          --baseline-ref e91d14bb40e490232cbe057f8535f0681bbeef5d
           --output .data/validation/container-smoke/report.json
       - name: Save synthetic container evidence
         if: always()

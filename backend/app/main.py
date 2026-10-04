@@ -15,7 +15,7 @@ from app.api.routes import knowledge, source_hub, evidence, github_sources, bran
 from app.api.routes import pilot
 from app.db.session import SessionLocal
 from app.db.runtime_lock import local_database_runtime_lock, saas_data_runtime_lock
-from app.core.diagnostics import RequestDiagnosticsMiddleware, RequestErrorsMiddleware, configure_diagnostics_logging
+from app.core.diagnostics import RequestDiagnosticsMiddleware, RequestErrorsMiddleware, configure_diagnostics_logging, persistent_diagnostics
 
 @asynccontextmanager
 async def lifespan(app):
@@ -25,7 +25,7 @@ async def lifespan(app):
     # so another process cannot mark the live owner's tasks as interrupted.
     runtime_lock = (saas_data_runtime_lock(os.getenv("SAAS_DATA_DIR", str(Path(__file__).resolve().parents[2] / ".data" / "saas")))
                     if saas else local_database_runtime_lock(settings.DATABASE_URL))
-    with runtime_lock, ExitStack() as cleanup:
+    with runtime_lock, persistent_diagnostics(), ExitStack() as cleanup:
         from app.agent_core.vector_store import close_vector_stores
         from app.saas.store import close_control_db
         from app.db.session import close_tenant_stores

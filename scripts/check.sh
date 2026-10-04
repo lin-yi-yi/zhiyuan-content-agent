@@ -9,6 +9,7 @@ export RAG_RETRIEVAL_MODE=lexical
 export AIHOT_ENABLED=false
 export GITHUB_ENABLED=false
 export MODEL_PRICING_JSON='[]'
+export DIAGNOSTIC_LOG_DIR=
 for tracing_namespace in LANGSMITH LANGCHAIN; do
   export "${tracing_namespace}_TRACING=false"
   export "${tracing_namespace}_TRACING_V2=false"

@@ -1,0 +1,114 @@
+{
+  "started_at": "2026-10-04T15:16:58.473683+00:00",
+  "status": "passed",
+  "stages": {
+    "default_disabled": {
+      "passed": true
+    },
+    "request_lookup": {
+      "passed": true,
+      "events": [
+        "http_response"
+      ],
+      "record_count": 1,
+      "query_wrote_files": false
+    },
+    "accepted_request_failed_workflow": {
+      "passed": true,
+      "events": [
+        "http_response",
+        "workflow_finished",
+        "workflow_started",
+        "workflow_step_failed"
+      ],
+      "record_count": 4,
+      "query_wrote_files": false,
+      "http_status": 201,
+      "workflow_status": "failed",
+      "workflow_attempt": 1
+    },
+    "restart_retains_request": {
+      "passed": true,
+      "events": [
+        "http_response"
+      ],
+      "record_count": 1,
+      "query_wrote_files": false
+    },
+    "second_owner_rejected": {
+      "passed": true,
+      "events": [
+        "http_response"
+      ],
+      "record_count": 1,
+      "query_wrote_files": false
+    },
+    "bounded_rotation": {
+      "passed": true,
+      "files": 3,
+      "max_bytes": 16384,
+      "evicted_match": "not_observed",
+      "events": [
+        "http_response"
+      ],
+      "record_count": 1,
+      "query_wrote_files": false
+    },
+    "write_failure_isolated": {
+      "passed": true,
+      "sink": {
+        "state": "degraded",
+        "written": 1,
+        "dropped": 3,
+        "error_code": "WRITE_FAILED"
+      },
+      "model_records": 0,
+      "outgoing_attempts": 0,
+      "notice_count": 1,
+      "writes_after_degradation": false
+    },
+    "fsync_failure_isolated": {
+      "passed": true,
+      "sink": {
+        "state": "degraded",
+        "written": 1,
+        "dropped": 3,
+        "error_code": "WRITE_FAILED"
+      },
+      "model_records": 0,
+      "outgoing_attempts": 0,
+      "notice_count": 1,
+      "writes_after_degradation": false
+    },
+    "malformed_query_is_unknown": {
+      "passed": true,
+      "scan_status": "partial"
+    }
+  },
+  "scope": "synthetic local subprocesses and temporary files; no production capacity or crash durability claim",
+  "limits": [
+    "Python socket guard, not an OS firewall",
+    "No paid models, customer data or external notifications",
+    "Fault injection is targeted write/fsync failure, not a full disk or power outage"
+  ],
+  "candidate": {
+    "commit": "beefa2597dae564b2ee214d4910bd88a9d1626e6",
+    "source": "working_tree",
+    "build_context_sha256": "0e08d9a0cfc86d45bec5fc56c5dbe2fe30380f935aa22c0f4b092336d58b2d96",
+    "file_count": 301,
+    "python": "3.12.14",
+    "system": "Linux",
+    "machine": "x86_64",
+    "health": {
+      "status": "ok",
+      "app": "知源内容工作台",
+      "version": "0.16.0",
+      "scope": "local-single-user"
+    }
+  },
+  "cleanup": {
+    "errors": [],
+    "scope": "only this runner's processes and temporary directory"
+  },
+  "elapsed_ms": 17491.61
+}
