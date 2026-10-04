@@ -1,11 +1,7 @@
 """FastAPI 主入口"""
 from contextlib import asynccontextmanager
 from pathlib import Path
-import logging
-import time
-import uuid
-
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -18,6 +14,7 @@ from app.api.routes import knowledge, source_hub, evidence, github_sources, bran
 from app.api.routes import pilot
 from app.db.session import SessionLocal
 from app.db.runtime_lock import local_database_runtime_lock
+from app.core.diagnostics import RequestDiagnosticsMiddleware, RequestErrorsMiddleware, configure_diagnostics_logging
 
 @asynccontextmanager
 async def lifespan(app):
@@ -50,35 +47,23 @@ async def lifespan(app):
 
 
 app = FastAPI(title=settings.APP_NAME, version=__version__, lifespan=lifespan)
-
-
-@app.middleware("http")
-async def request_trace(request: Request, call_next):
-    request_id = uuid.uuid4().hex
-    start = time.perf_counter()
-    try:
-        response = await call_next(request)
-    except Exception:
-        # Do not return SQL statements, document bodies, credentials or vendor responses.
-        logging.getLogger("content_agent").error("request_failed id=%s path=%s", request_id, request.url.path)
-        response = JSONResponse(status_code=500, content={"detail": "处理失败，请查看运行日志并重试。", "request_id": request_id})
-    response.headers["X-Request-ID"] = request_id
-    response.headers["Server-Timing"] = f"app;dur={(time.perf_counter()-start)*1000:.1f}"
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    return response
-
+configure_diagnostics_logging()
+app.add_middleware(RequestErrorsMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS.split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID", "Server-Timing"],
 )
 
 from app.saas.middleware import SaaSMiddleware
 from app.saas import routes as saas_routes, commerce_routes
 from app.saas.connections import ConnectionUnavailable
 app.add_middleware(SaaSMiddleware)
+# Last registered user middleware is outermost: include SaaS's early rejections.
+app.add_middleware(RequestDiagnosticsMiddleware)
 app.include_router(saas_routes.router)
 app.include_router(commerce_routes.router, prefix="/api")
 

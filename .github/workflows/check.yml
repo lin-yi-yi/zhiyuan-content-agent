@@ -37,3 +37,27 @@ jobs:
           path: output/playwright/
           if-no-files-found: ignore
           retention-days: 7
+  container-recovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Verify container upgrade and snapshot rollback
+        run: >-
+          python scripts/container_smoke.py
+          --baseline-ref 9364eb0f908b79e68abe1fd30e23d66337b6df6f
+          --output .data/validation/container-smoke/report.json
+      - name: Save synthetic container evidence
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: container-recovery
+          path: .data/validation/container-smoke/
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7

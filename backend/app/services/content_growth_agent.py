@@ -1,5 +1,6 @@
 """内容增长 Agent 总调度器。"""
 import json
+import time
 from app.saas.context import current_tenant, is_saas_mode
 from datetime import UTC, datetime
 from typing import Any, TypedDict
@@ -19,6 +20,7 @@ from app.models.source import Source
 from app.models.topic import Topic
 from app.llm.openai_compatible import ModelCallError
 from app.llm.tracing import model_trace_context
+from app.core.diagnostics import emit_diagnostic, safe_error_type, valid_request_id
 from app.schemas.agent_run import AgentRunCreate, AgentRunResult, AgentReviewCreate
 from app.schemas.card import CardOut
 from app.schemas.draft import DraftOut
@@ -54,7 +56,7 @@ def _safe_failure(exc: Exception) -> tuple[str, str, str]:
         RetrievalError: "RETRIEVAL_FAILED",
         ModelCallError: "MODEL_CALL_FAILED",
     }
-    error_type = type(exc).__name__[:80]
+    error_type = safe_error_type(exc)
     if type(exc) in safe_codes:
         return safe_codes[type(exc)], str(exc)[:1000], error_type
     return "STEP_FAILED", f"步骤执行失败，请检查配置、依赖和数据后重试。错误类型：{error_type}", error_type
@@ -75,7 +77,7 @@ STEP_PLAN = [
 ]
 
 
-def create_agent_run(req: AgentRunCreate, db: Session) -> AgentRunResult:
+def create_agent_run(req: AgentRunCreate, db: Session, *, request_id: str | None = None) -> AgentRunResult:
     """创建 Agent Run 和步骤，后台任务会继续执行。"""
     from app.services.business_brief import resolve_business_brief
     brief = resolve_business_brief(req, db)
@@ -96,6 +98,7 @@ def create_agent_run(req: AgentRunCreate, db: Session) -> AgentRunResult:
         current_step="queued",
         result_json={"_request": req.model_dump(), "brief": brief, "workflow": {
             "engine": "langgraph", "version": "content-v1", "attempt": 1,
+            "request_id": valid_request_id(request_id),
             "persistence": "atomic_sql_steps", "scope": "organization" if is_saas_mode() else "local_single_user",
             "generation_mode": "local_rules" if provider == "local" else "llm",
         }},
@@ -108,6 +111,7 @@ def create_agent_run(req: AgentRunCreate, db: Session) -> AgentRunResult:
 
 async def execute_agent_run(run_id: int) -> None:
     """Only the caller that atomically claims a pending run executes its graph."""
+    started = time.perf_counter()
     db = SessionLocal()
     try:
         claimed = db.query(AgentRun).filter(AgentRun.id == run_id, AgentRun.status == "pending").update(
@@ -119,6 +123,8 @@ async def execute_agent_run(run_id: int) -> None:
         run = db.query(AgentRun).filter(AgentRun.id == run_id).first()
         if not run:
             return
+        attempt = int(((run.result_json or {}).get("workflow") or {}).get("attempt") or 1)
+        emit_diagnostic("workflow_started", agent_run_id=run.id, workflow_attempt=attempt, status="running")
         try:
             req = _request_from_run(run)
         except (ValueError, TypeError):
@@ -127,13 +133,20 @@ async def execute_agent_run(run_id: int) -> None:
             run.status = "failed"
             run.error_message = "缺少 Agent 请求参数，无法继续执行"
             db.commit()
+            emit_diagnostic("workflow_finished", agent_run_id=run.id, workflow_attempt=attempt,
+                            status="failed", code="STEP_FAILED")
             return
         await _execute_steps(run, req, db)
+        failure = (run.result_json or {}).get("failure") or {}
+        emit_diagnostic("workflow_finished", agent_run_id=run.id, workflow_attempt=attempt,
+                        status=run.status, step_key=run.current_step,
+                        code=failure.get("code"), error_type=failure.get("error_type"),
+                        elapsed_ms=(time.perf_counter() - started) * 1000)
     finally:
         db.close()
 
 
-def prepare_retry_agent_run(run_id: int, db: Session) -> AgentRunResult | None:
+def prepare_retry_agent_run(run_id: int, db: Session, *, request_id: str | None = None) -> AgentRunResult | None:
     """Explicit retry; compare-and-set rejects concurrent or repeated retries."""
     run = db.query(AgentRun).filter(AgentRun.id == run_id).first()
     if not run:
@@ -160,6 +173,7 @@ def prepare_retry_agent_run(run_id: int, db: Session) -> AgentRunResult | None:
 
     previous_attempt = {
         "attempt": int((run.result_json or {}).get("workflow", {}).get("attempt") or 1),
+        "request_id": valid_request_id(((run.result_json or {}).get("workflow") or {}).get("request_id")),
         "failure": (run.result_json or {}).get("failure") or {"message": run.error_message},
         "failed_step": failed_step.key,
         "duration_ms": failed_step.duration_ms,
@@ -185,6 +199,7 @@ def prepare_retry_agent_run(run_id: int, db: Session) -> AgentRunResult | None:
     workflow = dict(data.get("workflow") or {})
     workflow["history"] = [*(workflow.get("history") or []), previous_attempt][-20:]
     workflow["attempt"] = int(workflow.get("attempt") or 1) + 1
+    workflow["request_id"] = valid_request_id(request_id)
     workflow["last_retry_at"] = _utcnow().isoformat()
     data["workflow"] = workflow
     run.result_json = data
@@ -408,10 +423,22 @@ def build_content_graph(run: AgentRun, req: AgentRunCreate, db: Session):
             if step.status not in {"completed", "skipped"} or (key == "retrieve_context" and req.required_facts):
                 _start_step(run, step, {"run_id": run.id, "engine": "langgraph"}, db)
             attempt = int(((run.result_json or {}).get("workflow") or {}).get("attempt") or 1)
+            diagnostic_run_id, diagnostic_step_id = run.id, step.id
+            diagnostic_started = time.perf_counter()
             # ContextVars follow this node's async execution and reset even when
             # the node fails. Model logs commit independently of node artifacts.
             with model_trace_context(run.id, step.id, key, attempt):
-                output = await dispatch(key, state, AtomicStepSession(db))
+                try:
+                    output = await dispatch(key, state, AtomicStepSession(db))
+                except WorkflowCancelled:
+                    raise
+                except Exception as exc:
+                    # Emit before rollback/persistence, which can itself fail.
+                    emit_diagnostic("workflow_step_failed", agent_run_id=diagnostic_run_id, agent_step_id=diagnostic_step_id,
+                                    step_key=key, workflow_attempt=attempt,
+                                    code=_safe_failure(exc)[0], error_type=safe_error_type(exc),
+                                    elapsed_ms=(time.perf_counter() - diagnostic_started) * 1000)
+                    raise
             # Cancellation is cooperative: a running remote call cannot be recalled.
             with SessionLocal() as observer:
                 status = observer.query(AgentRun.status).filter(AgentRun.id == run.id).scalar()

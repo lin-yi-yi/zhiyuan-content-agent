@@ -119,7 +119,11 @@ class SaaSMiddleware:
                 tenant_token = current_tenant.set(context)
                 if consumes_ai(method, path, body):
                     from app.saas.commerce import reserve_usage
-                    reservation = await run_in_threadpool(reserve_usage, context.organization_id, uuid.uuid4().hex)
+                    from app.core.diagnostics import current_request_id, valid_request_id
+                    # Correlate new ledger events to the server-generated request,
+                    # never a caller header. Standalone middleware keeps a fresh ID.
+                    usage_request_id = valid_request_id(current_request_id.get()) or uuid.uuid4().hex
+                    reservation = await run_in_threadpool(reserve_usage, context.organization_id, usage_request_id)
             else:
                 context = None
 
@@ -156,8 +160,8 @@ class SaaSMiddleware:
                 status = 429 if isinstance(exc, QuotaExceeded) else 409 if isinstance(exc, UsageConflict) else 422
                 await JSONResponse({"detail": str(exc)}, status_code=status)(scope, receive, send)
             else:
-                import logging
-                logging.getLogger("content_agent").error("saas_boundary_failed path=%s type=%s", path, type(exc).__name__)
+                from app.core.diagnostics import emit_diagnostic, safe_error_type
+                emit_diagnostic("saas_boundary_failed", error_type=safe_error_type(exc))
                 await JSONResponse({"detail": "服务暂时不可用，请稍后重试"}, status_code=503)(scope, receive, send)
         finally:
             if reservation:

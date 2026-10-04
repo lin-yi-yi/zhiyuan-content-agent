@@ -1,0 +1,403 @@
+{
+  "dataset_id": "faq-frozen-synthetic-v1",
+  "cases": [
+    {
+      "id": "d-paraphrase-1",
+      "scenario_family": "dev-power",
+      "split": "development",
+      "category": "paraphrase",
+      "question": "合成青岚 QL-12 接几伏的直流电源？",
+      "required_facts": [
+        {
+          "product_model": "合成青岚 QL-12",
+          "parameter": "额定电压"
+        }
+      ],
+      "expected_document_keys": [
+        "d-power"
+      ],
+      "required_fact_phrases": [
+        "12 V DC"
+      ],
+      "should_refuse": false,
+      "expected_refusal_reasons": [],
+      "expected_missing_facts": []
+    },
+    {
+      "id": "d-paraphrase-2",
+      "scenario_family": "dev-power",
+      "split": "development",
+      "category": "paraphrase",
+      "question": "给合成青岚 QL-12 供电时，输入电压应该是多少？",
+      "required_facts": [],
+      "expected_document_keys": [
+        "d-power"
+      ],
+      "required_fact_phrases": [
+        "12 V DC"
+      ],
+      "should_refuse": false,
+      "expected_refusal_reasons": [],
+      "expected_missing_facts": []
+    },
+    {
+      "id": "d-cross-model-1",
+      "scenario_family": "dev-pressure",
+      "split": "development",
+      "category": "cross_model",
+      "question": "合成青岚 QL-21 的额定压力是多少？",
+      "required_facts": [
+        {
+          "product_model": "合成青岚 QL-21",
+          "parameter": "额定压力"
+        }
+      ],
+      "expected_document_keys": [
+        "d-pressure-b"
+      ],
+      "required_fact_phrases": [
+        "7 bar"
+      ],
+      "should_refuse": false,
+      "expected_refusal_reasons": [],
+      "expected_missing_facts": []
+    },
+    {
+      "id": "d-cross-model-2",
+      "scenario_family": "dev-pressure",
+      "split": "development",
+      "category": "cross_model",
+      "question": "合成青岚 QL-22 的额定压力是多少？",
+      "required_facts": [],
+      "expected_document_keys": [],
+      "required_fact_phrases": [],
+      "should_refuse": true,
+      "expected_refusal_reasons": [
+        "insufficient_evidence"
+      ],
+      "expected_missing_facts": []
+    },
+    {
+      "id": "d-compound-1",
+      "scenario_family": "dev-flow",
+      "split": "development",
+      "category": "compound_missing",
+      "question": "合成澜石 LS-8 的额定流量和质保期限分别是什么？",
+      "required_facts": [
+        {
+          "product_model": "合成澜石 LS-8",
+          "parameter": "额定流量"
+        },
+        {
+          "product_model": "合成澜石 LS-8",
+          "parameter": "质保期限"
+        }
+      ],
+      "expected_document_keys": [],
+      "required_fact_phrases": [],
+      "should_refuse": true,
+      "expected_refusal_reasons": [
+        "missing_structured_facts"
+      ],
+      "expected_missing_facts": [
+        {
+          "product_model": "合成澜石 LS-8",
+          "parameter": "质保期限"
+        }
+      ]
+    },
+    {
+      "id": "d-compound-2",
+      "scenario_family": "dev-flow",
+      "split": "development",
+      "category": "compound_missing",
+      "question": "合成澜石 LS-8 的流量是多少，每台售价是多少？",
+      "required_facts": [],
+      "expected_document_keys": [],
+      "required_fact_phrases": [],
+      "should_refuse": true,
+      "expected_refusal_reasons": [
+        "insufficient_evidence"
+      ],
+      "expected_missing_facts": []
+    },
+    {
+      "id": "d-negation-1",
+      "scenario_family": "dev-outdoor",
+      "split": "development",
+      "category": "negation",
+      "question": "合成南序 NX-5 支持室外使用吗？",
+      "required_facts": [
+        {
+          "product_model": "合成南序 NX-5",
+          "parameter": "室外使用"
+        }
+      ],
+      "expected_document_keys": [
+        "d-outdoor"
+      ],
+      "required_fact_phrases": [
+        "不支持"
+      ],
+      "should_refuse": false,
+      "expected_refusal_reasons": [],
+      "expected_missing_facts": []
+    },
+    {
+      "id": "d-negation-2",
+      "scenario_family": "dev-outdoor",
+      "split": "development",
+      "category": "negation",
+      "question": "合成南序 NX-5 放到室外是否符合这份资料的使用范围？",
+      "required_facts": [],
+      "expected_document_keys": [
+        "d-outdoor"
+      ],
+      "required_fact_phrases": [
+        "不支持"
+      ],
+      "should_refuse": false,
+      "expected_refusal_reasons": [],
+      "expected_missing_facts": []
+    },
+    {
+      "id": "d-conflict-1",
+      "scenario_family": "dev-current-conflict",
+      "split": "development",
+      "category": "conflict",
+      "question": "合成初枫 CF-1 的额定电压是多少？",
+      "required_facts": [
+        {
+          "product_model": "合成初枫 CF-1",
+          "parameter": "额定电压"
+        }
+      ],
+      "expected_document_keys": [],
+      "required_fact_phrases": [],
+      "should_refuse": true,
+      "expected_refusal_reasons": [
+        "missing_structured_facts"
+      ],
+      "expected_missing_facts": [
+        {
+          "product_model": "合成初枫 CF-1",
+          "parameter": "额定电压"
+        }
+      ]
+    },
+    {
+      "id": "d-conflict-2",
+      "scenario_family": "dev-current-conflict",
+      "split": "development",
+      "category": "conflict",
+      "question": "请给出合成初枫 CF-1 目前可采用的供电电压。",
+      "required_facts": [],
+      "expected_document_keys": [],
+      "required_fact_phrases": [],
+      "should_refuse": true,
+      "expected_refusal_reasons": [
+        "insufficient_evidence"
+      ],
+      "expected_missing_facts": []
+    },
+    {
+      "id": "r-paraphrase-1",
+      "scenario_family": "reserved-filter",
+      "split": "reserved",
+      "category": "paraphrase",
+      "question": "合成晗川 HC-9 的过滤网隔多长时间查看一次？",
+      "required_facts": [
+        {
+          "product_model": "合成晗川 HC-9",
+          "parameter": "滤网检查周期"
+        }
+      ],
+      "expected_document_keys": [
+        "r-filter"
+      ],
+      "required_fact_phrases": [
+        "每 45 天"
+      ],
+      "should_refuse": false,
+      "expected_refusal_reasons": [],
+      "expected_missing_facts": []
+    },
+    {
+      "id": "r-paraphrase-2",
+      "scenario_family": "reserved-filter",
+      "split": "reserved",
+      "category": "paraphrase",
+      "question": "准备合成晗川 HC-9 的例行维护表，滤网检查间隔填多久？",
+      "required_facts": [],
+      "expected_document_keys": [
+        "r-filter"
+      ],
+      "required_fact_phrases": [
+        "每 45 天"
+      ],
+      "should_refuse": false,
+      "expected_refusal_reasons": [],
+      "expected_missing_facts": []
+    },
+    {
+      "id": "r-cross-model-1",
+      "scenario_family": "reserved-heat",
+      "split": "reserved",
+      "category": "cross_model",
+      "question": "合成晗川 HC-31 可以采用资料中哪个环境温度上限？",
+      "required_facts": [
+        {
+          "product_model": "合成晗川 HC-31",
+          "parameter": "环境温度上限"
+        }
+      ],
+      "expected_document_keys": [
+        "r-heat-b"
+      ],
+      "required_fact_phrases": [
+        "60 摄氏度"
+      ],
+      "should_refuse": false,
+      "expected_refusal_reasons": [],
+      "expected_missing_facts": []
+    },
+    {
+      "id": "r-cross-model-2",
+      "scenario_family": "reserved-heat",
+      "split": "reserved",
+      "category": "cross_model",
+      "question": "合成晗川 HC-32 的环境温度上限是几摄氏度？",
+      "required_facts": [],
+      "expected_document_keys": [],
+      "required_fact_phrases": [],
+      "should_refuse": true,
+      "expected_refusal_reasons": [
+        "insufficient_evidence"
+      ],
+      "expected_missing_facts": []
+    },
+    {
+      "id": "r-compound-1",
+      "scenario_family": "reserved-battery",
+      "split": "reserved",
+      "category": "compound_missing",
+      "question": "合成望汐 WX-6 的额定功率以及充电后的续航时长各是多少？",
+      "required_facts": [
+        {
+          "product_model": "合成望汐 WX-6",
+          "parameter": "额定功率"
+        },
+        {
+          "product_model": "合成望汐 WX-6",
+          "parameter": "续航时长"
+        }
+      ],
+      "expected_document_keys": [],
+      "required_fact_phrases": [],
+      "should_refuse": true,
+      "expected_refusal_reasons": [
+        "missing_structured_facts"
+      ],
+      "expected_missing_facts": [
+        {
+          "product_model": "合成望汐 WX-6",
+          "parameter": "续航时长"
+        }
+      ]
+    },
+    {
+      "id": "r-compound-2",
+      "scenario_family": "reserved-battery",
+      "split": "reserved",
+      "category": "compound_missing",
+      "question": "请同时说明合成望汐 WX-6 消耗多少功率以及采购单价。",
+      "required_facts": [],
+      "expected_document_keys": [],
+      "required_fact_phrases": [],
+      "should_refuse": true,
+      "expected_refusal_reasons": [
+        "insufficient_evidence"
+      ],
+      "expected_missing_facts": []
+    },
+    {
+      "id": "r-negation-1",
+      "scenario_family": "reserved-solvent",
+      "split": "reserved",
+      "category": "negation",
+      "question": "合成枫渡 FD-2 能不能用于有机溶剂？",
+      "required_facts": [
+        {
+          "product_model": "合成枫渡 FD-2",
+          "parameter": "有机溶剂使用"
+        }
+      ],
+      "expected_document_keys": [
+        "r-solvent"
+      ],
+      "required_fact_phrases": [
+        "不支持"
+      ],
+      "should_refuse": false,
+      "expected_refusal_reasons": [],
+      "expected_missing_facts": []
+    },
+    {
+      "id": "r-negation-2",
+      "scenario_family": "reserved-solvent",
+      "split": "reserved",
+      "category": "negation",
+      "question": "合成枫渡 FD-2 适合清水，是否也就支持有机溶剂？",
+      "required_facts": [],
+      "expected_document_keys": [
+        "r-solvent"
+      ],
+      "required_fact_phrases": [
+        "不支持"
+      ],
+      "should_refuse": false,
+      "expected_refusal_reasons": [],
+      "expected_missing_facts": []
+    },
+    {
+      "id": "r-conflict-1",
+      "scenario_family": "reserved-unit-conflict",
+      "split": "reserved",
+      "category": "conflict",
+      "question": "合成雨杉 YS-8 的额定电流应该填多少？",
+      "required_facts": [
+        {
+          "product_model": "合成雨杉 YS-8",
+          "parameter": "额定电流"
+        }
+      ],
+      "expected_document_keys": [],
+      "required_fact_phrases": [],
+      "should_refuse": true,
+      "expected_refusal_reasons": [
+        "missing_structured_facts"
+      ],
+      "expected_missing_facts": [
+        {
+          "product_model": "合成雨杉 YS-8",
+          "parameter": "额定电流"
+        }
+      ]
+    },
+    {
+      "id": "r-conflict-2",
+      "scenario_family": "reserved-unit-conflict",
+      "split": "reserved",
+      "category": "conflict",
+      "question": "需要引用合成雨杉 YS-8 的额定电流，请给出可采用的数值。",
+      "required_facts": [],
+      "expected_document_keys": [],
+      "required_fact_phrases": [],
+      "should_refuse": true,
+      "expected_refusal_reasons": [
+        "insufficient_evidence"
+      ],
+      "expected_missing_facts": []
+    }
+  ]
+}
