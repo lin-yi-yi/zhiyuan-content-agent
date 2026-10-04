@@ -1,6 +1,6 @@
 # 知源 · AI 内容与交付 Agent
 
-`zhiyuan-content-agent` · **v0.13.0 工程验证版** · RAG / LangGraph / 人工审核
+`zhiyuan-content-agent` · **v0.14.0 工程验证版** · RAG / LangGraph / 人工审核
 
 [![Project checks](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml/badge.svg?branch=main)](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml?query=branch%3Amain)
 
@@ -16,8 +16,8 @@
 | --- | --- |
 | 默认首页 / 最新整合代码 | [`main`](https://github.com/lin-yi-yi/zhiyuan-content-agent/tree/main)；直接打开仓库即可看到当前版本 |
 | 后续开发分支 | [`codex/content-agent`](https://github.com/lin-yi-yi/zhiyuan-content-agent/tree/codex/content-agent)；由原 `codex/job-ready-agent-v06` 更名，避免把分支名中的 v06 误当当前版本 |
-| 本轮完成 | 已核验参数目录、多型号人工范围确认、工具问答参数契约透传、用量结算失败与未知状态保护、第三组学习实验 |
-| 本地验证 | v0.13.0：**1087 个后端测试、43 个前端测试及构建通过**；问答页面实测缺项拒答、修改取消确认、切换库及延迟响应隔离；[本轮验收](docs/validation/v013-reliability-2026-10-04.md) |
+| 本轮完成 | 磁盘余量只读预检、资料问答失败排错编号、错误响应上下文隔离、第四组学习实验 |
+| 本地验证 | v0.14.0：**1145 个后端测试、57 个前端测试及构建通过**；磁盘演练、页面排错及完整浏览器流程通过；容器进度见 [本轮验收](docs/validation/v014-operations-2026-10-04.md) |
 | GitHub 自动检查 | `Project checks` 执行测试、构建、前端依赖审计、隔离浏览器流程及 Docker 升级恢复；具体结果以相应提交为准；[运行记录](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml)。顶部徽章显示 `main` 最新状态 |
 | 真实业务验证 | 本轮使用合成资料与模拟模型响应；真实供应商账单、客户验收、付费和公网生产环境尚未验证 |
 
@@ -62,7 +62,7 @@ RAG_RETRIEVAL_MODE=lexical ./scripts/start.sh
 
 模型与信源、运行诊断进入「设置与连接」；团队模式还提供成员、用量和账号。模型评分和编辑器检查清单不能代替人工批准。
 
-## v0.13.0 当前能力
+## v0.14.0 当前能力
 
 | 能力 | 实现与边界 |
 | --- | --- |
@@ -79,7 +79,8 @@ RAG_RETRIEVAL_MODE=lexical ./scripts/start.sh
 | 本地数据恢复 | 显式选择 SQLite 与 Qdrant 路径；停机快照、WAL、文件清单与哈希校验；只恢复到新或空目录。合成索引恢复后可查询，实际业务恢复需另验收 |
 | 内容流程 | LangGraph 条件流程：检索、选题、正文、卡片、质量检查和有限修订；步骤记录、重试和取消 |
 | 调用追溯 | 模型调用关联任务、步骤及工作流尝试；区分格式回退和 JSON 修复，记录指令版本 hash、用量及配置价格下的估算。缺失留空，估算不等于供应商账单 |
-| 请求诊断 | 服务器生成请求 ID，关联 HTTP、后台任务、执行尝试及新预留记录；JSON 日志仅包含允许的元数据。尚无日志落盘保证和通知告警 |
+| 请求诊断 | 服务器生成请求 ID，关联 HTTP、后台任务、执行尝试及新预留记录；资料问答失败时可复制编号，旧上下文结果会丢弃。JSON 日志仅包含允许的元数据，尚无日志落盘保证和通知告警 |
+| 磁盘预检 | 显式目录和阈值的只读 CLI，区分正常、低空间与未知；不读取数据库、不清理文件。是一次检查，不是持续告警、写入保证或容量验收 |
 | 异常预留核对 | 本地运营 CLI 默认预览，显式停机后处理单条已查明预留；幂等键、账本与审计同事务。只处理受理次数，不处理资金或供应商退款 |
 | 结算故障保护 | 首次业务受理/拒绝只尝试一次结算；兜底 500、取消或无响应保留未知预留，审计或发送故障不反向退款；日志记录未确认状态，交由人工核对 |
 | 冻结评测 | 20 题、14 份合成资料、开发/保留组、文件与配置哈希、坏例与分母；真实缓存 Embedding 可离线运行。标签待人工复核，不是独立盲测或生成模型质量验收 |
@@ -178,7 +179,7 @@ AI 辅助说明和交付清单不构成完整生产合规证明。服务中断�
 
 检查脚本覆盖后端行为、Python 编译、前端行为与生产构建。另用 `(cd frontend && npm run test:e2e)` 运行隔离的浏览器业务回归，首次先按 [浏览器回归说明](docs/browser-regression.md) 安装 Chromium。本地数据保护见 [备份恢复](docs/local-backup.md)。自动检查、浏览器验收和真实客户效果分别记录，不能互相替代。
 
-本轮工程说明：[人工确认问题范围](docs/question-clarification.md)、[工具问答契约](docs/rag-tool-facts.md)、[结算故障与未知状态](docs/usage-finalization-failures.md)。已有基础：[冻结评测](docs/frozen-faq-evaluation.md)、[请求诊断](docs/diagnostics.md)、[人工用量核对](docs/usage-reconciliation.md)、[容器升级回退](docs/container-acceptance.md)。冻结自由问答坏例仍然存在；人工确认和严格参数契约不能替代自由问题理解，也不能泛化为所有内容均已核验。
+本轮工程说明：[磁盘余量预检](docs/ops-health.md)、[页面排错编号](docs/request-troubleshooting.md)。已有基础：[人工确认问题范围](docs/question-clarification.md)、[工具问答契约](docs/rag-tool-facts.md)、[结算故障与未知状态](docs/usage-finalization-failures.md)、[冻结评测](docs/frozen-faq-evaluation.md)、[请求诊断](docs/diagnostics.md)、[人工用量核对](docs/usage-reconciliation.md)、[容器升级回退](docs/container-acceptance.md)。冻结自由问答坏例仍然存在；人工确认和严格参数契约不能替代自由问题理解，也不能泛化为所有内容均已核验。
 
 - [v0.9 商业化计划与价格实验](docs/v09-commercialization-plan.md)
 - [v0.10 工业 FAQ 审计、实现与本地验收](docs/validation/p0-industrial-faq-2026-10-03.md)

@@ -4,6 +4,22 @@ let requestCsrf: string | null = null;
 let requestGeneration = 0;
 const pendingRequests = new Set<AbortController>();
 
+export function validRequestId(value: unknown): value is string {
+  return typeof value === 'string' && /^[a-f0-9]{32}$/.test(value);
+}
+
+export class RequestError extends Error {
+  readonly status: number;
+  readonly requestId: string | null;
+
+  constructor(message: string, status: number, requestId: string | null = null) {
+    super(message);
+    this.name = 'RequestError';
+    this.status = status;
+    this.requestId = validRequestId(requestId) ? requestId : null;
+  }
+}
+
 export function configureRequestContext(organizationId: string | null, csrf: string | null) {
   if (requestOrganization !== organizationId || requestCsrf !== csrf) {
     requestGeneration += 1;
@@ -18,6 +34,10 @@ export async function request<T>(url: string, opts?: RequestInit): Promise<T> {
   const generation = requestGeneration;
   const controller = new AbortController();
   const abort = () => controller.abort();
+  const assertCurrent = () => {
+    if (generation !== requestGeneration) throw new DOMException('组织已切换', 'AbortError');
+    if (controller.signal.aborted) throw new DOMException('请求已取消', 'AbortError');
+  };
   if (opts?.signal?.aborted) controller.abort();
   opts?.signal?.addEventListener('abort', abort, {once:true});
   pendingRequests.add(controller);
@@ -27,27 +47,31 @@ export async function request<T>(url: string, opts?: RequestInit): Promise<T> {
   if (requestCsrf && !['GET','HEAD','OPTIONS'].includes((opts?.method || 'GET').toUpperCase())) headers.set('X-CSRF-Token', requestCsrf);
   try {
   const res = await fetch(`${API_BASE}${url}`, {...opts, headers, credentials:'same-origin', signal:controller.signal});
-  if (generation !== requestGeneration) throw new DOMException('组织已切换', 'AbortError');
+  assertCurrent();
   if (res.status === 401 && !url.startsWith('/api/saas/auth/')) window.dispatchEvent(new Event('saas-session-expired'));
   if (!res.ok) {
     const text = await res.text();
+    assertCurrent();
+    let message = text || `HTTP ${res.status}`;
     try {
       const data = JSON.parse(text);
       const detail = Array.isArray(data.detail)
         ? data.detail.map((item: {loc?: string[]; msg?: string}) => `${item.loc?.slice(1).join('.') || '参数'}：${item.msg || '无效'}`).join('；')
         : data.detail;
-      throw new Error(detail || text || `HTTP ${res.status}`);
-    } catch (error) {
-      if (error instanceof Error && error.message && error.message !== text) {
-        throw error;
-      }
-      throw new Error(text || `HTTP ${res.status}`);
-    }
+      message = String(detail || message);
+    } catch { /* Keep a non-JSON HTTP error's original text. */ }
+    // Only the response header is authoritative; never trust a body request_id.
+    throw new RequestError(message, res.status, res.headers.get('X-Request-ID'));
   }
   if (res.status === 204) return undefined as T;
   const result = await res.json();
-  if (generation !== requestGeneration) throw new DOMException('组织已切换', 'AbortError');
+  assertCurrent();
   return result;
+  } catch (error) {
+    // Also cover rejected body reads/fetches after a context switch, including
+    // transports which fail to honour AbortSignal. Old error data must not escape.
+    assertCurrent();
+    throw error;
   } finally {
     pendingRequests.delete(controller);
     opts?.signal?.removeEventListener('abort', abort);

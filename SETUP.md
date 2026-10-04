@@ -1,4 +1,4 @@
-# 知源内容工作台 v0.13.0 — 安装与运行
+# 知源内容工作台 v0.14.0 — 安装与运行
 
 本指南对应 `lin-yi-yi/zhiyuan-content-agent` 的最新 `main` 分支。当前范围是本机运行与单机小团队试点，能力及验证边界见 [README](README.md)。
 
@@ -94,6 +94,8 @@ if [ ! -f .env.saas ]; then cp .env.saas.example .env.saas; fi
 
 此脚本隔离数据库与环境配置，执行后端测试、Python 编译检查、前端行为测试及构建，不以真实模型调用验证内容质量。需要亲自操作导入、失败重试、修改重审与导出时，按 [工业 FAQ 练习](docs/industrial-faq-practice.md) 启动独立临时合成环境；不要用客户资料做失败注入实验。
 
+在已有数据目录上，可用 `python3 scripts/ops_health.py --directory database=.data --min-free-bytes 1073741824 --min-free-percent 5` 做一次只读磁盘预检。阈值只是示例，需按实际数据增长选择；目录不存在会返回未知，不自动创建或查祖先。完整范围与处置见 [磁盘预检](docs/ops-health.md)。
+
 `check.sh` 会在子进程中禁用 dotenv，清空继承的模型密钥、固定本地任务模型和空价格表，并关闭 LangSmith/LangChain 外部追踪；不会修改你的配置文件。前端依赖审计可单独运行 `cd frontend && npm audit --registry=https://registry.npmjs.org`，GitHub CI 同样执行并阻止已知 moderate 及以上告警。
 
 页面业务回归另用 `(cd frontend && npm run test:e2e)`；首次需安装 Chromium，详情见 [浏览器业务回归](docs/browser-regression.md)。按 [学习实验](docs/learning-labs.md) 记录自己运行、排错和修改的证据；后续开发顺序见 [路线图](ROADMAP.md)。
@@ -111,7 +113,8 @@ if [ ! -f .env.saas ]; then cp .env.saas.example .env.saas; fi
 | 页面仍是旧版本 | `start.sh` 会重新构建；团队模式修改前端后先在 `frontend` 目录执行 `npm run build`，再刷新页面；后端代码修改后重启服务 |
 | 意外连接旧 MySQL | 检查终端是否已导出 `DATABASE_URL`；启动脚本会保留该环境变量。默认 SQLite 不要求 MySQL |
 | 页面打不开或任务失败 | 核对终端日志、当前端口及浏览器请求；本地模式可检查 `/api/health` 和 `/api/ready`，接口正常仍需实际跑完审核交付流程 |
+| 资料问答显示请求失败 | 若有排错编号，复制后对照私有服务日志；修改问题或重新请求后使用新编号。网络失败不一定有编号，见 [操作说明](docs/request-troubleshooting.md) |
 
 `/api/health` 返回当前运行版本；`/api/ready` 检查数据库可用性，连接失败返回 503。团队模式下 readiness 需要已登录的组织上下文。项目交接与定向测试入口见 [开发指南](CONTRIBUTING.md)，完整文档分组见 [文档导航](docs/README.md)。
 
-更完整的能力、限制及验证记录以 [README](README.md) 和 [v0.13.0 工程验收记录](docs/validation/v013-reliability-2026-10-04.md) 为准。容器升级与快照回退按 [专用说明](docs/container-acceptance.md)在隔离环境进行；排错时用 [请求关联诊断](docs/diagnostics.md)核对执行尝试。问答范围确认见 [参数目录说明](docs/question-clarification.md)，未知用量处置见 [结算故障说明](docs/usage-finalization-failures.md)。
+更完整的能力、限制及验证记录以 [README](README.md) 和 [v0.14.0 工程验收记录](docs/validation/v014-operations-2026-10-04.md) 为准。容器升级与快照回退按 [专用说明](docs/container-acceptance.md)在隔离环境进行；排错时用 [请求关联诊断](docs/diagnostics.md)核对执行尝试。问答范围确认见 [参数目录说明](docs/question-clarification.md)，未知用量处置见 [结算故障说明](docs/usage-finalization-failures.md)。

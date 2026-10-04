@@ -7,6 +7,7 @@ import { useWorkspace } from '../components/WorkspaceContext';
 import { useAvailableModels } from '../components/useAvailableModels';
 import { addRagCatalogFact, ragFactCoverage, validateRagFactRows } from '../utils/ragFacts';
 import RagFactCatalogPicker from '../components/RagFactCatalogPicker';
+import RequestFailure from '../components/RequestFailure';
 import '../styles/ragFacts.css';
 
 type AnswerWithHealth=RagAnswerResponse&{answer_mode?:string;evidence_health?:{excluded_count:number;expired_count:number;unverified_count:number;untracked_count:number;warnings:string[]}};
@@ -37,14 +38,16 @@ function RetrievalExplanation({hit}:{hit:RagSearchHit}) {
 }
 
 export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledgeBaseId,onNavigate}:{initialScope?:EvidenceScope;initialKnowledgeBaseId?:number;onNavigate?:(page:string)=>void;onOpenEvidence?:(id:number,scope?:EvidenceScope)=>void}) {
-  const {canWrite}=useWorkspace();
+  const {canWrite,organization}=useWorkspace();
   const {models,modelsError}=useAvailableModels();
   const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([]);
+  const [selectionWarning,setSelectionWarning]=useState('');
   const [knowledgeBaseId, updateKnowledgeBaseId] = useState<number|null>(null);
   const [factRows, setFactRows] = useState<RequiredFact[]>([{product_model:'',parameter:''}]);
   const [factsConfirmed, setFactsConfirmed] = useState(false);
   const hasFactInput=factRows.some(row=>row.product_model.trim()||row.parameter.trim());
   const setKnowledgeBaseId=(id:number|null)=>{
+    if(id!==null&&knowledgeBases.some(item=>item.id===id))setSelectionWarning('');
     if(knowledgeBaseId!==id){setFactRows([{product_model:'',parameter:''}]);setFactsConfirmed(false);}
     updateKnowledgeBaseId(id);
   };
@@ -57,29 +60,75 @@ export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledge
   const [answer, setAnswer] = useState<AnswerWithHealth | null>(null);
   const factCoverage=answer?ragFactCoverage(answer):null;
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, updateError] = useState<Error | string>('');
+  const [initializationError, updateInitializationError] = useState<Error | string>('');
+  const setError=(reason:unknown)=>{
+    if(reason instanceof Error&&reason.name==='AbortError')return;
+    updateError(reason instanceof Error?reason:String(reason??''));
+  };
+  const setInitializationError=(reason:unknown)=>{
+    if(reason instanceof Error&&reason.name==='AbortError')return;
+    updateInitializationError(reason instanceof Error?reason:String(reason??''));
+  };
   const [resultContext,setResultContext]=useState<{query:string;knowledgeBase:string;strategy:string}|null>(null);
   const retrievalGeneration=useRef(0);
   const [status,setStatus]=useState<RetrievalStatus|null>(null);
   const [statusLoading,setStatusLoading]=useState(true);
   const [report,setReport]=useState<Record<string,unknown>|null>(null);
+  const scopeKey=JSON.stringify([organization?.id??null,initialScope?.workspace_id??null]);
+  const previousScope=useRef(scopeKey);
   const metricValues=(report?.metrics||{}) as Record<string,number|null>;
   const reportCases=(report?.cases||[]) as Array<{question:string;refused:boolean;should_refuse:boolean;recall_at_k:number|null;latency_ms:number}>;
-  const runEvaluation=async()=>{setLoading(true);setError('');try{const sample=await workbench.demoCases();setReport(await workbench.evaluate(sample.cases));}catch(e){setError(e instanceof Error?e.message:String(e));}finally{setLoading(false);}};
+  const runEvaluation=async()=>{
+    const generation=++retrievalGeneration.current;
+    setLoading(true);setError('');
+    try{
+      const sample=await workbench.demoCases();
+      if(generation!==retrievalGeneration.current)return;
+      const result=await workbench.evaluate(sample.cases);
+      if(generation===retrievalGeneration.current)setReport(result);
+    }catch(e){if(generation===retrievalGeneration.current)setError(e);}
+    finally{if(generation===retrievalGeneration.current)setLoading(false);}
+  };
   const downloadReport=()=>{if(!report)return;const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download='rag-evaluation.json';link.click();URL.revokeObjectURL(url);};
 
+  useEffect(()=>{
+    if(previousScope.current===scopeKey)return;
+    previousScope.current=scopeKey;
+    // Numeric KB IDs can collide across scopes, even if a parent keeps this page mounted.
+    setFactRows([{product_model:'',parameter:''}]);setFactsConfirmed(false);
+    setQuery('');updateKnowledgeBaseId(null);setKnowledgeBases([]);setSelectionWarning('');setStatus(null);setReport(null);
+  },[scopeKey]);
+
+  useEffect(()=>{
+    retrievalGeneration.current+=1;
+    setHits([]);setAnswer(null);setResultContext(null);setError('');setLoading(false);
+    return()=>{retrievalGeneration.current+=1;};
+  },[query,retrievalMode,knowledgeBaseId,topK,provider,factRows,initialScope?.workspace_id,organization?.id]);
+
   useEffect(() => {
-    workbench.status().then(setStatus).catch(e=>setError(String(e))).finally(()=>setStatusLoading(false));
+    let active=true;
+    // Initialization belongs to this scope, not to an individual question.
+    // Typing or applying the default provider must not hide a pending load failure.
+    setInitializationError('');
+    setSelectionWarning('');
+    setStatusLoading(true);
+    workbench.status().then(value=>{if(active)setStatus(value);})
+      .catch(e=>{if(active)setInitializationError(e);})
+      .finally(()=>{if(active)setStatusLoading(false);});
     api.listKnowledgeBases(initialScope?.workspace_id).then(items => {
+      if(!active)return;
       setKnowledgeBases(items);
       const requested=initialKnowledgeBaseId??initialScope?.knowledge_base_id;
-      if(requested&&!items.some(item=>item.id===requested)){setKnowledgeBaseId(null);setError('指定知识库不可用，请重新选择。');}
+      if(requested&&!items.some(item=>item.id===requested)){setKnowledgeBaseId(null);setSelectionWarning('指定知识库不可用，请重新选择。');}
       else setKnowledgeBaseId(requested??items[0]?.id??null);
-    }).catch(() => {setKnowledgeBases([]);setError('知识库读取失败，请刷新重试。');});
-  }, []);
+    }).catch(e => {
+      if(active){setKnowledgeBases([]);setInitializationError(e);}
+    });
+    return()=>{active=false;};
+  }, [initialScope?.workspace_id,initialScope?.knowledge_base_id,initialKnowledgeBaseId,organization?.id]);
 
   useEffect(()=>{if(models.length)setProvider((models.find(item=>item.is_default)||models.find(item=>item.provider==='local')||models[0]).provider);},[models]);
-  useEffect(()=>{retrievalGeneration.current+=1;setHits([]);setAnswer(null);setResultContext(null);setError('');},[query,retrievalMode,knowledgeBaseId,topK,provider,factRows]);
   const handleSearch = async () => {
     if (!query.trim()) return;
     const generation=++retrievalGeneration.current;
@@ -101,8 +150,8 @@ export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledge
       setHits(result.items);
       setResultContext({query:searchedQuery,knowledgeBase:searchedKnowledgeBase,strategy:result.strategy||result.retrieval?.strategy||result.retrieval?.mode||'unknown'});
     } catch (err) {
-      if(generation===retrievalGeneration.current)setError(err instanceof Error ? err.message : String(err));
-    } finally {setLoading(false);}
+      if(generation===retrievalGeneration.current)setError(err);
+    } finally {if(generation===retrievalGeneration.current)setLoading(false);}
   };
 
   const handleAnswer = async () => {
@@ -112,7 +161,7 @@ export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledge
       requiredFacts=validateRagFactRows(factRows);
       if(requiredFacts.length&&!factsConfirmed)throw new Error('请先对照原问题确认本次需要核对的型号和参数。');
     }
-    catch(err) {setError(err instanceof Error?err.message:String(err));return;}
+    catch(err) {setError(err);return;}
     const generation=++retrievalGeneration.current;
     const searchedQuery=query.trim(),searchedKnowledgeBase=knowledgeBases.find(item=>item.id===knowledgeBaseId)?.name||'当前知识库';
     setLoading(true);
@@ -135,8 +184,8 @@ export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledge
       setHits(result.citations || []);
       setResultContext({query:searchedQuery,knowledgeBase:searchedKnowledgeBase,strategy:result.retrieval?.strategy||result.retrieval?.mode||'unknown'});
     } catch (err) {
-      if(generation===retrievalGeneration.current)setError(err instanceof Error ? err.message : String(err));
-    } finally {setLoading(false);}
+      if(generation===retrievalGeneration.current)setError(err);
+    } finally {if(generation===retrievalGeneration.current)setLoading(false);}
   };
 
   return (
@@ -145,6 +194,8 @@ export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledge
       <p className="subtle" style={{marginBottom:20}}>{status?`当前默认：${status.mode==='hybrid'?'双路融合检索':status.mode==='semantic'?'中文语义检索':'词项检索'}`:statusLoading?'正在读取检索配置…':'尚未取得检索配置'} · 模型生成的回答仍需要核对。</p>
 
       {modelsError&&<div className="feedback error">{modelsError}</div>}
+      {Boolean(initializationError)&&<RequestFailure error={initializationError}/>}
+      {selectionWarning&&<RequestFailure error={selectionWarning}/>}
       <section className="rag-lab-layout">
         <div className="panel">
           <h3>查询</h3>
@@ -166,7 +217,7 @@ export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledge
             <p id="rag-facts-help" className="subtle">产品参数问题可先列清要求，最多 10 项，可包含多个型号。缺少任一项已核验依据时拒答。留空仍可进行资料问答，但不评估问题是否已完整回答。</p>
             {knowledgeBaseId&&<RagFactCatalogPicker key={`${initialScope?.workspace_id||0}:${knowledgeBaseId}`} knowledgeBaseId={knowledgeBaseId} workspaceId={initialScope?.workspace_id} disabled={loading} onAdd={fact=>{
               try{updateFacts(addRagCatalogFact(factRows,fact));setError('');}
-              catch(err){setError(err instanceof Error?err.message:String(err));}
+              catch(err){setError(err);}
             }}/>}
             <div className="rag-fact-rows">
               {factRows.map((row,index)=><div className="rag-fact-row" key={index}>
@@ -187,7 +238,7 @@ export default function RagLabPage({onOpenEvidence,initialScope,initialKnowledge
 
             <button className="btn btn-primary" onClick={handleAnswer} disabled={loading || !query.trim() || !models.length || !knowledgeBaseId || (hasFactInput&&!factsConfirmed)}>{loading?'正在查找依据…':hasFactInput?'按确认参数提问 →':'资料问答 →'}</button>
           </div>
-          {error && <div className="source-rag-status error" role="alert">{error}</div>}
+          {Boolean(error) && <RequestFailure error={error}/>}
         </div>
 
         <div className="panel">
