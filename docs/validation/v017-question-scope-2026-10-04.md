@@ -1,6 +1,6 @@
 # v0.17.0：问题范围提案与人工确认
 
-日期：2026-10-04。开发基线为 v0.16.0 合并提交 `7f4f1de1b67021cb5f7133a040986d232243060d`。该基线的合并后 [main CI](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37212916018) 与[开发分支 CI](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37212950255)已成功；下述本地结果来自本轮工作树，后续候选提交与远程检查另记。
+日期：2026-10-04。开发基线为 v0.16.0 合并提交 `7f4f1de1b67021cb5f7133a040986d232243060d`。该基线的合并后 [main CI](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37212916018) 与[开发分支 CI](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37212950255)已成功；下述本地结果来自本轮工作树，本轮功能候选为 `918c5465c3e2927d41156e38915511bd86e9047c`，通过 [PR #10](https://github.com/lin-yi-yi/zhiyuan-content-agent/pull/10)整合，远程结果见下文。
 
 ## 改动与范围
 
@@ -38,7 +38,7 @@
 | 支持语法组 | 首跑暴露上述缺口 | 30/30 |
 | 整体 `quality_passed` | false | false |
 
-首跑见[原始报告](v017-question-scope-initial.json)。修复后报告由提交后的 CI 单独归档；本地命令为：
+首跑见[原始报告](v017-question-scope-initial.json)。修复后见[同候选 Linux 报告](v017-question-scope-918c546.json)，本地命令为：
 
 ```bash
 .venv/bin/python scripts/evaluate_question_scope.py \
@@ -63,7 +63,19 @@
 
 ## GitHub 候选验证
 
-本轮候选提交、push/PR 检查、Linux 解析报告、诊断演练以及 v0.16→v0.17 版本对/同候选团队恢复尚待执行，将按实际结果补录。新增 `question-scope-evaluation` artifact 保留 7 天；它记录质量边界，不要求删去覆盖坏例来使指标全绿。CI 不部署公网服务。
+功能候选 `918c546` 的 [push](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37214476059) 与 [PR](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37214501374) 共六项检查全部成功。以下四份原始报告从 push artifact 下载后核对提交、运行版本、阶段与清理，原样归档；证据文档提交和合并提交仍须核对各自 CI。
+
+| 远程检查 | 实际结果 |
+| --- | --- |
+| Linux 完整检查 | 后端1566 passed，159.16秒、1既有warning；前端19+83、编译构建、审计已知漏洞0，Chromium1条总9.6秒；[job](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37214476059/job/111472085649) |
+| 新规则评测 | 32题契约全部有效、支持语法30/30；明确题精确pair17/19，需澄清题误提案0/13，保留2坏例，`quality_passed:false`；[原始报告](v017-question-scope-918c546.json) |
+| 私有诊断演练 | 9阶段通过、15.424秒、清理错误0；Python3.12.14/Linux x86_64；[原始报告](v017-diagnostics-918c546.json) |
+| v0.16→v0.17 升级与快照回退 | `7f4f1de`→`918c546`，8阶段通过、67.183秒、清理错误0；[job](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37214476059/job/111472085523)、[原始报告](v017-container-918c546.json) |
+| 同候选 SaaS/Qdrant 恢复 | 9阶段通过、83.565秒、清理错误0；[job](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/runs/37214476059/job/111472085671)、[原始报告](v017-saas-918c546.json) |
+
+两个容器场景运行于 Ubuntu24.04/Docker28.0.4，健康版本均为0.17.0，源码构建摘要 `d559e2288904c83e985729d8db1300591d37ea9b2d1cd73d61758af8d328c763`。版本对为 local/lexical、1个SQLite文件270336字节、无向量；团队场景为7文件459870字节、2组织4个真实Qdrant文件。模型local记录2条，外部记录/出站尝试0；固定三维synthetic向量不验证BGE质量或缓存，也不证明跨版本SaaS迁移。
+
+新增 `question-scope-evaluation` artifact 保留7天；绿色 job 仅表示完成评测，不能覆盖报告中的质量坏例。运行容器禁止网络、宿主绑定和端口发布，构建依赖下载仍有网络；CI不部署公网服务。这些耗时是合成演练结果，不是生产恢复目标。
 
 ## 后续门槛
 

@@ -17,10 +17,10 @@
 | 默认首页 / 整合主线 | [`main`](https://github.com/lin-yi-yi/zhiyuan-content-agent/tree/main)；默认显示已整合版本；开发分支的未合并改动通过 Pull Request 查看 |
 | 后续开发分支 | [`codex/content-agent`](https://github.com/lin-yi-yi/zhiyuan-content-agent/tree/codex/content-agent)；由原 `codex/job-ready-agent-v06` 更名，避免把分支名中的 v06 误当当前版本 |
 | 本轮实现 | 从问题原文提案型号/参数并显示位置；默认规则方式，显式模型方式；逐项加入、编辑与人工确认后接入证据缺项门禁 |
-| 本轮验证 | **1566 项后端、102 项前端、编译构建及 1 条 Chromium 业务流程通过**，npm 已知漏洞 0。新增 32 题开发评测：契约 32/32、支持语法 30/30，保留 2 道超模板坏例；见 [本轮验收](docs/validation/v017-question-scope-2026-10-04.md) |
+| 本轮验证 | **1566 项后端、102 项前端、编译构建及 1 条 Chromium 业务流程通过**，npm 已知漏洞 0。新增 32 题开发评测：契约 32/32、支持语法 30/30，保留 2 道超模板坏例；候选 `918c546` 六项 CI 通过；见 [本轮验收](docs/validation/v017-question-scope-2026-10-04.md) |
 | 历史回归 | v0.16.0 的 1441 项后端、57 项前端及诊断/容器证据保留在 [历史验收](docs/validation/v016-diagnostics-2026-10-04.md)；其合并后 main 与开发分支 CI 已通过，不作为 v0.17.0 结果 |
-| 本轮 Docker 演练 | 待本候选 GitHub 检查；配置为同候选双组织 Qdrant 恢复及 v0.16→v0.17 本地模式升级回退，实际结果见本轮验收 |
-| GitHub 自动检查 | 本候选尚待 CI。新增离线提案评测报告，绿色运行仅代表完成评测，质量坏例保留；核对自身[运行记录](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml)。顶部徽章显示 main 状态 |
+| 本轮 Docker 演练 | 候选 `918c546`：同候选双组织 Qdrant 恢复9阶段、v0.16→v0.17 本地模式升级回退8阶段通过，清理错误0；原始报告见本轮验收 |
+| GitHub 自动检查 | 功能候选 `918c546` 的 push/PR 共6项成功。新解析报告仍保留2坏例；后续提交核对自身[运行记录](https://github.com/lin-yi-yi/zhiyuan-content-agent/actions/workflows/check.yml)。顶部徽章显示 main 状态 |
 | 真实业务验证 | 本轮使用临时合成资料与故障注入，无付费模型或外部通知；真实供应商账单、客户验收、付费和公网生产环境尚未验证 |
 
 **[开发路线与商用验收](ROADMAP.md) · [学习实验](docs/learning-labs.md) · [项目状态与下一步](docs/project-status.md) · [安装与运行](SETUP.md) · [演示流程](docs/demo-walkthrough.md) · [文档导航](docs/README.md) · [开发交接](CONTRIBUTING.md) · [版本记录](CHANGELOG.md)**
